@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       // Update student if updates provided
       if (updates) {
         const updateData: {
-          email?: string;
+          email?: string | null;
           telefone?: string;
           genero?: string | null;
           estado_civil?: string | null;
