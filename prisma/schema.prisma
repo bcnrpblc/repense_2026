@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Student {
+  id          String      @id @default(uuid())
+  nome        String
+  cpf         String      @unique
+  telefone    String      @unique
+  email       String?     @unique
+  genero      String?
+  estado_civil String?
+  nascimento  DateTime?
+  criado_em   DateTime    @default(now())
+  
+  enrollments Enrollment[]
+
+  @@index([cpf])
+  @@index([telefone])
+  @@map("students")
+}
+
+model Course {
+  id              String      @id @default(uuid())
+  notion_id       String      @unique
+  grupo_repense   GrupoRepense
+  modelo          ModeloCurso
+  capacidade      Int
+  numero_inscritos Int        @default(0)
+  eh_ativo        Boolean     @default(true)
+  eh_16h          Boolean     @default(false)
+  link            String?
+  data_inicio     DateTime?
+  horario         String?
+  
+  enrollments     Enrollment[]
+
+  @@map("courses")
+}
+
+model Enrollment {
+  id              String      @id @default(uuid())
+  student_id      String
+  course_id       String
+  criado_em       DateTime    @default(now())
+  
+  student         Student     @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  course          Course      @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, course_id])
+  @@index([student_id])
+  @@index([course_id])
+  @@map("enrollments")
+}
+
+model Admin {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password_hash String
+  criado_em     DateTime  @default(now())
+
+  @@map("admins")
+}
+
+enum GrupoRepense {
+  Igreja
+  Espiritualidade
+  Evangelho
+}
+
+enum ModeloCurso {
+  online
+  presencial
+}
