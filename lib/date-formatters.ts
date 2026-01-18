@@ -28,12 +28,34 @@ const months = [
 ] as const;
 
 /**
+ * Parses a date as local date to avoid timezone conversion issues
+ * When database stores "2026-02-24T00:00:00.000Z", this ensures we get Feb 24, not Feb 23
+ * @param dateInput - Date object or ISO date string
+ * @returns Date object parsed as local date
+ */
+function parseLocalDate(dateInput: Date | string): Date {
+  if (typeof dateInput === 'string') {
+    // Extract YYYY-MM-DD part before the 'T'
+    const datePart = dateInput.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
+    // Create date in local timezone (month is 0-indexed)
+    return new Date(year, month - 1, day);
+  } else {
+    // If it's already a Date object, extract components and recreate as local
+    const year = dateInput.getUTCFullYear();
+    const month = dateInput.getUTCMonth();
+    const day = dateInput.getUTCDate();
+    return new Date(year, month, day);
+  }
+}
+
+/**
  * Formats a date to Portuguese day name
  * @param date - Date object or ISO date string
  * @returns Portuguese day name (e.g., "Segunda-feira")
  */
 export function formatDayOfWeek(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateObj = parseLocalDate(date);
   if (isNaN(dateObj.getTime())) {
     return '';
   }
@@ -46,7 +68,7 @@ export function formatDayOfWeek(date: Date | string): string {
  * @returns Portuguese month name (e.g., "Janeiro")
  */
 export function formatMonth(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateObj = parseLocalDate(date);
   if (isNaN(dateObj.getTime())) {
     return '';
   }
@@ -115,7 +137,7 @@ export function formatCourseSchedule(
   }
 
   try {
-    const dateObj = typeof dataInicio === 'string' ? new Date(dataInicio) : dataInicio;
+    const dateObj = parseLocalDate(dataInicio);
     
     // Check if date is valid
     if (isNaN(dateObj.getTime())) {
@@ -133,6 +155,15 @@ export function formatCourseSchedule(
     console.error('Error formatting course schedule:', error);
     return modeloCapitalized;
   }
+}
+
+/**
+ * Formats a course date as a local date (fixes timezone conversion bug)
+ * @param dateInput - Date object or ISO date string (e.g., "2026-02-24T00:00:00.000Z")
+ * @returns Date object parsed as local date to avoid showing wrong day
+ */
+export function formatCourseDate(dateInput: Date | string): Date {
+  return parseLocalDate(dateInput);
 }
 
 /**
