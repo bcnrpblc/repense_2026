@@ -38,6 +38,7 @@ model Course {
   numero_inscritos Int        @default(0)
   eh_ativo        Boolean     @default(true)
   eh_16h          Boolean     @default(false)
+  eh_mulheres     Boolean     @default(false)
   link            String?
   data_inicio     DateTime?
   horario         String?

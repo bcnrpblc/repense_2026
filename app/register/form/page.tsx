@@ -20,6 +20,7 @@ interface Course {
   capacidade: number;
   numero_inscritos: number;
   eh_ativo: boolean;
+  eh_mulheres: boolean;
   data_inicio: string | null;
   horario: string | null;
 }
@@ -60,11 +61,20 @@ export default function RegisterFormPage() {
 
   const watchedValues = watch();
 
-  // Fetch courses on mount
+  // Fetch courses when step 2 is shown or when genero changes
   useEffect(() => {
+    // Only fetch courses when we're on step 2 or about to go to step 2
+    if (step < 2) {
+      return;
+    }
+
     const fetchCourses = async () => {
+      setFetchingCourses(true);
       try {
-        const response = await fetch('/api/courses');
+        const genero = watchedValues.genero;
+        const url = genero ? `/api/courses?genero=${encodeURIComponent(genero)}` : '/api/courses';
+        
+        const response = await fetch(url);
         if (response.ok) {
           const data = await response.json();
           
@@ -83,7 +93,7 @@ export default function RegisterFormPage() {
     };
 
     fetchCourses();
-  }, []);
+  }, [step, watchedValues.genero]);
 
   // Group courses by grupo_repense
   const groupedCourses = courses.reduce((acc, course) => {
@@ -448,6 +458,11 @@ export default function RegisterFormPage() {
                                       ? formatCourseSchedule(course.modelo, course.data_inicio, course.horario)
                                       : modeloLabels[course.modelo]}
                                   </div>
+                                  {course.eh_mulheres && (
+                                    <div className="mt-2 text-sm text-purple-600 font-medium">
+                                      Esse Repense é exclusivo para mulheres
+                                    </div>
+                                  )}
                                   <div className="text-sm text-gray-600 mt-1">
                                     Capacidade: {course.capacidade}
                                   </div>

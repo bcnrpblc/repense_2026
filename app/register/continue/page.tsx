@@ -20,6 +20,7 @@ interface Course {
   capacidade: number;
   numero_inscritos: number;
   eh_ativo: boolean;
+  eh_mulheres: boolean;
   vagas_disponiveis: number;
   data_inicio: string | null;
   horario: string | null;
@@ -128,8 +129,13 @@ function ContinueForm() {
         setValue('nome', studentData.nome);
         setValue('cpf', formatCPF(studentData.cpf));
 
-        // Fetch available courses (excluding already enrolled)
-        const coursesResponse = await fetch(`/api/courses?student_id=${studentId}`);
+        // Fetch available courses (excluding already enrolled and filtered by gender)
+        const genero = studentData.genero;
+        const coursesUrl = genero
+          ? `/api/courses?student_id=${studentId}&genero=${encodeURIComponent(genero)}`
+          : `/api/courses?student_id=${studentId}`;
+        
+        const coursesResponse = await fetch(coursesUrl);
         if (!coursesResponse.ok) {
           setError('Erro ao carregar cursos disponíveis');
           setFetchingData(false);
@@ -515,6 +521,11 @@ function ContinueForm() {
                                       ? formatCourseSchedule(course.modelo, course.data_inicio, course.horario)
                                       : modeloLabels[course.modelo]}
                                   </div>
+                                  {course.eh_mulheres && (
+                                    <div className="mt-2 text-sm text-purple-600 font-medium">
+                                      Esse Repense é exclusivo para mulheres
+                                    </div>
+                                  )}
                                   <div className="text-sm text-gray-600 mt-1">
                                     Capacidade: {course.capacidade}
                                   </div>

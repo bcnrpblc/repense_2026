@@ -14,6 +14,7 @@ type CourseWithVacancies = {
   numero_inscritos: number;
   eh_ativo: boolean;
   eh_16h: boolean;
+  eh_mulheres: boolean;
   link: string | null;
   data_inicio: string | null;
   horario: string | null;
@@ -28,11 +29,18 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const studentId = searchParams.get('student_id');
+    const genero = searchParams.get('genero');
 
     // Build where clause for courses
     const whereClause: any = {
       eh_ativo: true,
     };
+
+    // Filter by gender: if Masculino, exclude women-only courses
+    if (genero === 'Masculino') {
+      whereClause.eh_mulheres = false;
+    }
+    // If genero=Feminino or no genero param: show all courses (no filter)
 
     // If student_id is provided, exclude courses the student is already enrolled in
     if (studentId) {
@@ -84,6 +92,7 @@ export async function GET(request: NextRequest) {
         numero_inscritos: course.numero_inscritos,
         eh_ativo: course.eh_ativo,
         eh_16h: course.eh_16h,
+        eh_mulheres: course.eh_mulheres,
         link: course.link,
         data_inicio: course.data_inicio ? course.data_inicio.toISOString() : null,
         horario: course.horario,
