@@ -10,6 +10,7 @@ type NotionCourse = {
   capacidade: number;
   eh_ativo: boolean;
   eh_16h?: boolean;
+  eh_itu?: boolean; // City filter: true = Itu, false = Indaiatuba
   link?: string | null;
   data_inicio?: string; // ISO date format
   horario?: string; // Time format "HH:mm"
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
           capacidade: course.capacidade,
           eh_ativo: course.eh_ativo,
           eh_16h: course.eh_16h ?? false,
+          eh_itu: course.eh_itu ?? false,
           link: course.link || null,
           data_inicio: course.data_inicio ? new Date(course.data_inicio) : null,
           horario: course.horario || null,

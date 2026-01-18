@@ -21,9 +21,15 @@ interface Course {
   numero_inscritos: number;
   eh_ativo: boolean;
   eh_mulheres: boolean;
+  eh_itu: boolean;
   data_inicio: string | null;
   horario: string | null;
 }
+
+type GroupedCoursesByCity = {
+  indaiatuba: Record<GrupoRepense, Course[]>;
+  itu: Record<GrupoRepense, Course[]>;
+};
 
 const grupoLabels: Record<GrupoRepense, string> = {
   Igreja: 'Igreja',
@@ -39,7 +45,18 @@ const modeloLabels: Record<ModeloCurso, string> = {
 export default function RegisterFormPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [groupedCourses, setGroupedCourses] = useState<GroupedCoursesByCity>({
+    indaiatuba: {
+      Igreja: [],
+      Espiritualidade: [],
+      Evangelho: [],
+    },
+    itu: {
+      Igreja: [],
+      Espiritualidade: [],
+      Evangelho: [],
+    },
+  });
   const [loading, setLoading] = useState(false);
   const [fetchingCourses, setFetchingCourses] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -78,12 +95,11 @@ export default function RegisterFormPage() {
         if (response.ok) {
           const data = await response.json();
           
-          // API returns grouped object, flatten to array
-          const flattenedCourses = Array.isArray(data) 
-            ? data 
-            : Object.values(data).flat() as Course[];
-          
-          setCourses(flattenedCourses);
+          // API returns grouped by city structure
+          setGroupedCourses({
+            indaiatuba: data.indaiatuba || { Igreja: [], Espiritualidade: [], Evangelho: [] },
+            itu: data.itu || { Igreja: [], Espiritualidade: [], Evangelho: [] },
+          });
         }
       } catch (error) {
         console.error('Error fetching courses:', error);
@@ -95,15 +111,11 @@ export default function RegisterFormPage() {
     fetchCourses();
   }, [step, watchedValues.genero]);
 
-  // Group courses by grupo_repense
-  const groupedCourses = courses.reduce((acc, course) => {
-    const grupo = course.grupo_repense;
-    if (!acc[grupo]) {
-      acc[grupo] = [];
-    }
-    acc[grupo].push(course);
-    return acc;
-  }, {} as Record<GrupoRepense, Course[]>);
+  // Flatten all courses for finding selected course
+  const allCourses: Course[] = [
+    ...Object.values(groupedCourses.indaiatuba).flat(),
+    ...Object.values(groupedCourses.itu).flat(),
+  ];
 
   const handleNext = async () => {
     if (step === 1) {
@@ -114,7 +126,7 @@ export default function RegisterFormPage() {
     } else if (step === 2) {
       const isValid = await trigger(['course_id']);
       if (isValid) {
-        const selectedCourse = courses.find((c) => c.id === watchedValues.course_id);
+        const selectedCourse = allCourses.find((c) => c.id === watchedValues.course_id);
         
         // Check if selected course is 16:30 and warning hasn't been shown
         if (selectedCourse && selectedCourse.horario === '16:30' && warningShownFor !== selectedCourse.id) {
@@ -197,7 +209,7 @@ export default function RegisterFormPage() {
     }
   };
 
-  const selectedCourse = courses.find((c) => c.id === watchedValues.course_id);
+  const selectedCourse = allCourses.find((c) => c.id === watchedValues.course_id);
 
   return (
     <div className="min-h-screen bg-white">
@@ -423,75 +435,160 @@ export default function RegisterFormPage() {
                   <p className="mt-4 text-gray-600">Carregando opções...</p>
                 </div>
               ) : (
-                <div className="space-y-8">
-                  {Object.entries(groupedCourses).map(([grupo, grupoCourses]) => (
-                    <div key={grupo}>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                        {grupoLabels[grupo as GrupoRepense]}
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {grupoCourses.map((course) => {
-                          const isFull = course.numero_inscritos >= course.capacidade;
-                          const isSelected = watchedValues.course_id === course.id;
-                          const vagasDisponiveis = course.capacidade - course.numero_inscritos;
+                <div className="space-y-12">
+                  {/* Opções Repense Indaiatuba */}
+                  <div className="space-y-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-300">
+                      Opções Repense Indaiatuba
+                    </h3>
+                    {Object.entries(groupedCourses.indaiatuba).map(([grupo, grupoCourses]) => (
+                      grupoCourses.length > 0 && (
+                        <div key={`indaiatuba-${grupo}`}>
+                          <h4 className="text-xl font-semibold text-gray-900 mb-4">
+                            {grupoLabels[grupo as GrupoRepense]}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {grupoCourses.map((course) => {
+                              const isFull = course.numero_inscritos >= course.capacidade;
+                              const isSelected = watchedValues.course_id === course.id;
+                              const vagasDisponiveis = course.capacidade - course.numero_inscritos;
 
-                          return (
-                            <div
-                              key={course.id}
-                              onClick={() => {
-                                if (!isFull) {
-                                  setValue('course_id', course.id, { shouldValidate: true });
-                                }
-                              }}
-                              className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                                isSelected
-                                  ? 'border-[#c92041] bg-red-50'
-                                  : isFull
-                                  ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
-                                  : 'border-gray-200 hover:border-[#c92041] hover:bg-red-50'
-                              }`}
-                            >
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="flex-1">
-                                  <div className="font-semibold text-gray-900">
-                                    {course.data_inicio && course.horario
-                                      ? formatCourseSchedule(course.modelo, course.data_inicio, course.horario)
-                                      : modeloLabels[course.modelo]}
-                                  </div>
-                                  {course.eh_mulheres && (
-                                    <div className="mt-2 text-sm text-purple-600 font-medium">
-                                      Esse Repense é exclusivo para mulheres
+                              return (
+                                <div
+                                  key={course.id}
+                                  onClick={() => {
+                                    if (!isFull) {
+                                      setValue('course_id', course.id, { shouldValidate: true });
+                                    }
+                                  }}
+                                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                                    isSelected
+                                      ? 'border-[#c92041] bg-red-50'
+                                      : isFull
+                                      ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                                      : 'border-gray-200 hover:border-[#c92041] hover:bg-red-50'
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between mb-2">
+                                    <div className="flex-1">
+                                      <div className="font-semibold text-gray-900">
+                                        {course.data_inicio && course.horario
+                                          ? formatCourseSchedule(course.modelo, course.data_inicio, course.horario)
+                                          : modeloLabels[course.modelo]}
+                                      </div>
+                                      {course.eh_mulheres && (
+                                        <div className="mt-2 text-sm text-purple-600 font-medium">
+                                          Esse Repense é exclusivo para mulheres
+                                        </div>
+                                      )}
+                                      <div className="text-sm text-gray-600 mt-1">
+                                        Capacidade: {course.capacidade}
+                                      </div>
                                     </div>
-                                  )}
-                                  <div className="text-sm text-gray-600 mt-1">
-                                    Capacidade: {course.capacidade}
+                                    {isSelected && (
+                                      <div className="w-6 h-6 bg-[#c92041] rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="mt-2">
+                                    {isFull ? (
+                                      <span className="inline-block px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded">
+                                        Curso lotado
+                                      </span>
+                                    ) : (
+                                      <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+                                        {vagasDisponiveis} {vagasDisponiveis === 1 ? 'vaga disponível' : 'vagas disponíveis'}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
-                                {isSelected && (
-                                  <div className="w-6 h-6 bg-[#c92041] rounded-full flex items-center justify-center flex-shrink-0 ml-2">
-                                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )
+                    ))}
+                  </div>
+
+                  {/* Opções Repense Itu */}
+                  <div className="space-y-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-300">
+                      Opções Repense Itu
+                    </h3>
+                    {Object.entries(groupedCourses.itu).map(([grupo, grupoCourses]) => (
+                      grupoCourses.length > 0 && (
+                        <div key={`itu-${grupo}`}>
+                          <h4 className="text-xl font-semibold text-gray-900 mb-4">
+                            {grupoLabels[grupo as GrupoRepense]}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {grupoCourses.map((course) => {
+                              const isFull = course.numero_inscritos >= course.capacidade;
+                              const isSelected = watchedValues.course_id === course.id;
+                              const vagasDisponiveis = course.capacidade - course.numero_inscritos;
+
+                              return (
+                                <div
+                                  key={course.id}
+                                  onClick={() => {
+                                    if (!isFull) {
+                                      setValue('course_id', course.id, { shouldValidate: true });
+                                    }
+                                  }}
+                                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                                    isSelected
+                                      ? 'border-[#c92041] bg-red-50'
+                                      : isFull
+                                      ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                                      : 'border-gray-200 hover:border-[#c92041] hover:bg-red-50'
+                                  }`}
+                                >
+                                  <div className="flex items-start justify-between mb-2">
+                                    <div className="flex-1">
+                                      <div className="font-semibold text-gray-900">
+                                        {course.data_inicio && course.horario
+                                          ? formatCourseSchedule(course.modelo, course.data_inicio, course.horario)
+                                          : modeloLabels[course.modelo]}
+                                      </div>
+                                      {course.eh_mulheres && (
+                                        <div className="mt-2 text-sm text-purple-600 font-medium">
+                                          Esse Repense é exclusivo para mulheres
+                                        </div>
+                                      )}
+                                      <div className="text-sm text-gray-600 mt-1">
+                                        Capacidade: {course.capacidade}
+                                      </div>
+                                    </div>
+                                    {isSelected && (
+                                      <div className="w-6 h-6 bg-[#c92041] rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                              <div className="mt-2">
-                                {isFull ? (
-                                  <span className="inline-block px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded">
-                                    Curso lotado
-                                  </span>
-                                ) : (
-                                  <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
-                                    {vagasDisponiveis} {vagasDisponiveis === 1 ? 'vaga disponível' : 'vagas disponíveis'}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
+                                  <div className="mt-2">
+                                    {isFull ? (
+                                      <span className="inline-block px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded">
+                                        Curso lotado
+                                      </span>
+                                    ) : (
+                                      <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+                                        {vagasDisponiveis} {vagasDisponiveis === 1 ? 'vaga disponível' : 'vagas disponíveis'}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )
+                    ))}
+                  </div>
                 </div>
               )}
 

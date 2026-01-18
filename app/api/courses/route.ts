@@ -15,14 +15,20 @@ type CourseWithVacancies = {
   eh_ativo: boolean;
   eh_16h: boolean;
   eh_mulheres: boolean;
+  eh_itu: boolean;
   link: string | null;
   data_inicio: string | null;
   horario: string | null;
   vagas_disponiveis: number;
 };
 
-type GroupedCoursesResponse = {
+type GroupedCoursesByGrupo = {
   [K in GrupoRepense]: CourseWithVacancies[];
+};
+
+type GroupedCoursesResponse = {
+  indaiatuba: GroupedCoursesByGrupo;
+  itu: GroupedCoursesByGrupo;
 };
 
 export async function GET(request: NextRequest) {
@@ -93,6 +99,7 @@ export async function GET(request: NextRequest) {
         eh_ativo: course.eh_ativo,
         eh_16h: course.eh_16h,
         eh_mulheres: course.eh_mulheres,
+        eh_itu: course.eh_itu,
         link: course.link,
         data_inicio: course.data_inicio ? course.data_inicio.toISOString() : null,
         horario: course.horario,
@@ -100,15 +107,23 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Group courses by grupo_repense
+    // Group courses by city (eh_itu), then by grupo_repense
     const groupedCourses: GroupedCoursesResponse = {
-      Igreja: [],
-      Espiritualidade: [],
-      Evangelho: [],
+      indaiatuba: {
+        Igreja: [],
+        Espiritualidade: [],
+        Evangelho: [],
+      },
+      itu: {
+        Igreja: [],
+        Espiritualidade: [],
+        Evangelho: [],
+      },
     };
 
     coursesWithVacancies.forEach((course) => {
-      groupedCourses[course.grupo_repense].push(course);
+      const cityKey = course.eh_itu ? 'itu' : 'indaiatuba';
+      groupedCourses[cityKey][course.grupo_repense].push(course);
     });
 
     return NextResponse.json(groupedCourses);
