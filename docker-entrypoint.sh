@@ -32,7 +32,7 @@ fi
 echo "Setting up database schema..."
 if [ -d "/app/prisma/migrations" ] && [ "$(ls -A /app/prisma/migrations 2>/dev/null)" ]; then
   echo "Migrations found - running migrate deploy..."
-  npx prisma migrate deploy || {
+  npx prisma migrate deploy --skip-generate || {
     echo "Migration deploy failed, falling back to db push..."
     npx prisma db push --accept-data-loss --skip-generate
   }
@@ -41,9 +41,14 @@ else
   npx prisma db push --accept-data-loss --skip-generate
 fi
 
-# Generate Prisma Client (required for runtime)
-echo "Generating Prisma Client..."
-npx prisma generate
+# Prisma Client is already generated in builder stage and copied
+# Only regenerate if needed (will use existing binaries from builder)
+if [ ! -d "/app/node_modules/.prisma/client" ]; then
+  echo "Generating Prisma Client..."
+  npx prisma generate
+else
+  echo "Prisma Client already generated, skipping..."
+fi
 
 # Start the Next.js application
 echo "Starting Next.js application..."

@@ -31,8 +31,11 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Install Prisma CLI for migrations (needed at runtime)
-RUN npm install -g prisma@^5.19.1
+# Install OpenSSL 3.0 for Prisma (required for linux-musl-openssl-3.0.x binary)
+RUN apk add --no-cache openssl openssl-dev
+
+# Install Prisma CLI locally (not globally) for migrations
+RUN npm install prisma@^5.19.1
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
