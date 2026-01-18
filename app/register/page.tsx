@@ -20,7 +20,7 @@ export default function RegisterPage() {
 
   const handleEnroll = () => {
     // Redirect to 4 Passos website
-    window.location.href = 'https://4passos.com.br';
+    window.location.href = 'https://igrejared.com/4-passos';
   };
 
   const handleCancelDialog = () => {
