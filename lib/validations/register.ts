@@ -63,7 +63,7 @@ export const registerSchema = z.object({
   };
 });
 
-export type RegisterFormData = z.infer<typeof registerSchema>;
+export type RegisterFormData = z.input<typeof registerSchema>;
 
 export const verifySchema = z.object({
   telefone: z.string().refine(
