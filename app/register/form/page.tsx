@@ -119,7 +119,7 @@ export default function RegisterFormPage() {
 
   const handleNext = async () => {
     if (step === 1) {
-      const isValid = await trigger(['nome', 'cpf', 'telefone']);
+      const isValid = await trigger(['nome', 'cpf', 'telefone', 'nascimento']);
       if (isValid) {
         setStep(2);
       }
@@ -343,7 +343,7 @@ export default function RegisterFormPage() {
 
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
+                  Email <span className="text-gray-500 font-normal">(opcional)</span>
                 </label>
                 <input
                   {...register('email')}
@@ -352,7 +352,7 @@ export default function RegisterFormPage() {
                   className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#c92041] focus:border-transparent ${
                     errors.email ? 'border-red-500' : 'border-gray-300'
                   }`}
-                  placeholder="seu@email.com"
+                  placeholder="seu@email.com (opcional)"
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
@@ -395,7 +395,7 @@ export default function RegisterFormPage() {
 
               <div>
                 <label htmlFor="nascimento" className="block text-sm font-medium text-gray-700 mb-2">
-                  Data de Nascimento
+                  Data de Nascimento <span className="text-red-500">*</span>
                 </label>
                 <InputMask
                   mask="99-99-9999"

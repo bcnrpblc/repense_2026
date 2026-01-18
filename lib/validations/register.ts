@@ -35,10 +35,10 @@ export const registerSchema = z.object({
     ),
   genero: z.enum(['Masculino', 'Feminino', 'Outro']).optional(),
   estado_civil: z.enum(['Solteiro', 'Casado', 'Divorciado', 'Viúvo']).optional(),
-  nascimento: z.string().optional().refine(
+  nascimento: z.string().refine(
     (val) => {
       if (!val || val.trim() === '') {
-        return true; // Optional field
+        return false; // Required field
       }
       return validateBrazilianDate(val);
     },
@@ -49,16 +49,10 @@ export const registerSchema = z.object({
   course_id: z.string().min(1, 'Selecione um curso'),
 }).transform((data) => {
   // Transform nascimento from Brazilian format to ISO format for storage
-  if (data.nascimento && data.nascimento.trim()) {
-    const isoDate = brazilianDateToISO(data.nascimento);
-    return {
-      ...data,
-      nascimento: isoDate || data.nascimento, // Keep original if transformation fails (validation will catch it)
-      email: data.email && data.email.trim() ? data.email.trim() : undefined,
-    };
-  }
+  const isoDate = brazilianDateToISO(data.nascimento);
   return {
     ...data,
+    nascimento: isoDate || data.nascimento, // Keep original if transformation fails (validation will catch it)
     email: data.email && data.email.trim() ? data.email.trim() : undefined,
   };
 });

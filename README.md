@@ -92,7 +92,7 @@ Este comando:
 ### Enrollment
 - Relacionamento entre Student e Course (many-to-many)
 - Constraint único em `[student_id, course_id]` para prevenir duplicatas
-- Campo `status_pagamento` para rastrear pagamentos
+- Campo `criado_em` para rastrear data de inscrição
 
 ### Admin
 - Autenticação de administradores
@@ -108,6 +108,47 @@ import { prisma } from '@/lib/prisma'
 // Exemplo de uso em uma API route ou Server Component
 const students = await prisma.student.findMany()
 ```
+
+## API Endpoints
+
+### Públicos
+- `GET /api/courses` - Lista cursos disponíveis (filtros: `student_id`, `genero`)
+- `POST /api/register` - Registra novo estudante e matrícula
+- `POST /api/register/continue` - Continua registro de estudante existente
+- `GET /api/students/verify` - Verifica estudante por CPF/telefone
+- `GET /api/enrollments/[id]` - Busca detalhes de matrícula
+- `GET /api/students/[id]` - Busca dados do estudante
+- `POST /api/sync/courses` - Sincroniza cursos do Notion
+
+### Dashboard (A Implementar)
+- Endpoints para gerenciar cursos (CRUD)
+- Endpoints para gerenciar estudantes
+- Endpoints para gerenciar matrículas
+- Endpoints de analytics e relatórios
+- Autenticação de administradores
+
+**Nota:** Consulte `DASHBOARD_SPECIFICATION.md` para especificação técnica completa do dashboard.
+
+## Funcionalidades
+
+### Sistema de Matrícula
+- Registro de estudantes (CPF, telefone, email únicos)
+- Matrícula em cursos com validação de capacidade
+- Verificação de estudante existente
+- Sistema de 4 Passos (pré-requisito)
+
+### Gerenciamento de Cursos
+- Sincronização via Notion
+- Filtros por cidade (Indaiatuba/Itu), grupo (Igreja/Espiritualidade/Evangelho)
+- Cursos presenciais e online
+- Cursos exclusivos para mulheres
+- Controle de capacidade e vagas disponíveis
+
+### Dashboard (Em Desenvolvimento)
+- Interface administrativa para gerenciar cursos, estudantes e matrículas
+- Analytics em tempo real de matrículas
+- Relatórios e estatísticas
+- Ver [DASHBOARD_SPECIFICATION.md](./DASHBOARD_SPECIFICATION.md)
 
 ## Próximos Passos
 
