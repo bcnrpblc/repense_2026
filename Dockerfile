@@ -31,6 +31,9 @@ WORKDIR /app
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
+# Install Prisma CLI for migrations (needed at runtime)
+RUN npm install -g prisma@^5.19.1
+
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -43,8 +46,16 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/prisma ./prisma
 
-# Set correct permissions
-RUN chown -R nextjs:nodejs /app
+# Copy package.json and package-lock.json for Prisma
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/package-lock.json* ./package-lock.json
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+
+# Make entrypoint script executable and set correct permissions
+RUN chmod +x /app/docker-entrypoint.sh && \
+    chown -R nextjs:nodejs /app
 
 USER nextjs
 
@@ -53,4 +64,4 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "server.js"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
