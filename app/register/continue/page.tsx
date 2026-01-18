@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import InputMask from 'react-input-mask';
@@ -52,7 +52,7 @@ const modeloLabels: Record<ModeloCurso, string> = {
   presencial: 'Presencial',
 };
 
-export default function ContinueRegisterPage() {
+function ContinueForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const studentId = searchParams.get('student_id');
@@ -677,5 +677,20 @@ export default function ContinueRegisterPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function ContinueRegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#c92041] mb-4"></div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    }>
+      <ContinueForm />
+    </Suspense>
   );
 }
