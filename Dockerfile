@@ -18,7 +18,12 @@ COPY . .
 # Set build-time environment variable
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Generate Prisma Client
+# DATABASE_URL is needed for Prisma generate (for connection validation)
+# Use ARG to accept it at build time, ENV to make it available during build
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
+# Generate Prisma Client (after npm install, before build)
 RUN npx prisma generate
 
 # Build Next.js application
@@ -34,7 +39,7 @@ ENV NEXT_TELEMETRY_DISABLED 1
 # Install OpenSSL 3.0 for Prisma (required for linux-musl-openssl-3.0.x binary)
 RUN apk add --no-cache openssl openssl-dev
 
-# Install Prisma CLI locally (not globally) for migrations
+# Install Prisma CLI locally (not globally) for migrations at runtime
 RUN npm install prisma@^5.19.1
 
 # Create non-root user
@@ -53,11 +58,11 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/package-lock.json* ./package-lock.json
 
-# Copy entrypoint script
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+# Copy start script
+COPY start.sh /app/start.sh
 
-# Make entrypoint script executable and set correct permissions
-RUN chmod +x /app/docker-entrypoint.sh && \
+# Make start script executable and set correct permissions
+RUN chmod +x /app/start.sh && \
     chown -R nextjs:nodejs /app
 
 USER nextjs
@@ -67,4 +72,5 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+# Run migrations at runtime, then start the app
+CMD ["sh", "start.sh"]
