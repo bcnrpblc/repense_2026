@@ -275,7 +275,7 @@ export default function EditClassPage() {
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Selecione "Esperando em Deus" se ainda não há líder definido
+              Selecione &quot;Esperando em Deus&quot; se ainda não há líder definido
             </p>
           </div>
 
