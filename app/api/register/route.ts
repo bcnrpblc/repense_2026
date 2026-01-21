@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     const cleanedPhone = cleanPhone(student.telefone);
 
     // Check if course exists
-    const course = await prisma.course.findUnique({
+    const course = await prisma.class.findUnique({
       where: { id: course_id },
     });
 
@@ -155,29 +155,53 @@ export async function POST(request: NextRequest) {
 
     // Use Prisma transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx) => {
-      // Create Student record
-      const newStudent = await tx.student.create({
-        data: {
-          nome: student.nome.trim(),
-          cpf: cleanedCPF,
-          telefone: cleanedPhone,
-          email: student.email && student.email.trim().length > 0 ? student.email.trim() : null,
-          genero: student.genero?.trim() || null,
-          estado_civil: student.estado_civil?.trim() || null,
-          nascimento: student.nascimento ? new Date(student.nascimento) : null,
-        },
+      // Check if student exists (might be on priority list)
+      const existingStudent = await tx.student.findUnique({
+        where: { cpf: cleanedCPF },
       });
+
+      let newStudent;
+      if (existingStudent) {
+        // Update existing student (clear priority list flags)
+        newStudent = await tx.student.update({
+          where: { id: existingStudent.id },
+          data: {
+            nome: student.nome.trim(),
+            telefone: cleanedPhone,
+            email: student.email && student.email.trim().length > 0 ? student.email.trim() : existingStudent.email,
+            genero: student.genero?.trim() || existingStudent.genero,
+            estado_civil: student.estado_civil?.trim() || existingStudent.estado_civil,
+            nascimento: student.nascimento ? new Date(student.nascimento) : existingStudent.nascimento,
+            priority_list: false,
+            priority_list_course_id: null,
+            priority_list_added_at: null,
+          },
+        });
+      } else {
+        // Create Student record
+        newStudent = await tx.student.create({
+          data: {
+            nome: student.nome.trim(),
+            cpf: cleanedCPF,
+            telefone: cleanedPhone,
+            email: student.email && student.email.trim().length > 0 ? student.email.trim() : null,
+            genero: student.genero?.trim() || null,
+            estado_civil: student.estado_civil?.trim() || null,
+            nascimento: student.nascimento ? new Date(student.nascimento) : null,
+          },
+        });
+      }
 
       // Create Enrollment record
       const enrollment = await tx.enrollment.create({
         data: {
           student_id: newStudent.id,
-          course_id: course.id,
+          class_id: course.id,
         },
       });
 
       // Increment course.numero_inscritos
-      await tx.course.update({
+      await tx.class.update({
         where: { id: course.id },
         data: {
           numero_inscritos: {

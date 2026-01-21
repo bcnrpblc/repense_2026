@@ -21,12 +21,12 @@ export async function GET(
             cpf: true,
           },
         },
-        course: {
+        Class: {
           select: {
             id: true,
             grupo_repense: true,
             modelo: true,
-            link: true,
+            link_whatsapp: true,
             data_inicio: true,
             horario: true,
           },
@@ -52,12 +52,12 @@ export async function GET(
         cpf: enrollment.student.cpf,
       },
       course: {
-        id: enrollment.course.id,
-        grupo_repense: enrollment.course.grupo_repense,
-        modelo: enrollment.course.modelo,
-        link: enrollment.course.link,
-        data_inicio: enrollment.course.data_inicio ? enrollment.course.data_inicio.toISOString() : null,
-        horario: enrollment.course.horario,
+        id: enrollment.Class.id,
+        grupo_repense: enrollment.Class.grupo_repense,
+        modelo: enrollment.Class.modelo,
+        link: enrollment.Class.link_whatsapp,
+        data_inicio: enrollment.Class.data_inicio ? enrollment.Class.data_inicio.toISOString() : null,
+        horario: enrollment.Class.horario,
       },
       criado_em: enrollment.criado_em,
     };

@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if course exists
-    const course = await prisma.course.findUnique({
+    const course = await prisma.class.findUnique({
       where: { id: course_id },
     });
 
@@ -112,9 +112,9 @@ export async function POST(request: NextRequest) {
     // Check if already enrolled in this course
     const existingEnrollment = await prisma.enrollment.findUnique({
       where: {
-        student_id_course_id: {
+        student_id_class_id: {
           student_id: student.id,
-          course_id: course.id,
+          class_id: course.id,
         },
       },
     });
@@ -198,12 +198,12 @@ export async function POST(request: NextRequest) {
       const enrollment = await tx.enrollment.create({
         data: {
           student_id: student.id,
-          course_id: course.id,
+          class_id: course.id,
         },
       });
 
       // Increment course.numero_inscritos
-      await tx.course.update({
+      await tx.class.update({
         where: { id: course.id },
         data: {
           numero_inscritos: {
@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
       const target = error.meta?.target;
 
       // Check if it's the enrollment unique constraint
-      if (Array.isArray(target) && target.includes('student_id') && target.includes('course_id')) {
+      if (Array.isArray(target) && target.includes('student_id') && target.includes('class_id')) {
         return NextResponse.json<ErrorResponse>(
           { error: 'Você já está inscrito neste curso' },
           { status: 409 }

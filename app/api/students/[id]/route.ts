@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// ============================================================================
+// GET /api/students/[id]
+// ============================================================================
+
+/**
+ * Get student by ID (public endpoint for success pages)
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -8,21 +15,21 @@ export async function GET(
   try {
     const studentId = params.id;
 
-    // Fetch student with enrollments and courses
     const student = await prisma.student.findUnique({
       where: { id: studentId },
-      include: {
-        enrollments: {
-          include: {
-            course: {
-              select: {
-                id: true,
-                grupo_repense: true,
-                modelo: true,
-              },
-            },
-          },
-        },
+      select: {
+        id: true,
+        nome: true,
+        cpf: true,
+        email: true,
+        telefone: true,
+        genero: true,
+        estado_civil: true,
+        nascimento: true,
+        criado_em: true,
+        priority_list: true,
+        priority_list_course_id: true,
+        priority_list_added_at: true,
       },
     });
 
@@ -33,28 +40,11 @@ export async function GET(
       );
     }
 
-    // Format response
-    const response = {
-      id: student.id,
-      nome: student.nome,
-      cpf: student.cpf,
-      telefone: student.telefone,
-      email: student.email,
-      genero: student.genero,
-      estado_civil: student.estado_civil,
-      nascimento: student.nascimento,
-      completed_courses: student.enrollments.map((enrollment) => ({
-        id: enrollment.course.id,
-        grupo_repense: enrollment.course.grupo_repense,
-        modelo: enrollment.course.modelo,
-      })),
-    };
-
-    return NextResponse.json(response);
+    return NextResponse.json(student);
   } catch (error) {
     console.error('Error fetching student:', error);
     return NextResponse.json(
-      { error: 'Erro ao buscar dados do estudante' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }

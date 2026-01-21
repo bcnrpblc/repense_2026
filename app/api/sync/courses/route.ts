@@ -81,9 +81,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Process courses in a transaction
-    const results = await prisma.$transaction(
-      courses.map((course) => {
-        // Prepare data for upsert
+    const results = await prisma.$transaction(async (tx) => {
+      const processedCourses = [];
+      
+      for (const course of courses) {
+        // Prepare data for create/update
         const courseData = {
           grupo_repense: course.grupo_repense as GrupoRepense,
           modelo: course.modelo as ModeloCurso,
@@ -91,23 +93,39 @@ export async function POST(request: NextRequest) {
           eh_ativo: course.eh_ativo,
           eh_16h: course.eh_16h ?? false,
           eh_itu: course.eh_itu ?? false,
-          link: course.link || null,
+          link_whatsapp: course.link || null,
           data_inicio: course.data_inicio ? new Date(course.data_inicio) : null,
           horario: course.horario || null,
         };
 
-        // Upsert course (create or update)
-        return prisma.course.upsert({
+        // Find existing class by notion_id
+        const existingClass = await tx.class.findFirst({
           where: { notion_id: course.notion_id },
-          update: courseData,
-          create: {
-            notion_id: course.notion_id,
-            ...courseData,
-            numero_inscritos: 0, // Initialize with 0 enrolled
-          },
         });
-      })
-    );
+
+        let result;
+        if (existingClass) {
+          // Update existing class
+          result = await tx.class.update({
+            where: { id: existingClass.id },
+            data: courseData,
+          });
+        } else {
+          // Create new class with generated UUID
+          result = await tx.class.create({
+            data: {
+              id: crypto.randomUUID(),
+              notion_id: course.notion_id,
+              ...courseData,
+              numero_inscritos: 0, // Initialize with 0 enrolled
+            },
+          });
+        }
+        processedCourses.push(result);
+      }
+      
+      return processedCourses;
+    });
 
     return NextResponse.json(
       {

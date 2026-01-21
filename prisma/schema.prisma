@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -12,65 +9,130 @@ datasource db {
 }
 
 model Student {
-  id          String      @id @default(uuid())
-  nome        String
-  cpf         String      @unique
-  telefone    String      @unique
-  email       String?     @unique
-  genero      String?
-  estado_civil String?
-  nascimento  DateTime?
-  criado_em   DateTime    @default(now())
-  
-  enrollments Enrollment[]
+  id                    String       @id @default(uuid())
+  nome                  String
+  cpf                   String       @unique
+  telefone              String       @unique
+  email                 String?      @unique
+  genero                String?
+  estado_civil          String?
+  nascimento            DateTime?
+  criado_em             DateTime     @default(now())
+  priority_list         Boolean      @default(false)
+  priority_list_course_id String?
+  priority_list_added_at DateTime?
+  Attendance            Attendance[]
+  enrollments           Enrollment[]
 
   @@index([cpf])
   @@index([telefone])
+  @@index([priority_list])
   @@map("students")
 }
 
-model Course {
-  id              String      @id @default(uuid())
-  notion_id       String      @unique
-  grupo_repense   GrupoRepense
-  modelo          ModeloCurso
-  capacidade      Int
-  numero_inscritos Int        @default(0)
-  eh_ativo        Boolean     @default(true)
-  eh_16h          Boolean     @default(false)
-  eh_mulheres     Boolean     @default(false)
-  eh_itu          Boolean     @default(false)
-  link            String?
-  data_inicio     DateTime?
-  horario         String?
-  
-  enrollments     Enrollment[]
-
-  @@map("courses")
-}
-
 model Enrollment {
-  id              String      @id @default(uuid())
-  student_id      String
-  course_id       String
-  criado_em       DateTime    @default(now())
-  
-  student         Student     @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  course          Course      @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  id                      String    @id @default(uuid())
+  student_id              String
+  class_id                String
+  criado_em               DateTime  @default(now())
+  status                  String    @default("ativo")
+  concluido_em            DateTime?
+  cancelado_em            DateTime?
+  transferido_de_class_id String?
+  Class                   Class     @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  student                 Student   @relation(fields: [student_id], references: [id], onDelete: Cascade)
 
-  @@unique([student_id, course_id])
+  @@unique([student_id, class_id], map: "enrollments_student_id_class_id_key")
   @@index([student_id])
-  @@index([course_id])
+  @@index([class_id], map: "enrollments_class_id_idx")
+  @@index([status])
+  @@index([student_id, status])
   @@map("enrollments")
 }
 
 model Admin {
-  id            String    @id @default(uuid())
-  email         String    @unique
+  id            String   @id @default(uuid())
+  email         String   @unique
   password_hash String
-  criado_em     DateTime  @default(now())
+  criado_em     DateTime @default(now())
 
   @@map("admins")
+}
+
+model Attendance {
+  id              String    @id
+  session_id      String
+  student_id      String
+  presente        Boolean   @default(true)
+  observacao      String?
+  criado_em       DateTime  @default(now())
+  lida_por_admin  Boolean   @default(false)
+  lida_em         DateTime?
+  Session         Session   @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  students        Student   @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([session_id, student_id])
+  @@index([session_id])
+  @@index([student_id])
+  @@index([lida_por_admin])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Class {
+  id               String       @id(map: "classs_pkey")
+  notion_id        String?
+  grupo_repense    GrupoRepense
+  modelo           ModeloCurso
+  capacidade       Int
+  numero_inscritos Int          @default(0)
+  eh_ativo         Boolean      @default(true)
+  eh_16h           Boolean      @default(false)
+  link_whatsapp    String?
+  data_inicio      DateTime?
+  horario          String?
+  eh_mulheres      Boolean      @default(false)
+  eh_itu           Boolean      @default(false)
+  teacher_id       String?
+  numero_sessoes   Int          @default(8)
+  atualizado_em    DateTime     @default(now())
+  arquivada        Boolean      @default(false)
+  final_report     String?
+  final_report_em  DateTime?
+  Teacher          Teacher?     @relation(fields: [teacher_id], references: [id])
+  Session          Session[]
+  enrollments      Enrollment[]
+
+  @@index([teacher_id])
+  @@index([eh_ativo])
+  @@index([arquivada])
+}
+
+model Session {
+  id            String       @id
+  class_id      String
+  numero_sessao Int
+  data_sessao   DateTime
+  relatorio     String?
+  criado_em     DateTime     @default(now())
+  Attendance    Attendance[]
+  Class         Class        @relation(fields: [class_id], references: [id], onDelete: Cascade)
+
+  @@unique([class_id, numero_sessao])
+  @@index([class_id])
+  @@index([class_id, data_sessao])
+}
+
+model Teacher {
+  id            String   @id
+  nome          String
+  email         String   @unique
+  password_hash String
+  telefone      String
+  eh_ativo      Boolean  @default(true)
+  criado_em     DateTime @default(now())
+  Class         Class[]
+
+  @@index([eh_ativo])
 }
 
 enum GrupoRepense {

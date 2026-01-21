@@ -12,7 +12,7 @@ export async function GET() {
     // Get all enrollments with course data for grouping
     const enrollments = await prisma.enrollment.findMany({
       include: {
-        course: true,
+        Class: true,
       },
     });
 
@@ -31,11 +31,11 @@ export async function GET() {
 
     enrollments.forEach((enrollment) => {
       // Count by repense type
-      const repenseType = enrollment.course.grupo_repense;
+      const repenseType = enrollment.Class.grupo_repense;
       byRepense[repenseType] = (byRepense[repenseType] || 0) + 1;
 
       // Count by city
-      if (enrollment.course.eh_itu) {
+      if (enrollment.Class.eh_itu) {
         byCity.Itu += 1;
       } else {
         byCity.Indaiatuba += 1;
@@ -43,7 +43,7 @@ export async function GET() {
     });
 
     // Get top 5 courses by enrollment (numero_inscritos)
-    const topCourses = await prisma.course.findMany({
+    const topCourses = await prisma.class.findMany({
       where: {
         eh_ativo: true,
       },

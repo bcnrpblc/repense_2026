@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 // TypeScript types for the response
 type CourseWithVacancies = {
   id: string;
-  notion_id: string;
+  notion_id: string | null;
   grupo_repense: GrupoRepense;
   modelo: ModeloCurso;
   capacidade: number;
@@ -16,7 +16,7 @@ type CourseWithVacancies = {
   eh_16h: boolean;
   eh_mulheres: boolean;
   eh_itu: boolean;
-  link: string | null;
+  link_whatsapp: string | null;
   data_inicio: string | null;
   horario: string | null;
   vagas_disponiveis: number;
@@ -65,10 +65,10 @@ export async function GET(request: NextRequest) {
       // Get enrolled course IDs for this student
       const enrollments = await prisma.enrollment.findMany({
         where: { student_id: studentId },
-        select: { course_id: true },
+        select: { class_id: true },
       });
 
-      const enrolledCourseIds = enrollments.map((e) => e.course_id);
+      const enrolledCourseIds = enrollments.map((e) => e.class_id);
 
       // Exclude enrolled courses
       if (enrolledCourseIds.length > 0) {
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch active courses
-    const courses = await prisma.course.findMany({
+    const courses = await prisma.class.findMany({
       where: whereClause,
       orderBy: [
         { grupo_repense: 'asc' },
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
         eh_16h: course.eh_16h,
         eh_mulheres: course.eh_mulheres,
         eh_itu: course.eh_itu,
-        link: course.link,
+        link_whatsapp: course.link_whatsapp,
         data_inicio: course.data_inicio ? course.data_inicio.toISOString() : null,
         horario: course.horario,
         vagas_disponiveis: course.capacidade - course.numero_inscritos,

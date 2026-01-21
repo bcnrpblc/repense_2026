@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { registerSchema, type RegisterFormData } from '@/lib/validations/register';
 import { formatCPF } from '@/lib/utils/cpf';
 import { formatPhone } from '@/lib/utils/phone';
-import { isoDateToBrazilian } from '@/lib/utils/date';
+import { isoDateToBrazilian, brazilianDateToISO } from '@/lib/utils/date';
 import { formatCourseSchedule, formatDayOfWeek, formatMonth, formatTime } from '@/lib/date-formatters';
 import AfternoonCourseWarning from '@/components/AfternoonCourseWarning';
 import { GrupoRepense, ModeloCurso } from '@prisma/client';
@@ -63,6 +63,11 @@ export default function RegisterFormPage() {
   const [showWarning, setShowWarning] = useState(false);
   const [pendingCourseId, setPendingCourseId] = useState<string | null>(null);
   const [warningShownFor, setWarningShownFor] = useState<string | null>(null);
+  const [showPriorityModal, setShowPriorityModal] = useState(false);
+  const [addingToPriorityList, setAddingToPriorityList] = useState(false);
+  const [priorityListSelectedCourse, setPriorityListSelectedCourse] = useState<string>('');
+  const [allCoursesForPriority, setAllCoursesForPriority] = useState<Course[]>([]);
+  const [loadingPriorityCourses, setLoadingPriorityCourses] = useState(false);
 
   const {
     register,
@@ -158,6 +163,67 @@ export default function RegisterFormPage() {
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1);
+    }
+  };
+
+  const handleAddToPriorityList = async () => {
+    if (!priorityListSelectedCourse) {
+      setSubmitError('Por favor, selecione um curso na lista de prioridade');
+      return;
+    }
+
+    // Validate step 1 fields first
+    const isValid = await trigger(['nome', 'cpf', 'telefone', 'nascimento']);
+    if (!isValid) {
+      setSubmitError('Por favor, preencha todos os campos obrigatórios');
+      setShowPriorityModal(false);
+      return;
+    }
+
+    setAddingToPriorityList(true);
+    try {
+      const response = await fetch('/api/students/priority-list', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nome: watchedValues.nome,
+          cpf: watchedValues.cpf,
+          telefone: watchedValues.telefone,
+          email: watchedValues.email || undefined,
+          genero: watchedValues.genero || undefined,
+          estado_civil: watchedValues.estado_civil || undefined,
+          nascimento: watchedValues.nascimento 
+            ? (brazilianDateToISO(watchedValues.nascimento) || null)
+            : undefined,
+          course_id: priorityListSelectedCourse,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao adicionar à lista de prioridade');
+      }
+
+      // Redirect to success page with student_id
+      router.push(`/register/success/priority/${data.student_id}`);
+    } catch (error: any) {
+      console.error('Error adding to priority list:', error);
+      
+      let errorMessage = 'Erro ao adicionar à lista de prioridade';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMessage = String(error.message);
+      }
+      
+      setSubmitError(errorMessage);
+      // Keep modal open so user can see the error and try again
+    } finally {
+      setAddingToPriorityList(false);
     }
   };
 
@@ -458,7 +524,12 @@ export default function RegisterFormPage() {
                                   key={course.id}
                                   onClick={() => {
                                     if (!isFull) {
-                                      setValue('course_id', course.id, { shouldValidate: true });
+                                      // Toggle: if already selected, deselect; otherwise select
+                                      if (isSelected) {
+                                        setValue('course_id', '', { shouldValidate: true });
+                                      } else {
+                                        setValue('course_id', course.id, { shouldValidate: true });
+                                      }
                                     }
                                   }}
                                   className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
@@ -535,7 +606,12 @@ export default function RegisterFormPage() {
                                   key={course.id}
                                   onClick={() => {
                                     if (!isFull) {
-                                      setValue('course_id', course.id, { shouldValidate: true });
+                                      // Toggle: if already selected, deselect; otherwise select
+                                      if (isSelected) {
+                                        setValue('course_id', '', { shouldValidate: true });
+                                      } else {
+                                        setValue('course_id', course.id, { shouldValidate: true });
+                                      }
                                     }
                                   }}
                                   className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
@@ -595,6 +671,42 @@ export default function RegisterFormPage() {
               {errors.course_id && (
                 <p className="text-sm text-red-500 mt-2">{errors.course_id.message}</p>
               )}
+
+              {/* Priority List Button - Always visible on step 2 */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-sm text-gray-600 mb-3 text-center">
+                  Não encontrou um horário que funcione para você?
+                </p>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setPriorityListSelectedCourse('');
+                    setShowPriorityModal(true);
+                    // Fetch all courses (including inactive) for priority list
+                    setLoadingPriorityCourses(true);
+                    try {
+                      // Fetch courses without gender filter to get all options
+                      const response = await fetch('/api/courses');
+                      if (response.ok) {
+                        const data = await response.json();
+                        const allPriorityCourses: Course[] = [
+                          ...(Object.values(data.indaiatuba || {}).flat() as Course[]),
+                          ...(Object.values(data.itu || {}).flat() as Course[]),
+                        ];
+                        setAllCoursesForPriority(allPriorityCourses);
+                      }
+                    } catch (error) {
+                      console.error('Error fetching courses for priority list:', error);
+                    } finally {
+                      setLoadingPriorityCourses(false);
+                    }
+                  }}
+                  disabled={addingToPriorityList}
+                  className="w-full px-4 py-2 bg-red-100 text-[#c92041] border border-red-300 rounded-lg font-medium hover:bg-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Entrar na Lista de Prioridade
+                </button>
+              </div>
             </div>
           )}
 
@@ -734,6 +846,105 @@ export default function RegisterFormPage() {
         onContinue={handleWarningContinue}
         onCancel={handleWarningCancel}
       />
+
+      {/* Priority List Confirmation Modal */}
+      {showPriorityModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black/50" onClick={() => setShowPriorityModal(false)}></div>
+            
+            <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Lista de Prioridade
+              </h3>
+              <p className="text-gray-600 mb-6">
+              Selecione o curso que você gostaria de fazer. Entraremos em contato assim que houver novas turmas disponíveis.
+              </p>
+              
+              {/* Course Selection Dropdown */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Curso Desejado <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={priorityListSelectedCourse}
+                  onChange={(e) => {
+                    setPriorityListSelectedCourse(e.target.value);
+                    setSubmitError(null);
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c92041] focus:border-transparent"
+                >
+                  <option value="">Selecione um curso...</option>
+                  {loadingPriorityCourses ? (
+                    <option value="" disabled>Carregando cursos...</option>
+                  ) : (
+                    /* Group courses by grupo_repense and show options */
+                    (['Igreja', 'Espiritualidade', 'Evangelho'] as GrupoRepense[]).map((grupo) => {
+                      // Use allCoursesForPriority (includes inactive) if available, otherwise fallback to allCourses
+                      const coursesToUse = allCoursesForPriority.length > 0 ? allCoursesForPriority : allCourses;
+                      const grupoCourses = coursesToUse.filter(c => c.grupo_repense === grupo);
+                      
+                      if (grupoCourses.length === 0) {
+                        // If no courses found even in allCoursesForPriority, still show option but note it's unavailable
+                        return (
+                          <option key={grupo} value="" disabled>
+                            {grupoLabels[grupo]} (sem turmas no momento)
+                          </option>
+                        );
+                      }
+                      
+                      // Use the first course as representative for this grupo_repense
+                      const representativeCourse = grupoCourses[0];
+                      
+                      return (
+                        <option key={grupo} value={representativeCourse.id}>
+                          {grupoLabels[grupo]}
+                        </option>
+                      );
+                    })
+                  )}
+                </select>
+                {submitError && !priorityListSelectedCourse && (
+                  <p className="mt-1 text-sm text-red-500">{submitError}</p>
+                )}
+              </div>
+
+              {/* Error message display */}
+              {submitError && priorityListSelectedCourse && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800">{submitError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPriorityModal(false);
+                    setPriorityListSelectedCourse('');
+                    setSubmitError(null);
+                  }}
+                  disabled={addingToPriorityList}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddToPriorityList}
+                  disabled={addingToPriorityList || !priorityListSelectedCourse}
+                  className="px-4 py-2 bg-[#c92041] text-white rounded-lg font-medium hover:bg-[#a01a33] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {addingToPriorityList && (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                  {addingToPriorityList ? 'Adicionando...' : 'Confirmar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="bg-black text-white py-6 mt-12">
