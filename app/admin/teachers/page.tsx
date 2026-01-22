@@ -47,7 +47,7 @@ export default function TeachersPage() {
       }
     } catch (error) {
       console.error('Error fetching teachers:', error);
-      toast.error('Erro ao carregar líderes');
+      toast.error('Erro ao carregar facilitadores');
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ export default function TeachersPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao atualizar líder');
+        throw new Error(result.error || 'Erro ao atualizar facilitador');
       }
 
       toast.success(result.message);
@@ -81,7 +81,7 @@ export default function TeachersPage() {
 
     } catch (error) {
       console.error('Error toggling teacher status:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar líder');
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar facilitador');
     } finally {
       setToggling(false);
     }
@@ -100,9 +100,9 @@ export default function TeachersPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Líderes</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Facilitadores</h1>
           <p className="mt-1 text-gray-600">
-            Gerencie os líderes do sistema
+            Gestão dos facilitadores
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -131,7 +131,7 @@ export default function TeachersPage() {
                 toast.error(
                   error instanceof Error
                     ? error.message
-                    : 'Erro ao sincronizar status dos líderes'
+                    : 'Erro ao sincronizar status dos facilitadores'
                 );
               }
             }}
@@ -142,7 +142,7 @@ export default function TeachersPage() {
             variant="primary"
             onClick={() => setShowCreateModal(true)}
           >
-            + Adicionar Líder
+            + Adicionar Facilitador
           </Button>
         </div>
       </div>
@@ -181,14 +181,14 @@ export default function TeachersPage() {
       {loading ? (
         <div className="py-12 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando líderes...</p>
+          <p className="mt-4 text-gray-600">Carregando facilitadores...</p>
         </div>
       ) : filteredTeachers.length === 0 ? (
         <Card className="py-12 text-center">
           <p className="text-gray-500">
             {activeTab === 'active'
-              ? 'Nenhum líder ativo'
-              : 'Nenhum líder inativo'
+              ? 'Nenhum facilitador ativo'
+              : 'Nenhum facilitador inativo'
             }
           </p>
         </Card>
@@ -209,7 +209,7 @@ export default function TeachersPage() {
                     Telefone
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Turmas
+                    Grupos
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Status
@@ -279,7 +279,7 @@ export default function TeachersPage() {
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 mb-1">{teacher.telefone}</p>
-                <p className="text-sm text-gray-500 mb-4">{teacher.classCount} turma(s)</p>
+                <p className="text-sm text-gray-500 mb-4">{teacher.classCount} grupo(s)</p>
                 <button
                   onClick={() => setToggleTarget(teacher)}
                   className={`w-full px-3 py-2 text-sm font-medium rounded-lg border ${
@@ -288,7 +288,7 @@ export default function TeachersPage() {
                       : 'text-green-600 border-green-200 hover:bg-green-50'
                   }`}
                 >
-                  {teacher.eh_ativo ? 'Desativar Líder' : 'Ativar Líder'}
+                  {teacher.eh_ativo ? 'Desativar Facilitador' : 'Ativar Facilitador'}
                 </button>
               </Card>
             ))}
@@ -309,11 +309,11 @@ export default function TeachersPage() {
           isOpen={!!toggleTarget}
           onClose={() => setToggleTarget(null)}
           onConfirm={handleToggleStatus}
-          title={toggleTarget.eh_ativo ? 'Desativar Líder' : 'Ativar Líder'}
+          title={toggleTarget.eh_ativo ? 'Desativar Facilitador' : 'Ativar Facilitador'}
           message={
             toggleTarget.eh_ativo
-              ? `Tem certeza que deseja desativar ${toggleTarget.nome}? O líder não poderá mais acessar o sistema.`
-              : `Tem certeza que deseja ativar ${toggleTarget.nome}? O líder poderá acessar o sistema novamente.`
+              ? `Tem certeza que deseja desativar ${toggleTarget.nome}? O facilitador não poderá mais acessar o sistema.`
+              : `Tem certeza que deseja ativar ${toggleTarget.nome}? O facilitador poderá acessar o sistema novamente.`
           }
           confirmText={toggleTarget.eh_ativo ? 'Desativar' : 'Ativar'}
           variant={toggleTarget.eh_ativo ? 'danger' : 'info'}

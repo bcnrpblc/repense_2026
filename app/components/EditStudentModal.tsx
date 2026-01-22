@@ -147,15 +147,15 @@ export function EditStudentModal({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao atualizar aluno');
+        throw new Error(result.error || 'Erro ao atualizar participante');
       }
 
-      toast.success('Aluno atualizado com sucesso!');
+      toast.success('Participante atualizado com sucesso!');
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Error updating student:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar aluno');
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar participante');
     } finally {
       setSubmitting(false);
     }
@@ -165,7 +165,7 @@ export function EditStudentModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Editar Aluno"
+      title="Editar Participante"
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">

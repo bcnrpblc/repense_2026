@@ -90,7 +90,7 @@ export function TransferStudentModal({
         }
       } catch (error) {
         console.error('Error fetching classes:', error);
-        toast.error('Erro ao carregar turmas');
+        toast.error('Erro ao carregar grupos');
       } finally {
         setLoading(false);
       }
@@ -110,7 +110,7 @@ export function TransferStudentModal({
   // Handle transfer
   const handleTransfer = async () => {
     if (!selectedClassId) {
-      toast.error('Selecione uma turma de destino');
+      toast.error('Selecione um grupo de destino');
       return;
     }
 
@@ -134,16 +134,16 @@ export function TransferStudentModal({
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.error || 'Erro ao transferir aluno');
+          throw new Error(result.error || 'Erro ao transferir participante');
         }
 
-        toast.success('Aluno da lista de prioridade transferido com sucesso!');
-        onSuccess();
+        toast.success('Participante da lista de prioridade transferido com sucesso!');
+        onSuccess();  
         onClose();
       } else {
         // For enrolled students, use existing move-student endpoint
         if (!currentClassId) {
-          throw new Error('ID da turma atual é necessário para transferência');
+          throw new Error('ID do grupo atual é necessário para transferência');
         }
         
         const response = await fetch(`/api/admin/classes/${currentClassId}/move-student`, {
@@ -161,16 +161,16 @@ export function TransferStudentModal({
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.error || 'Erro ao transferir aluno');
+          throw new Error(result.error || 'Erro ao transferir participante');
         }
 
-        toast.success('Aluno transferido com sucesso!');
+        toast.success('Participante transferido com sucesso!');
         onSuccess();
         onClose();
       }
     } catch (error) {
       console.error('Error transferring student:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao transferir aluno');
+      toast.error(error instanceof Error ? error.message : 'Erro ao transferir participante');
     } finally {
       setSubmitting(false);
     }
@@ -182,28 +182,28 @@ export function TransferStudentModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Transferir Aluno: ${studentName}`}
+      title={`Transferir Participante: ${studentName}`}
       size="md"
     >
       {!showConfirm ? (
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
             {isPriorityListStudent 
-              ? 'Selecione o curso para o qual deseja transferir o aluno da lista de prioridade. Todas as turmas ativas com vagas disponíveis são exibidas.'
+              ? 'Selecione o curso para o qual deseja transferir o participante da lista de prioridade. Todas os grupos ativos com vagas disponíveis são exibidas.'
               : currentGrupoRepense
-              ? `Selecione a turma de destino. Todas as turmas ativas com vagas disponíveis são exibidas.`
-              : 'Selecione a turma de destino. Todas as turmas ativas com vagas disponíveis são exibidas.'
+              ? `Selecione o grupo de destino. Todos os grupos ativos com vagas disponíveis são exibidas.`
+              : 'Selecione o grupo de destino. Todos os grupos ativos com vagas disponíveis são exibidas.'
             }
           </p>
 
           {loading ? (
             <div className="py-8 text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-sm text-gray-500">Carregando turmas...</p>
+              <p className="mt-2 text-sm text-gray-500">Carregando grupos...</p>
             </div>
           ) : classes.length === 0 ? (
             <div className="py-8 text-center bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Nenhuma turma disponível para transferência</p>
+              <p className="text-gray-500">Nenhum grupo disponível para transferência</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -233,7 +233,7 @@ export function TransferStudentModal({
                       </p>
                       <p className="text-sm text-gray-500">
                         {classItem.modelo} • {classItem.eh_itu ? 'Itu' : 'Indaiatuba'}
-                        {classItem.teacher && ` • Líder ${classItem.teacher.nome}`}
+                        {classItem.teacher && ` • Facilitador ${classItem.teacher.nome}`}
                       </p>
                     </div>
                   </div>
@@ -271,13 +271,13 @@ export function TransferStudentModal({
               <div>
                 <p className="font-medium text-yellow-800">Confirmar Transferência</p>
                 <p className="mt-1 text-sm text-yellow-700">
-                  O aluno <strong>{studentName}</strong> será transferido para a turma:
+                  O participante <strong>{studentName}</strong> será transferido para o grupo:
                 </p>
                 <p className="mt-2 text-sm font-medium text-yellow-800">
                   {selectedClass?.grupo_repense} - {selectedClass?.horario || 'Horário não definido'} - {selectedClass?.eh_itu ? 'Itu' : 'Indaiatuba'}
                 </p>
                 <p className="mt-2 text-sm text-yellow-700">
-                  <strong>Atenção:</strong> O progresso do aluno será resetado na nova turma.
+                  <strong>Atenção:</strong> O progresso do participante será resetado no novo grupo.
                 </p>
               </div>
             </div>

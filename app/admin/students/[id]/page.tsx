@@ -239,7 +239,7 @@ export default function StudentProfilePage() {
       setPriorityListCourse(data.priorityListCourse || null);
     } catch (error) {
       console.error('Error fetching student:', error);
-      toast.error('Erro ao carregar dados do aluno');
+      toast.error('Erro ao carregar dados do participante');
     } finally {
       setLoading(false);
     }
@@ -315,7 +315,7 @@ export default function StudentProfilePage() {
           <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Voltar para Alunos
+          Voltar para Participantes
         </Link>
         <ProfileSkeleton />
       </div>
@@ -325,9 +325,9 @@ export default function StudentProfilePage() {
   if (!student) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-500">Aluno não encontrado</p>
+        <p className="text-gray-500">Participante não encontrado</p>
         <Link href="/admin/students" className="mt-4 text-blue-600 hover:underline">
-          Voltar para Alunos
+          Voltar para Participantes
         </Link>
       </div>
     );
@@ -361,7 +361,7 @@ export default function StudentProfilePage() {
         <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Voltar para Alunos
+        Voltar para Participantes
       </Link>
 
       {/* Student Info Card */}
@@ -516,7 +516,7 @@ export default function StudentProfilePage() {
                       )}
                     </>
                   ) : (
-                    <p className="text-gray-500">Curso não definido</p>
+                    <p className="text-gray-500">Grupo não definido</p>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -562,7 +562,7 @@ export default function StudentProfilePage() {
                         {enrollment.class.horario || 'Horário não definido'}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {enrollment.class.teacher?.nome || 'Sem líder'} • {enrollment.class.eh_itu ? 'Itu' : 'Indaiatuba'}
+                        {enrollment.class.teacher?.nome || 'Sem facilitador'} • {enrollment.class.eh_itu ? 'Itu' : 'Indaiatuba'}
                       </p>
                       <p className="text-sm text-gray-500 mt-1">
                         Inscrito em: {formatDate(enrollment.criado_em)}
@@ -628,10 +628,10 @@ export default function StudentProfilePage() {
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Turma
+                      Grupo
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Líder
+                      Facilitador
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                       Status
@@ -715,7 +715,7 @@ export default function StudentProfilePage() {
                       Data
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Turma
+                      Grupo
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                       Sessão
@@ -792,7 +792,7 @@ export default function StudentProfilePage() {
           message={
             confirmAction.type === 'complete'
               ? `Deseja marcar ${student.nome} como concluído em ${confirmAction.enrollment.class.grupo_repense} - ${confirmAction.enrollment.class.horario || 'Horário não definido'}?`
-              : `Deseja cancelar a inscrição de ${student.nome}? Esta ação liberará 1 vaga na turma.`
+              : `Deseja cancelar a inscrição de ${student.nome}? Esta ação liberará 1 vaga no grupo.`
           }
           confirmText={confirmAction.type === 'complete' ? 'Concluir' : 'Cancelar Inscrição'}
           variant={confirmAction.type === 'complete' ? 'info' : 'danger'}

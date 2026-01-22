@@ -99,7 +99,7 @@ function ToggleSwitch({ enabled, onChange, disabled = false, showLabel = true }:
         `}
         role="switch"
         aria-checked={enabled}
-        title={enabled ? 'Desativar turma' : 'Ativar turma'}
+        title={enabled ? 'Desativar grupo' : 'Ativar grupo'}
       >
         <span
           className={`
@@ -155,7 +155,7 @@ export default function ClassesPage() {
       } else if (filterStatus === 'inactive') {
         queryParams = '?arquivada=false&eh_ativo=false';
       } else if (filterStatus === 'future') {
-        queryParams = '?arquivada=false&futuras=true';
+        queryParams = '?arquivada=false&aguardando_inicio=true';
       } else {
         queryParams = '?arquivada=false';
       }
@@ -210,7 +210,7 @@ export default function ClassesPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao atualizar turma');
+        throw new Error(result.error || 'Erro ao atualizar grupo');
       }
 
       // Update local state optimistically
@@ -221,11 +221,11 @@ export default function ClassesPage() {
       );
 
       toast.success(
-        classItem.eh_ativo ? 'Turma desativada' : 'Turma ativada'
+        classItem.eh_ativo ? 'Grupo desativado' : 'Grupo ativado'
       );
     } catch (error) {
       console.error('Error toggling class status:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar turma');
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar grupo');
     } finally {
       setTogglingId(null);
     }
@@ -244,14 +244,14 @@ export default function ClassesPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao arquivar turma');
+        throw new Error(result.error || 'Erro ao arquivar grupo');
       }
 
       toast.success(result.message);
       fetchData();
     } catch (error) {
       console.error('Error archiving class:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao arquivar turma');
+      toast.error(error instanceof Error ? error.message : 'Erro ao arquivar grupo');
     } finally {
       setArchivingId(null);
     }
@@ -274,7 +274,7 @@ export default function ClassesPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao arquivar turmas');
+        throw new Error(result.error || 'Erro ao arquivar grupos');
       }
 
       toast.success(result.message);
@@ -282,7 +282,7 @@ export default function ClassesPage() {
       fetchData();
     } catch (error) {
       console.error('Error batch archiving classes:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao arquivar turmas');
+      toast.error(error instanceof Error ? error.message : 'Erro ao arquivar grupos');
     } finally {
       setBatchArchiving(false);
     }
@@ -333,9 +333,9 @@ export default function ClassesPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Turmas</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Gruposs</h1>
           <p className="mt-1 text-gray-600">
-            Gerencie as turmas do sistema
+            Gerencie as grupos do sistema
           </p>
         </div>
         <div className="flex gap-2">
@@ -351,7 +351,7 @@ export default function ClassesPage() {
             variant="primary"
             onClick={() => setShowCreateModal(true)}
           >
-            + Criar Turma
+            + Criar Grupo
           </Button>
         </div>
       </div>
@@ -372,7 +372,7 @@ export default function ClassesPage() {
               <option value="all">Todas</option>
               <option value="active">Ativas</option>
               <option value="inactive">Inativas</option>
-              <option value="future">Futuras</option>
+              <option value="future">Aguardando</option>
               <option value="archived">Arquivadas</option>
             </select>
           </div>
@@ -397,7 +397,7 @@ export default function ClassesPage() {
           {/* Teacher Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Líder
+              Facilitador
             </label>
             <select
               value={filterTeacher}
@@ -405,7 +405,7 @@ export default function ClassesPage() {
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
             >
               <option value="all">Todos</option>
-              <option value="none">Sem Líder</option>
+              <option value="none">Sem Facilitador</option>
               {teachers.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.nome}
@@ -417,7 +417,7 @@ export default function ClassesPage() {
           {/* Count */}
           <div className="flex items-end">
             <p className="text-sm text-gray-500 pb-2">
-              {filteredClasses.length} turma{filteredClasses.length !== 1 ? 's' : ''}
+              {filteredClasses.length} grupo{filteredClasses.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -427,11 +427,11 @@ export default function ClassesPage() {
       {loading ? (
         <div className="py-12 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando turmas...</p>
+          <p className="mt-4 text-gray-600">Carregando grupos...</p>
         </div>
       ) : filteredClasses.length === 0 ? (
         <Card className="py-12 text-center">
-          <p className="text-gray-500">Nenhuma turma encontrada</p>
+          <p className="text-gray-500">Nenhum grupo encontrado</p>
         </Card>
       ) : (
         <>
@@ -454,7 +454,7 @@ export default function ClassesPage() {
                     Grupo
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Líder
+                    Facilitador
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Modelo
@@ -503,7 +503,7 @@ export default function ClassesPage() {
                         </span>
                         {isFutureClass(classItem.data_inicio) && (
                           <span className="px-2 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
-                            Futura
+                            Aguardando início
                           </span>
                         )}
                       </div>
@@ -583,7 +583,7 @@ export default function ClassesPage() {
                           href={`/admin/classes/${classItem.id}/students`}
                           className="px-3 py-1 text-xs font-medium text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg hover:bg-gray-50"
                         >
-                          Alunos
+                          Participantes
                         </Link>
                       </div>
                     </td>
@@ -611,7 +611,7 @@ export default function ClassesPage() {
                     </span>
                     {isFutureClass(classItem.data_inicio) && (
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
-                        Futura
+                        Aguardando início
                       </span>
                     )}
                     {classItem.arquivada && (
@@ -677,7 +677,7 @@ export default function ClassesPage() {
                     href={`/admin/classes/${classItem.id}/students`}
                     className="flex-1 px-3 py-2 text-sm font-medium text-center text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
                   >
-                    Alunos
+                    Participantes
                   </Link>
                 </div>
               </Card>
@@ -698,8 +698,8 @@ export default function ClassesPage() {
         isOpen={showBatchArchiveModal}
         onClose={() => setShowBatchArchiveModal(false)}
         onConfirm={batchArchiveClasses}
-        title="Arquivar Turmas"
-        message={`Deseja arquivar ${selectedIds.size} turma(s) selecionada(s)? Turmas arquivadas não aparecem na listagem principal.`}
+        title="Arquivar Grupo"
+        message={`Deseja arquivar ${selectedIds.size} grupo(s) selecionado(s)? Grupos arquivados não aparecem na listagem principal.`}
         confirmText="Arquivar"
         variant="warning"
         loading={batchArchiving}

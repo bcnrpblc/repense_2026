@@ -172,9 +172,9 @@ export default function TeacherClassesPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Minhas Turmas</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Meus Grupos</h1>
           <p className="mt-1 text-gray-600">
-            Gerencie suas turmas e veja o histórico de sessões
+            Gerencie seus grupos e veja o histórico de sessões
           </p>
         </div>
         <Link href="/teacher/dashboard">
@@ -225,8 +225,8 @@ export default function TeacherClassesPage() {
         <Card className="text-center py-12">
           <p className="text-gray-500">
             {filter === 'all' 
-              ? 'Nenhuma turma atribuída' 
-              : `Nenhuma turma ${filter === 'active' ? 'ativa' : 'inativa'}`}
+              ? 'Nenhum grupo atribuído' 
+              : `Nenhum grupo ${filter === 'active' ? 'ativo' : 'inativo'}`}
           </p>
         </Card>
       ) : (
@@ -274,7 +274,7 @@ export default function TeacherClassesPage() {
                       </div>
                       <div className="flex items-center gap-1">
                         <UsersIcon />
-                        <span>{classItem.enrollmentCount}/{classItem.capacidade} alunos</span>
+                        <span>{classItem.enrollmentCount}/{classItem.capacidade} participantes</span>
                       </div>
                       {classItem.lastSession && (
                         <div className="flex items-center gap-1">

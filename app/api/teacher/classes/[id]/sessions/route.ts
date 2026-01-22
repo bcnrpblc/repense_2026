@@ -50,7 +50,7 @@ export async function GET(
 
     if (!classData) {
       return NextResponse.json(
-        { error: 'Turma não encontrada' },
+        { error: 'Grupo não encontrado' },
         { status: 404 }
       );
     }
@@ -58,7 +58,7 @@ export async function GET(
     // Verify teacher owns this class
     if (classData.teacher_id !== teacherId) {
       return NextResponse.json(
-        { error: 'Você não tem permissão para visualizar sessões desta turma' },
+        { error: 'Você não tem permissão para visualizar sessões deste grupo' },
         { status: 403 }
       );
     }

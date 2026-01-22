@@ -44,14 +44,14 @@ export async function POST(
 
     if (!student) {
       return NextResponse.json(
-        { error: 'Aluno não encontrado' },
+        { error: 'Participante não encontrado' },
         { status: 404 }
       );
     }
 
     if (!student.priority_list) {
       return NextResponse.json(
-        { error: 'Aluno não está na lista de prioridade' },
+        { error: 'Participante não está na lista de prioridade' },
         { status: 400 }
       );
     }
@@ -70,14 +70,14 @@ export async function POST(
 
     if (!newCourse) {
       return NextResponse.json(
-        { error: 'Curso não encontrado' },
+        { error: 'Grupo não encontrado' },
         { status: 404 }
       );
     }
 
     if (!newCourse.eh_ativo) {
       return NextResponse.json(
-        { error: 'Curso não está ativo' },
+        { error: 'Grupo não está ativo' },
         { status: 400 }
       );
     }
@@ -85,7 +85,7 @@ export async function POST(
     // Check if class has capacity
     if (newCourse.numero_inscritos >= newCourse.capacidade) {
       return NextResponse.json(
-        { error: 'Turma não possui vagas disponíveis' },
+        { error: 'Grupo não possui vagas disponíveis' },
         { status: 400 }
       );
     }
@@ -122,11 +122,11 @@ export async function POST(
         });
 
         if (!classLocked || !classLocked.eh_ativo) {
-          throw new Error('Turma não está ativa');
+          throw new Error('Grupo não está ativo');
         }
 
         if (classLocked.numero_inscritos >= classLocked.capacidade) {
-          throw new Error('Turma não possui vagas disponíveis');
+          throw new Error('Grupo não possui vagas disponíveis');
         }
 
         // Create enrollment
@@ -169,7 +169,7 @@ export async function POST(
       });
 
       return NextResponse.json({
-        message: 'Aluno da lista de prioridade transferido e matriculado com sucesso',
+          message: 'Participante da lista de prioridade transferido e matriculado com sucesso',
         enrollment_id: result.enrollmentId,
         student: result.student,
       });

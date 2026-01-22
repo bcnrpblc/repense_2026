@@ -284,7 +284,7 @@ export async function PUT(
 
       if (emailExists) {
         return NextResponse.json(
-          { error: 'Este email já está cadastrado para outro aluno' },
+          { error: 'Este email já está cadastrado para outro participante' },
           { status: 400 }
         );
       }
@@ -301,7 +301,7 @@ export async function PUT(
 
       if (phoneExists) {
         return NextResponse.json(
-          { error: 'Este telefone já está cadastrado para outro aluno' },
+          { error: 'Este telefone já está cadastrado para outro participante' },
           { status: 400 }
         );
       }

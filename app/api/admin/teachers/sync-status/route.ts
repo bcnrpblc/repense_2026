@@ -7,11 +7,11 @@ import { syncTeachersActiveStatus } from '@/lib/teacherStatus';
 // ============================================================================
 
 /**
- * Sincroniza o status (eh_ativo) dos líderes com base nas turmas.
+ * Sincroniza o status (eh_ativo) dos líderes com base nas grupos.
  *
  * Regra:
- * - Professor com pelo menos 1 turma ativa (eh_ativo = true, arquivada = false) => eh_ativo = true
- * - Professor sem turmas ativas => eh_ativo = false
+ * - Professor com pelo menos 1 grupo ativo (eh_ativo = true, arquivada = false) => eh_ativo = true
+ * - Professor sem grupos ativas => eh_ativo = false
  */
 export async function POST(request: NextRequest) {
   try {

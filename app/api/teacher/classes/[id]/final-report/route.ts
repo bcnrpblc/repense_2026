@@ -63,14 +63,14 @@ export async function PUT(
 
     if (!classData) {
       return NextResponse.json(
-        { error: 'Turma não encontrada' },
+        { error: 'Grupo não encontrado' },
         { status: 404 }
       );
     }
 
     if (classData.teacher_id !== teacherId) {
       return NextResponse.json(
-        { error: 'Você não tem permissão para submeter relatório final nesta turma' },
+        { error: 'Você não tem permissão para submeter relatório final nesse grupo' },
         { status: 403 }
       );
     }
@@ -150,14 +150,14 @@ export async function GET(
 
     if (!classData) {
       return NextResponse.json(
-        { error: 'Turma não encontrada' },
+        { error: 'Grupo não encontrado' },
         { status: 404 }
       );
     }
 
     if (classData.teacher_id !== teacherId) {
       return NextResponse.json(
-        { error: 'Você não tem permissão para visualizar relatório final desta turma' },
+        { error: 'Você não tem permissão para visualizar relatório final deste grupo' },
         { status: 403 }
       );
     }

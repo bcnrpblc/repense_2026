@@ -68,14 +68,14 @@ export async function POST(request: NextRequest) {
 
     if (!classData) {
       return NextResponse.json(
-        { error: 'Turma não encontrada' },
+        { error: 'Grupo não encontrado' },
         { status: 404 }
       );
     }
 
     if (classData.teacher_id !== teacherId) {
       return NextResponse.json(
-        { error: 'Você não tem permissão para criar sessões nesta turma' },
+        { error: 'Você não tem permissão para criar sessões nesse grupo' },
         { status: 403 }
       );
     }

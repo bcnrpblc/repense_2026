@@ -289,7 +289,7 @@ export default function RegisterFormPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">inscrição Online</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Inscrição Online</h1>
           <p className="text-gray-600">Preencha os dados abaixo para realizar sua inscrição</p>
         </div>
 
@@ -493,7 +493,7 @@ export default function RegisterFormPage() {
           {/* Step 2: Course Selection */}
           {step === 2 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Seleção do PG Repense</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Seleção de PG Repense</h2>
 
               {fetchingCourses ? (
                 <div className="text-center py-12">
@@ -505,7 +505,7 @@ export default function RegisterFormPage() {
                   {/* Opções Repense Indaiatuba */}
                   <div className="space-y-8">
                     <h3 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-300">
-                      Opções Repense Indaiatuba
+                      Opções PG Repense Indaiatuba
                     </h3>
                     {Object.entries(groupedCourses.indaiatuba).map(([grupo, grupoCourses]) => (
                       grupoCourses.length > 0 && (
@@ -549,7 +549,7 @@ export default function RegisterFormPage() {
                                       </div>
                                       {course.eh_mulheres && (
                                         <div className="mt-2 text-sm text-purple-600 font-medium">
-                                          Esse Repense é exclusivo para mulheres
+                                          Esse PG Repense é exclusivo para mulheres
                                         </div>
                                       )}
                                       <div className="text-sm text-gray-600 mt-1">
@@ -567,7 +567,7 @@ export default function RegisterFormPage() {
                                   <div className="mt-2">
                                     {isFull ? (
                                       <span className="inline-block px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded">
-                                        Curso lotado
+                                        PG Repense lotado
                                       </span>
                                     ) : (
                                       <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
@@ -587,7 +587,7 @@ export default function RegisterFormPage() {
                   {/* Opções Repense Itu */}
                   <div className="space-y-8">
                     <h3 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-300">
-                      Opções Repense Itu
+                      Opções PG Repense Itu
                     </h3>
                     {Object.entries(groupedCourses.itu).map(([grupo, grupoCourses]) => (
                       grupoCourses.length > 0 && (
@@ -631,7 +631,7 @@ export default function RegisterFormPage() {
                                       </div>
                                       {course.eh_mulheres && (
                                         <div className="mt-2 text-sm text-purple-600 font-medium">
-                                          Esse Repense é exclusivo para mulheres
+                                          Esse PG Repense é exclusivo para mulheres
                                         </div>
                                       )}
                                       <div className="text-sm text-gray-600 mt-1">
@@ -649,7 +649,7 @@ export default function RegisterFormPage() {
                                   <div className="mt-2">
                                     {isFull ? (
                                       <span className="inline-block px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded">
-                                        Curso lotado
+                                        PG Repense lotado
                                       </span>
                                     ) : (
                                       <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
@@ -762,7 +762,7 @@ export default function RegisterFormPage() {
 
                 {selectedCourse && (
                   <div className="pt-4 border-t border-gray-200">
-                    <h3 className="font-semibold text-gray-900 mb-3">Curso Selecionado</h3>
+                    <h3 className="font-semibold text-gray-900 mb-3">PG Repense Selecionado</h3>
                     <div className="text-sm space-y-2">
                       <div>
                         <p className="font-medium text-gray-900">
@@ -855,10 +855,10 @@ export default function RegisterFormPage() {
             
             <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Lista de Prioridade
+              Lista de Prioridade
               </h3>
               <p className="text-gray-600 mb-6">
-              Selecione o curso que você gostaria de fazer. Entraremos em contato assim que houver novas turmas disponíveis.
+              Selecione o PG Repense que você gostaria de fazer. Entraremos em contato assim que houver novos grupos disponíveis.
               </p>
               
               {/* Course Selection Dropdown */}
@@ -874,9 +874,9 @@ export default function RegisterFormPage() {
                   }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c92041] focus:border-transparent"
                 >
-                  <option value="">Selecione um curso...</option>
+                  <option value="">Selecione um PG Repense...</option>
                   {loadingPriorityCourses ? (
-                    <option value="" disabled>Carregando cursos...</option>
+                    <option value="" disabled>Carregando PG Repense...</option>
                   ) : (
                     /* Group courses by grupo_repense and show options */
                     (['Igreja', 'Espiritualidade', 'Evangelho'] as GrupoRepense[]).map((grupo) => {
@@ -888,7 +888,7 @@ export default function RegisterFormPage() {
                         // If no courses found even in allCoursesForPriority, still show option but note it's unavailable
                         return (
                           <option key={grupo} value="" disabled>
-                            {grupoLabels[grupo]} (sem turmas no momento)
+                            {grupoLabels[grupo]} (sem PG Repense no momento)
                           </option>
                         );
                       }

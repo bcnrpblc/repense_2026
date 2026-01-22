@@ -12,6 +12,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
@@ -193,6 +194,19 @@ export default function AdminDashboardPage() {
     value: s.count
   }));
 
+  // Prepare chart data for enrollments by grupo
+  const grupoChartData = [
+    { name: 'Igreja', value: analytics.enrollmentsByGrupo.Igreja },
+    { name: 'Espiritualidade', value: analytics.enrollmentsByGrupo.Espiritualidade },
+    { name: 'Evangelho', value: analytics.enrollmentsByGrupo.Evangelho },
+  ];
+
+  // Prepare chart data for enrollments by city
+  const cityChartData = [
+    { name: 'Itu', value: analytics.enrollmentsByCity.Itu },
+    { name: 'Indaiatuba', value: analytics.enrollmentsByCity.Indaiatuba },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -201,10 +215,39 @@ export default function AdminDashboardPage() {
         <p className="text-sm text-muted-foreground">Bem-vindo(a), {user?.email}</p>
       </div>
 
+      {/* Middle Section: Operational Overview (Metric Cards) */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <StatCard 
+          title="Grupos Ativos" 
+          value={analytics.summary.totalActiveClasses} 
+          icon={<ClassesIcon />}
+        />
+        <StatCard 
+          title="Líderes Ativos" 
+          value={stats.activeTeachers} 
+          icon={<TeachersIcon />}
+        />
+        <StatCard 
+          title="Total de Participantes" 
+          value={stats.totalStudents} 
+          icon={<StudentsIcon />}
+        />
+        <StatCard 
+          title="Matrículas em Turmas Aguardando Início" 
+          value={analytics.summary.futureEnrollments} 
+          icon={<EnrollmentsIcon />}
+        />
+        <StatCard 
+          title="Lista de Prioridade" 
+          value={stats.priorityListCount || 0} 
+          icon={<StudentsIcon />}
+        />
+      </div>
+
       {/* Top Section: Growth & Engagement Trends */}
       <div className="grid gap-4 md:grid-cols-3">
         {/* Row 1: Area Chart - Matrículas no Ano */}
-        <Card className="md:col-span-2">
+        <Card className="md:col-span-3">
           <CardHeader title="Matrículas no Ano (YTD)" subtitle="Tendência mensal de novas inscrições" />
           <div className="h-[200px] w-full p-6 pt-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -322,29 +365,84 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        {/* Row 2: Taxa de Drop-off (geral) - Progress/Gauge */}
-        <Card>
-          <CardHeader title="Taxa de Drop-off (geral)" />
-          <div className="p-6 pt-0 flex flex-col justify-center h-full">
-            <div className="text-3xl font-bold mb-2">{analytics.summary.dropOffRate}%</div>
-            <div className="w-full bg-muted rounded-full h-4 overflow-hidden">
-              <div 
-                className={`h-full transition-all duration-500 ${
-                  analytics.summary.dropOffRate > 20 ? 'bg-destructive' : 'bg-chart-4'
-                }`}
-                style={{ width: `${analytics.summary.dropOffRate}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground mt-4">
-              {analytics.summary.dropOffRate > 20 
-                ? '⚠️ Atenção: Taxa de drop-off acima de 20%' 
-                : 'Taxa dentro do esperado'}
-            </p>
+        {/* Row 2: Inscrições por Grupo Repense - Bar Chart */}
+        <Card className="md:col-span-1">
+          <CardHeader title="Inscrições por Grupo Repense" />
+          <div className="h-[200px] w-full p-6 pt-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={grupoChartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis 
+                  dataKey="name" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))" }}
+                />
+                <YAxis 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))" }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 'var(--radius)',
+                  }}
+                />
+                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]}>
+                  {grupoChartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={`hsl(var(--chart-${[5, 2, 4][index % 3]}))`} 
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Row 2: Inscrições por Cidade - Pie Chart */}
+        <Card className="md:col-span-1">
+          <CardHeader title="Inscrições por Cidade" />
+          <div className="h-[200px] w-full p-6 pt-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={cityChartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={40}
+                  outerRadius={70}
+                  fill="hsl(var(--primary))"
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {cityChartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={`hsl(var(--chart-${[3, 2][index % 2]}))`} 
+                    />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 'var(--radius)',
+                  }}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </Card>
 
         {/* Row 2: Drop-off no Ano (YTD) - Line Chart */}
-        <Card>
+        <Card className="md:col-span-1">
           <CardHeader title="Drop-off no Ano (YTD)" subtitle="Evolução da taxa de cancelamento" />
           <div className="h-[200px] w-full p-6 pt-0">
             <ResponsiveContainer width="100%" height="100%">
@@ -376,35 +474,6 @@ export default function AdminDashboardPage() {
             </ResponsiveContainer>
           </div>
         </Card>
-      </div>
-
-      {/* Middle Section: Operational Overview (Metric Cards) */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard 
-          title="Turmas Ativas" 
-          value={analytics.summary.totalActiveClasses} 
-          icon={<ClassesIcon />}
-        />
-        <StatCard 
-          title="Líderes Ativos" 
-          value={stats.activeTeachers} 
-          icon={<TeachersIcon />}
-        />
-        <StatCard 
-          title="Total de Alunos" 
-          value={stats.totalStudents} 
-          icon={<StudentsIcon />}
-        />
-        <StatCard 
-          title="Matrículas em Turmas Futuras" 
-          value={analytics.summary.futureEnrollments} 
-          icon={<EnrollmentsIcon />}
-        />
-        <StatCard 
-          title="Lista de Prioridade" 
-          value={stats.priorityListCount || 0} 
-          icon={<StudentsIcon />}
-        />
       </div>
 
       {/* Bottom Section: Status Breakdown */}
@@ -443,20 +512,20 @@ export default function AdminDashboardPage() {
       {/* Quick Actions (Keep existing ones but style better) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <NavCard
-          title="Turmas"
-          description="Gerenciar turmas e sessões"
+          title="Grupos"
+          description="Gerenciar grupos e sessões"
           icon={<ClassesIcon />}
           href="/admin/classes"
         />
         <NavCard
-          title="Alunos"
-          description="Gerenciar base de alunos"
+          title="Participantes"
+          description="Gerenciar base de participantes"
           icon={<StudentsIcon />}
           href="/admin/students"
         />
         <NavCard
-          title="Líderes"
-          description="Gerenciar líderes"
+          title="Facilitadores"
+          description="Gerenciar facilitadores"
           icon={<TeachersIcon />}
           href="/admin/teachers"
         />

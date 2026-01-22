@@ -13,8 +13,8 @@ export type SyncTeachersResult = {
  * Sync teacher `eh_ativo` flag based on active, non-archived classes.
  *
  * Regra:
- * - Se professor tem pelo menos 1 turma ativa (eh_ativo = true, arquivada = false) => teacher.eh_ativo = true
- * - Se professor não tem turmas ativas => teacher.eh_ativo = false
+ * - Se professor tem pelo menos 1 grupo ativo (eh_ativo = true, arquivada = false) => teacher.eh_ativo = true
+ * - Se professor não tem grupos ativas => teacher.eh_ativo = false
  */
 export async function syncTeachersActiveStatus(): Promise<SyncTeachersResult> {
   // Load teachers with their active, non-archived classes

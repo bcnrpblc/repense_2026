@@ -98,7 +98,7 @@ export async function POST(
     if (invalidStudents.length > 0) {
       return NextResponse.json(
         {
-          error: 'Alguns alunos não estão matriculados nesta turma',
+          error: 'Alguns participantes não estão matriculados neste grupo',
           invalidStudentIds: invalidStudents.map((s) => s.studentId),
         },
         { status: 400 }

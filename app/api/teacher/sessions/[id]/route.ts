@@ -223,7 +223,7 @@ export async function PUT(
     if (missingAttendance.length > 0) {
       return NextResponse.json(
         {
-          error: 'Você precisa registrar a presença de todos os alunos antes de finalizar a sessão',
+          error: 'Você precisa registrar a presença de todos os participantes antes de finalizar a sessão',
           code: 'CHECK_IN_REQUIRED',
         },
         { status: 400 }

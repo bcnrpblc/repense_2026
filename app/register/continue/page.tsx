@@ -150,7 +150,7 @@ function ContinueForm() {
         
         const coursesResponse = await fetch(coursesUrl);
         if (!coursesResponse.ok) {
-          setError('Erro ao carregar cursos disponíveis');
+          setError('Erro ao carregar PG Repense disponíveis');
           setFetchingData(false);
           return;
         }
@@ -499,18 +499,18 @@ function ContinueForm() {
           {/* Step 2: Course Selection */}
           {step === 2 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Selecione seu próximo curso:</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Selecione seu próximo PG Repense:</h2>
 
               {allCourses.length === 0 ? (
                 <div className="text-center py-12">
-                  <p className="text-gray-600">Não há cursos disponíveis no momento.</p>
+                  <p className="text-gray-600">Não há PG Repense disponíveis no momento.</p>
                 </div>
               ) : (
                 <div className="space-y-12">
                   {/* Opções Repense Indaiatuba */}
                   <div className="space-y-8">
                     <h3 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-300">
-                      Opções Repense Indaiatuba
+                      Opções PG Repense Indaiatuba
                     </h3>
                     {Object.entries(groupedCourses.indaiatuba).map(([grupo, grupoCourses]) => (
                       grupoCourses.length > 0 && (
@@ -586,7 +586,7 @@ function ContinueForm() {
                   {/* Opções Repense Itu */}
                   <div className="space-y-8">
                     <h3 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-300">
-                      Opções Repense Itu
+                      Opções PG Repense Itu
                     </h3>
                     {Object.entries(groupedCourses.itu).map(([grupo, grupoCourses]) => (
                       grupoCourses.length > 0 && (
@@ -624,7 +624,7 @@ function ContinueForm() {
                                       </div>
                                       {course.eh_mulheres && (
                                         <div className="mt-2 text-sm text-purple-600 font-medium">
-                                          Esse Repense é exclusivo para mulheres
+                                          Esse PG Repense é exclusivo para mulheres
                                         </div>
                                       )}
                                       <div className="text-sm text-gray-600 mt-1">
@@ -642,7 +642,7 @@ function ContinueForm() {
                                   <div className="mt-2">
                                     {isFull ? (
                                       <span className="inline-block px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded">
-                                        Curso lotado
+                                        PG Repense lotado
                                       </span>
                                     ) : (
                                       <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
@@ -711,7 +711,7 @@ function ContinueForm() {
 
                 {selectedCourse && (
                   <div className="pt-4 border-t border-gray-200">
-                    <h3 className="font-semibold text-gray-900 mb-3">Curso Selecionado</h3>
+                    <h3 className="font-semibold text-gray-900 mb-3">PG Repense Selecionado</h3>
                     <div className="text-sm space-y-2">
                       <div>
                         <span className="text-gray-600">Grupo:</span>

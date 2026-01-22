@@ -46,7 +46,7 @@ export interface LoginFormProps {
  * 
  * // Teacher login page
  * <LoginForm
- *   title="Login do Líder de Repense"
+ *   title="Login do Facilitador do PG Repense"
  *   role="teacher"
  *   subtitle="Acesse sua contar"
  *   redirectPath="/teacher/dashboard"

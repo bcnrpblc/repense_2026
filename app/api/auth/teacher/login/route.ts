@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     // Check if teacher is active
     if (!teacher.eh_ativo) {
       return NextResponse.json(
-        { error: 'Líder inativo' },
+        { error: 'Facilitador inativo' },
         { status: 403 }
       );
     }

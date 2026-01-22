@@ -399,9 +399,9 @@ export default function TeacherClassDetailPage() {
   if (!classInfo) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Turma não encontrada</p>
+        <p className="text-gray-500">Grupo não encontrado</p>
         <Link href="/teacher/classes" className="mt-4 text-blue-600 hover:underline">
-          Voltar para Turmas
+          Voltar para Grupos
         </Link>
       </div>
     );
@@ -415,7 +415,7 @@ export default function TeacherClassDetailPage() {
         className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
       >
         <ChevronLeftIcon />
-        Voltar para Turmas
+        Voltar para Grupos
       </Link>
 
       {/* Class Info Card */}
@@ -450,7 +450,7 @@ export default function TeacherClassDetailPage() {
               <p className="text-2xl font-bold text-gray-900">
                 {classInfo.numero_inscritos}/{classInfo.capacidade}
               </p>
-              <p className="text-sm text-gray-500">alunos</p>
+              <p className="text-sm text-gray-500">participantes</p>
             </div>
             {classInfo.eh_ativo && (
               <Link href={`/teacher/classes/${classId}/session`}>
@@ -542,12 +542,12 @@ export default function TeacherClassDetailPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
-                Relatório Final da Turma
+                Relatório Final do Grupo
               </h2>
               <p className="text-sm text-gray-500 mt-1">
                 {finalReportEm 
                   ? `Enviado em ${new Date(finalReportEm).toLocaleDateString('pt-BR')}`
-                  : 'Obrigatório para arquivar a turma'}
+                  : 'Obrigatório para arquivar o grupo'}
               </p>
             </div>
             {!finalReport && (
@@ -580,7 +580,7 @@ export default function TeacherClassDetailPage() {
           ) : (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
-                Esta turma completou todas as sessões. É necessário enviar um relatório final antes de arquivar a turma.
+                Este grupo completou todas as sessões. É necessário enviar um relatório final antes de arquivar o grupo.
               </p>
             </div>
           )}
@@ -598,10 +598,10 @@ export default function TeacherClassDetailPage() {
               <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Relatório Final da Turma
+                    Relatório Final do Grupo
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Este relatório é obrigatório para arquivar a turma
+                    Este relatório é obrigatório para arquivar o grupo
                   </p>
                 </div>
                 <button
@@ -619,7 +619,7 @@ export default function TeacherClassDetailPage() {
                 <textarea
                   value={finalReport}
                   onChange={(e) => setFinalReport(e.target.value)}
-                  placeholder="Descreva o resumo final da turma, conquistas, observações importantes, etc..."
+                  placeholder="Descreva o resumo final do grupo, conquistas, observações importantes, etc..."
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows={10}
                   style={{ minHeight: '250px' }}

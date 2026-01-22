@@ -44,7 +44,7 @@ export async function POST(
 
     if (!currentClass) {
       return NextResponse.json(
-        { error: 'Turma atual não encontrada' },
+        { error: 'Grupo atual não encontrado' },
         { status: 404 }
       );
     }
@@ -63,7 +63,7 @@ export async function POST(
 
     if (!newClass) {
       return NextResponse.json(
-        { error: 'Nova turma não encontrada' },
+        { error: 'Novo grupo não encontrado' },
         { status: 404 }
       );
     }
@@ -71,7 +71,7 @@ export async function POST(
     // Validate same grupo_repense
     if (newClass.grupo_repense !== currentClass.grupo_repense) {
       return NextResponse.json(
-        { error: 'Transferência só é permitida entre turmas do mesmo grupo' },
+        { error: 'Transferência só é permitida entre grupos do mesmo grupo' },
         { status: 400 }
       );
     }
@@ -87,7 +87,7 @@ export async function POST(
 
     if (!enrollment) {
       return NextResponse.json(
-        { error: 'Inscrição ativa não encontrada para este aluno nesta turma' },
+        { error: 'Inscrição ativa não encontrada para este participante nesse grupo' },
         { status: 404 }
       );
     }
@@ -96,7 +96,7 @@ export async function POST(
     const result = await transferStudent(enrollment.id, newClassId);
 
     return NextResponse.json({
-      message: 'Aluno transferido com sucesso',
+      message: 'Participante transferido com sucesso',
       oldEnrollment: result.oldEnrollment,
       newEnrollment: result.newEnrollment,
     });
@@ -115,13 +115,13 @@ export async function POST(
       const messages: Record<string, string> = {
         'Enrollment not found': 'Inscrição não encontrada',
         'Enrollment is not active': 'Inscrição não está ativa',
-        'New class not found': 'Nova turma não encontrada',
-        'New class inactive': 'Nova turma está inativa',
-        'New class full': 'Nova turma está lotada',
+        'New class not found': 'Novo grupo não encontrado',
+        'New class inactive': 'Novo grupo está inativo',
+        'New class full': 'Novo grupo está lotado',
       };
       return NextResponse.json(
         { error: messages[error.message] || error.message },
-        { status: 400 }
+        { status: 400 } 
       );
     }
 

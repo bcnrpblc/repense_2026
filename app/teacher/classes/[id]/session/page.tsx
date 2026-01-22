@@ -188,7 +188,7 @@ export default function TeacherSessionPage() {
         setRelatorio(activeData.session.relatorio || '');
       } else if (activeData.session) {
         // Active session exists but for a different class
-        toast.error('Você tem uma sessão ativa em outra turma');
+        toast.error('Você tem uma sessão ativa em outro grupo');
         router.push(`/teacher/classes/${activeData.session.class.id}/session`);
         return;
       } else {
@@ -436,7 +436,7 @@ export default function TeacherSessionPage() {
         fetch('http://127.0.0.1:7249/ingest/968788e1-fcc3-43a8-9503-ceefa9c559f1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/teacher/classes/[id]/session/page.tsx:348',message:'Check-in not completed, showing error',data:{checkInDone},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
       }
       // #endregion
-      toast.error('Você precisa registrar a presença de todos os alunos antes de finalizar a sessão');
+      toast.error('Você precisa registrar a presença de todos os participantes antes de finalizar a sessão');
       return;
     }
 
@@ -469,7 +469,7 @@ export default function TeacherSessionPage() {
 
       if (!response.ok) {
         if (data.code === 'CHECK_IN_REQUIRED') {
-          toast.error('Você precisa registrar a presença de todos os alunos antes de finalizar a sessão');
+          toast.error('Você precisa registrar a presença de todos os participantes antes de finalizar a sessão');
         } else {
           toast.error(data.error || 'Erro ao finalizar sessão');
         }
@@ -586,7 +586,7 @@ export default function TeacherSessionPage() {
         {session.students.length === 0 ? (
           <Card className="text-center py-8">
             <UserIcon />
-            <p className="mt-4 text-gray-500">Nenhum aluno inscrito nesta turma</p>
+            <p className="mt-4 text-gray-500">Nenhum participante inscrito neste grupo</p>
           </Card>
         ) : (
           <div className="space-y-3">
@@ -605,7 +605,7 @@ export default function TeacherSessionPage() {
       {/* Report Section */}
       <Card className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Relatório da Aula (Opcional)
+          Relatório da Sessão (Opcional)
         </h2>
         <textarea
           value={relatorio}

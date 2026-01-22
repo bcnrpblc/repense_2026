@@ -110,7 +110,7 @@ export default function ClassDetailPage() {
 
       if (!response.ok) {
         if (response.status === 404) {
-          toast.error('Turma não encontrada');
+          toast.error('Grupo não encontrado');
           router.push('/admin/classes');
           return;
         }
@@ -121,7 +121,7 @@ export default function ClassDetailPage() {
       setClassData(data.class);
     } catch (error) {
       console.error('Error fetching class:', error);
-      toast.error('Erro ao carregar turma');
+      toast.error('Erro ao carregar grupo');
     } finally {
       setLoading(false);
     }
@@ -174,14 +174,14 @@ export default function ClassDetailPage() {
 
       if (!response.ok) {
         const result = await response.json();
-        throw new Error(result.error || 'Erro ao atualizar turma');
+        throw new Error(result.error || 'Erro ao atualizar grupo');
       }
 
-      toast.success(classData.eh_ativo ? 'Turma desativada' : 'Turma ativada');
+      toast.success(classData.eh_ativo ? 'Grupo desativado' : 'Grupo ativado');
       fetchClass();
     } catch (error) {
       console.error('Error toggling status:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar turma');
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar grupo');
     } finally {
       setToggling(false);
     }
@@ -200,7 +200,7 @@ export default function ClassDetailPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao arquivar turma');
+        throw new Error(result.error || 'Erro ao arquivar grupo');
       }
 
       toast.success(result.message);
@@ -208,7 +208,7 @@ export default function ClassDetailPage() {
       fetchClass();
     } catch (error) {
       console.error('Error archiving class:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao arquivar turma');
+      toast.error(error instanceof Error ? error.message : 'Erro ao arquivar grupo');
     } finally {
       setArchiving(false);
     }
@@ -218,7 +218,7 @@ export default function ClassDetailPage() {
     return (
       <div className="py-12 text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Carregando turma...</p>
+        <p className="mt-4 text-gray-600">Carregando grupo...</p>
       </div>
     );
   }
@@ -237,7 +237,7 @@ export default function ClassDetailPage() {
         <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Voltar para Turmas
+        Voltar para Grupos
       </Link>
 
       {/* Header */}
@@ -295,7 +295,7 @@ export default function ClassDetailPage() {
                 onClick={() => {
                   // Check if final report is required but missing
                   if (classData._count.Session >= classData.numero_sessoes && !classData.final_report) {
-                    toast.error('Relatório final é obrigatório para arquivar uma turma que completou todas as sessões');
+                    toast.error('Relatório final é obrigatório para arquivar uma grupo que completou todas as sessões');
                     return;
                   }
                   setShowArchiveModal(true);
@@ -321,7 +321,7 @@ export default function ClassDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Class Info */}
         <Card>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações da Turma</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Informações do grupo</h2>
           <dl className="space-y-3">
             <div className="flex justify-between">
               <dt className="text-gray-500">Data de Início</dt>
@@ -372,9 +372,9 @@ export default function ClassDetailPage() {
           )}
         </Card>
 
-        {/* Líder Info */}
+        {/* Facilitador Info */}
         <Card>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Líder</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Facilitador</h2>
           {classData.Teacher ? (
             <div>
               <div className="flex items-center gap-4 mb-4">
@@ -407,7 +407,7 @@ export default function ClassDetailPage() {
                 />
               </svg>
               <p className="mt-2 text-gray-500 italic">Esperando em Deus</p>
-              <p className="text-sm text-gray-400">Nenhum líder atribuído</p>
+              <p className="text-sm text-gray-400">Nenhum facilitador atribuído</p>
             </div>
           )}
         </Card>
@@ -419,12 +419,12 @@ export default function ClassDetailPage() {
         <div className="flex flex-wrap gap-3">
           <Link href={`/admin/classes/${classId}/students`}>
             <Button variant="secondary">
-              Ver Alunos ({classData._count.enrollments})
+              Ver Participantes ({classData._count.enrollments})
             </Button>
           </Link>
           <Link href={`/admin/classes/${classId}/edit`}>
             <Button variant="secondary">
-              Editar Turma
+              Editar Grupo
             </Button>
           </Link>
         </div>
@@ -434,7 +434,7 @@ export default function ClassDetailPage() {
       {classData._count.Session >= classData.numero_sessoes && (
         <Card className="mt-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Relatório Final da Turma
+            Relatório Final do grupo
           </h2>
           {classData.final_report ? (
             <div className="bg-gray-50 rounded-lg p-4">
@@ -450,7 +450,7 @@ export default function ClassDetailPage() {
           ) : (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-sm text-yellow-800">
-                Relatório final não enviado. A turma não pode ser arquivada até que o relatório final seja enviado.
+                Relatório final não enviado. O grupo não pode ser arquivado até que o relatório final seja enviado.
               </p>
             </div>
           )}
@@ -472,7 +472,7 @@ export default function ClassDetailPage() {
           </div>
         ) : sessions.length === 0 ? (
           <div className="py-8 text-center text-sm text-gray-500">
-            Nenhuma sessão registrada para esta turma
+            Nenhuma sessão registrada para este grupo
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -566,8 +566,8 @@ export default function ClassDetailPage() {
         isOpen={showArchiveModal}
         onClose={() => setShowArchiveModal(false)}
         onConfirm={archiveClass}
-        title="Arquivar Turma"
-        message={`Deseja arquivar a turma ${classData.grupo_repense} - ${classData.horario || 'Sem horário'}? Turmas arquivadas não aparecem na listagem principal.`}
+        title="Arquivar Grupo"
+        message={`Deseja arquivar a grupo ${classData.grupo_repense} - ${classData.horario || 'Sem horário'}? Grupos arquivados não aparecem na listagem principal.`}
         confirmText="Arquivar"
         variant="warning"
         loading={archiving}

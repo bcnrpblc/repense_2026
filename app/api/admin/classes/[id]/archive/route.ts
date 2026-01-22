@@ -36,7 +36,7 @@ export async function PUT(
 
     if (!currentClass) {
       return NextResponse.json(
-        { error: 'Turma não encontrada' },
+        { error: 'Grupo não encontrado' },
         { status: 404 }
       );
     }
@@ -53,7 +53,7 @@ export async function PUT(
       if (sessionCount >= requiredSessions && !currentClass.final_report) {
         return NextResponse.json(
           {
-            error: 'Relatório final é obrigatório para arquivar uma turma que completou todas as sessões',
+            error: 'Relatório final é obrigatório para arquivar um grupo que completou todas as sessões',
             code: 'FINAL_REPORT_REQUIRED',
           },
           { status: 400 }
@@ -80,14 +80,14 @@ export async function PUT(
       },
     });
 
-    // Após arquivar/desarquivar turma, sincroniza status dos líderes
+    // Após arquivar/desarquivar grupo, sincroniza status dos facilitadores
     await syncTeachersActiveStatus();
 
     return NextResponse.json({
       success: true,
       message: newArquivada
-        ? 'Turma arquivada com sucesso'
-        : 'Turma desarquivada com sucesso',
+        ? 'Grupo arquivado com sucesso'
+        : 'Grupo desarquivado com sucesso',
       class: updatedClass,
     });
 
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
 
     if (!Array.isArray(classIds) || classIds.length === 0) {
       return NextResponse.json(
-        { error: 'Lista de turmas inválida' },
+        { error: 'Lista de grupos inválido' },
         { status: 400 }
       );
     }
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `${result.count} turma(s) arquivada(s) com sucesso`,
+      message: `${result.count} grupo(s) arquivado(s) com sucesso`,
       count: result.count,
     });
 

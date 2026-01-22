@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
 
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-    // Matrículas em turmas futuras (turma ainda não iniciou)
+    // Matrículas em grupos aguardando inicio
     const futureEnrollmentsCount = enrollments.filter((e) => {
       if (e.status !== 'ativo') return false;
       const start = e.Class.data_inicio;

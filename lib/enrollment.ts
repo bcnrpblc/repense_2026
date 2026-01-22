@@ -91,20 +91,20 @@ export async function validateEnrollment(
   });
 
   if (!classToEnroll) {
-    return { canEnroll: false, error: 'Turma não encontrada', code: EnrollmentErrorCodes.CLASS_NOT_FOUND };
+    return { canEnroll: false, error: 'Grupo não encontrado', code: EnrollmentErrorCodes.CLASS_NOT_FOUND };
   }
 
   if (!classToEnroll.eh_ativo) {
-    return { canEnroll: false, error: 'Turma não está ativa', code: EnrollmentErrorCodes.CLASS_INACTIVE };
+    return { canEnroll: false, error: 'Grupo não está ativo', code: EnrollmentErrorCodes.CLASS_INACTIVE };
   }
 
   if (classToEnroll.numero_inscritos >= classToEnroll.capacidade) {
-    return { canEnroll: false, error: 'Turma está lotada', code: EnrollmentErrorCodes.CLASS_FULL };
+    return { canEnroll: false, error: 'Grupo está lotado', code: EnrollmentErrorCodes.CLASS_FULL };
   }
 
   // Check women-only restriction
   if (classToEnroll.eh_mulheres && student.genero === 'Masculino') {
-    return { canEnroll: false, error: 'Esta turma é exclusiva para mulheres', code: EnrollmentErrorCodes.WOMEN_ONLY_CLASS };
+    return { canEnroll: false, error: 'Este grupo é exclusivo para mulheres', code: EnrollmentErrorCodes.WOMEN_ONLY_CLASS };
   }
 
   // Check for existing enrollments in same grupo_repense
@@ -135,7 +135,7 @@ export async function validateEnrollment(
   if (completedEnrollment) {
     return {
       canEnroll: false,
-      error: `Já concluiu o curso ${classToEnroll.grupo_repense}`,
+      error: `Já concluiu o PG Repense ${classToEnroll.grupo_repense}`,
       code: EnrollmentErrorCodes.ALREADY_COMPLETED,
       previousEnrollment: {
         status: 'concluido',
@@ -177,7 +177,7 @@ export async function enrollStudent(
   });
 
   if (!student) {
-    throw new EnrollmentError('Aluno não encontrado', EnrollmentErrorCodes.STUDENT_NOT_FOUND);
+    throw new EnrollmentError('Participante não encontrado', EnrollmentErrorCodes.STUDENT_NOT_FOUND);
   }
 
   // Check if student already has active enrollment in same grupo_repense
@@ -194,16 +194,16 @@ export async function enrollStudent(
   });
 
   if (!classToEnroll) {
-    throw new EnrollmentError('Turma não encontrada', EnrollmentErrorCodes.CLASS_NOT_FOUND);
+    throw new EnrollmentError('Grupo não encontrado', EnrollmentErrorCodes.CLASS_NOT_FOUND);
   }
 
   if (!classToEnroll.eh_ativo) {
-    throw new EnrollmentError('Turma não está ativa', EnrollmentErrorCodes.CLASS_INACTIVE);
+    throw new EnrollmentError('Grupo não está ativo', EnrollmentErrorCodes.CLASS_INACTIVE);
   }
 
   // Check women-only restriction
   if (classToEnroll.eh_mulheres && student.genero === 'Masculino') {
-    throw new EnrollmentError('Esta turma é exclusiva para mulheres', EnrollmentErrorCodes.WOMEN_ONLY_CLASS);
+    throw new EnrollmentError('Este grupo é exclusivo para mulheres', EnrollmentErrorCodes.WOMEN_ONLY_CLASS);
   }
 
   // Check for existing enrollments in same grupo_repense
@@ -229,7 +229,7 @@ export async function enrollStudent(
   const completedEnrollment = existingEnrollments.find((e) => e.status === 'concluido');
   if (completedEnrollment) {
     throw new EnrollmentError(
-      `Já concluiu o curso ${classToEnroll.grupo_repense}`,
+      `Já concluiu o PG Repense ${classToEnroll.grupo_repense}`,
       EnrollmentErrorCodes.ALREADY_COMPLETED
     );
   }
@@ -353,11 +353,11 @@ export async function transferStudent(
   });
 
   if (!newClass) {
-    throw new EnrollmentError('Nova turma não encontrada', EnrollmentErrorCodes.CLASS_NOT_FOUND);
+    throw new EnrollmentError('Novo grupo não encontrado', EnrollmentErrorCodes.CLASS_NOT_FOUND);
   }
 
   if (!newClass.eh_ativo) {
-    throw new EnrollmentError('Nova turma não está ativa', EnrollmentErrorCodes.CLASS_INACTIVE);
+    throw new EnrollmentError('Novo grupo não está ativo', EnrollmentErrorCodes.CLASS_INACTIVE);
   }
 
   // Use transaction for atomic transfer

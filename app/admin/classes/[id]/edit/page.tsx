@@ -99,7 +99,7 @@ export default function EditClassPage() {
 
         if (!classRes.ok) {
           if (classRes.status === 404) {
-            toast.error('Turma não encontrada');
+            toast.error('Grupo não encontrado');
             router.push('/admin/classes');
             return;
           }
@@ -130,7 +130,7 @@ export default function EditClassPage() {
         });
       } catch (error) {
         console.error('Error fetching data:', error);
-        toast.error('Erro ao carregar turma');
+        toast.error('Erro ao carregar Grupo');
       } finally {
         setLoading(false);
       }
@@ -167,15 +167,15 @@ export default function EditClassPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao atualizar turma');
+        throw new Error(result.error || 'Erro ao atualizar Grupo');
       }
 
-      toast.success('Turma atualizada com sucesso!');
+      toast.success('Grupo atualizado com sucesso!');
       router.push('/admin/classes');
 
     } catch (error) {
       console.error('Error updating class:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar turma');
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar Grupo');
     }
   };
 
@@ -183,7 +183,7 @@ export default function EditClassPage() {
     return (
       <div className="py-12 text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Carregando turma...</p>
+        <p className="mt-4 text-gray-600">Carregando Grupo...</p>
       </div>
     );
   }
@@ -205,14 +205,14 @@ export default function EditClassPage() {
         <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Voltar para Turmas
+        Voltar para Grupos
       </Link>
 
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Editar Turma</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Editar Grupo</h1>
         <p className="mt-1 text-gray-600">
-          Atualize as informações da turma
+          Atualize as informações do grupo
         </p>
       </div>
 
@@ -235,7 +235,7 @@ export default function EditClassPage() {
             </p>
           </div>
           <div>
-            <p className="text-gray-500">Alunos Inscritos</p>
+            <p className="text-gray-500">Participantes Inscritos</p>
             <p className="font-medium text-gray-900">{classData.numero_inscritos}</p>
           </div>
           <div>
@@ -253,16 +253,16 @@ export default function EditClassPage() {
       <Card>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Campos Editáveis</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Líder */}
+          {/* Facilitador */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Líder
+              Facilitador
             </label>
             <select
               {...register('teacher_id')}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">Esperando em Deus (sem líder)</option>
+              <option value="">Esperando em Deus (sem facilitador)</option>
               {activeTeachers.map((teacher) => (
                 <option key={teacher.id} value={teacher.id}>
                   {teacher.nome}
@@ -275,7 +275,7 @@ export default function EditClassPage() {
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Selecione &quot;Esperando em Deus&quot; se ainda não há líder definido
+              Selecione &quot;Esperando em Deus&quot; se ainda não há facilitador definido
             </p>
           </div>
 
@@ -297,7 +297,7 @@ export default function EditClassPage() {
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Mínimo: {classData.numero_inscritos || 1} (alunos já inscritos)
+              Mínimo: {classData.numero_inscritos || 1} (participantes já inscritos)
             </p>
           </div>
 
@@ -381,10 +381,10 @@ export default function EditClassPage() {
                 {...register('eh_ativo')}
                 className="mr-2 rounded text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm font-medium text-gray-700">Turma Ativa</span>
+              <span className="text-sm font-medium text-gray-700">Grupo Ativo</span>
             </label>
             <p className="mt-1 text-xs text-gray-500">
-              Turmas inativas não aparecem para novas inscrições
+              Grupos inativos não aparecem para novas inscrições
             </p>
           </div>
 

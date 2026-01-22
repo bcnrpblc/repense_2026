@@ -108,7 +108,7 @@ const PlayIcon = () => (
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/teacher/dashboard', icon: <DashboardIcon /> },
-  { label: 'Minhas Turmas', href: '/teacher/classes', icon: <ClassesIcon /> },
+  { label: 'Meus Grupos', href: '/teacher/classes', icon: <ClassesIcon /> },
   { label: 'Alterar Senha', href: '/teacher/change-password', icon: <SettingsIcon /> },
 ];
 
@@ -255,7 +255,7 @@ export function TeacherNav({ userName, userEmail, onLogout }: TeacherNavProps) {
           {/* Logo */}
           <div className="hidden lg:flex items-center px-6 py-5 border-b border-gray-200">
             <img src="/logored.png" alt="PG Repense" className="h-10" />
-            <span className="ml-3 font-semibold text-gray-900">Líder Repense</span>
+            <span className="ml-3 font-semibold text-gray-900">Facilitador Repense</span>
           </div>
 
           {/* Mobile spacer */}

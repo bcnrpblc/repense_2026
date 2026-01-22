@@ -50,7 +50,7 @@ const createClassSchema = z.object({
  * - teacher_id: string - filter by teacher
  * - grupo_repense: string - filter by grupo
  * - arquivada: boolean - filter by archived status (default: false)
- * - futuras: boolean - filter future classes (data_inicio > today)
+ * - aguardando_inicio: boolean - filter classes waiting for start (data_inicio > today)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     const teacherId = searchParams.get('teacher_id');
     const grupoRepense = searchParams.get('grupo_repense');
     const arquivadaParam = searchParams.get('arquivada');
-    const futurasParam = searchParams.get('futuras');
+    const aguardandoInicioParam = searchParams.get('aguardando_inicio');
 
     // Build where clause
     const where: any = {};
@@ -90,8 +90,8 @@ export async function GET(request: NextRequest) {
       where.grupo_repense = grupoRepense;
     }
 
-    // Filter future classes
-    if (futurasParam === 'true') {
+    // Filter classes waiting for start
+    if (aguardandoInicioParam === 'true') {
       where.data_inicio = {
         gt: new Date(),
       };
@@ -191,8 +191,8 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Regra: Professor pode ter no máximo 1 turma ativa (eh_ativo = true, arquivada = false).
-      // Só validamos essa regra se a nova turma for criada como ativa.
+      // Regra: Professor pode ter no máximo 1 grupo ativo (eh_ativo = true, arquivada = false).
+      // Só validamos essa regra se a nova grupo for criada como ativa.
       if (data.eh_ativo) {
         const activeClassCount = await prisma.class.count({
           where: {
@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
 
         if (activeClassCount >= 1) {
           return NextResponse.json(
-            { error: 'Professor já tem 1 turma ativa' },
+            { error: 'Professor já tem 1 grupo ativo' },
             { status: 400 }
           );
         }
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
 
       if (existingLink) {
         return NextResponse.json(
-          { error: 'Link WhatsApp já usado em outra turma' },
+          { error: 'Link WhatsApp já usado em outro grupo' },
           { status: 400 }
         );
       }
@@ -231,7 +231,7 @@ export async function POST(request: NextRequest) {
     // Generate UUID for notion_id
     const notionId = randomUUID();
 
-    // Create class
+    // Create grupo
     const newClass = await prisma.class.create({
       data: {
         id: randomUUID(),
@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Opcional: após criar turma podemos sincronizar status dos líderes,
+    // Opcional: após criar grupo podemos sincronizar status dos líderes,
     // mas como a regra principal é usada em updates/arquivamentos, mantemos simples aqui.
 
     return NextResponse.json({ class: newClass }, { status: 201 });

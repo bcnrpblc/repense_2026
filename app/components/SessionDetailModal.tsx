@@ -218,7 +218,7 @@ export function SessionDetailModal({ sessionId, onClose }: SessionDetailModalPro
                 {/* Attendance List */}
                 <div>
                   <h4 className="font-medium text-gray-900 mb-3">
-                    Lista de Presença ({session.attendance.length} alunos)
+                    Lista de Presença ({session.attendance.length} participantes)
                   </h4>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {session.attendance.map((record) => (

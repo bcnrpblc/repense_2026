@@ -89,11 +89,11 @@ function getBadgeColor(grupo: string): string {
 function getBadgeAbbreviation(grupo: string): string {
   switch (grupo) {
     case 'Igreja':
-      return 'I';
+      return 'IGR';
     case 'Espiritualidade':
-      return 'E';
+      return 'ESP';
     case 'Evangelho':
-      return 'V';
+      return 'EVG';
     default:
       return '?';
   }
@@ -256,7 +256,7 @@ function ObservationsModal({ isOpen, onClose, student, onMarkRead }: Observation
         {/* Observations list */}
         {student.observations.length === 0 ? (
           <p className="text-center text-gray-500 py-8">
-            Nenhuma observação registrada para este aluno
+            Nenhuma observação registrada para este participante
           </p>
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -394,7 +394,7 @@ export default function StudentsPage() {
       setPagination(data.pagination);
     } catch (error) {
       console.error('Error fetching students:', error);
-      toast.error('Erro ao carregar alunos');
+      toast.error('Erro ao carregar participantes');
     } finally {
       setLoading(false);
     }
@@ -448,9 +448,9 @@ export default function StudentsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Alunos</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Participantes</h1>
           <p className="mt-1 text-gray-600">
-            Gerencie os alunos do sistema
+            Gerencie os participantes do sistema
           </p>
         </div>
       </div>
@@ -460,7 +460,7 @@ export default function StudentsPage() {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Buscar Aluno
+              Buscar Participante
             </label>
             <div className="relative">
               <input
@@ -505,7 +505,7 @@ export default function StudentsPage() {
           {pagination.totalCount > 0 && (
             <div className="flex items-end">
               <p className="text-sm text-gray-500">
-                {pagination.totalCount} aluno{pagination.totalCount !== 1 ? 's' : ''} encontrado{pagination.totalCount !== 1 ? 's' : ''}
+                {pagination.totalCount} participante{pagination.totalCount !== 1 ? 's' : ''} encontrado{pagination.totalCount !== 1 ? 's' : ''}
               </p>
             </div>
           )}
@@ -531,7 +531,7 @@ export default function StudentsPage() {
             />
           </svg>
           <p className="mt-4 text-gray-500">
-            {search ? 'Nenhum aluno encontrado com esses critérios' : 'Nenhum aluno cadastrado'}
+            {search ? 'Nenhum participante encontrado com esses critérios' : 'Nenhum participante cadastrado'}
           </p>
         </Card>
       ) : (
@@ -551,7 +551,7 @@ export default function StudentsPage() {
                     Email/Telefone
                   </th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
-                    Cursos Completos
+                    PG Repense Concluídos
                   </th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
                     Inscrições Ativas

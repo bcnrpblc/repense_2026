@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     if (!Array.isArray(classIds) || classIds.length === 0) {
       return NextResponse.json(
-        { error: 'Lista de turmas inválida' },
+        { error: 'Lista de grupos inválido' },
         { status: 400 }
       );
     }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `${result.count} turma(s) arquivada(s) com sucesso`,
+      message: `${result.count} grupo(s) arquivada(s) com sucesso`,
       count: result.count,
     });
 

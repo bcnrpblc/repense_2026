@@ -59,7 +59,7 @@ export async function GET(
 
     if (!classData) {
       return NextResponse.json(
-        { error: 'Turma não encontrada' },
+        { error: 'Grupo não encontrado' },
         { status: 404 }
       );
     }

@@ -54,7 +54,7 @@ export async function GET(
 
     if (!classData) {
       return NextResponse.json(
-        { error: 'Turma não encontrada' },
+        { error: 'Grupo não encontrado' },
         { status: 404 }
       );
     }
@@ -115,7 +115,7 @@ export async function PUT(
 
     if (!currentClass) {
       return NextResponse.json(
-        { error: 'Turma não encontrada' },
+        { error: 'Grupo não encontrado' },
         { status: 404 }
       );
     }
@@ -146,7 +146,7 @@ export async function PUT(
 
       if (!teacher) {
         return NextResponse.json(
-          { error: 'Professor não encontrado' },
+          { error: 'Facilitador não encontrado' },
           { status: 400 }
         );
       }
@@ -154,26 +154,26 @@ export async function PUT(
       // Check if teacher is active
       if (!teacher.eh_ativo) {
         return NextResponse.json(
-          { error: 'Professor está inativo' },
+          { error: 'Facilitador está inativo' },
           { status: 400 }
         );
       }
 
-      // Regra: Professor pode ter no máximo 1 turma ativa (eh_ativo = true, arquivada = false).
-      // Só validamos essa regra se a turma estiver (ou for ficar) ativa.
+      // Regra: Professor pode ter no máximo 1 grupo ativo (eh_ativo = true, arquivada = false).
+      // Só validamos essa regra se o grupo estiver (ou for ficar) ativo.
       if (nextEhAtivo) {
         const activeClassCount = await prisma.class.count({
           where: {
             teacher_id: data.teacher_id,
             eh_ativo: true,
             arquivada: false,
-            id: { not: params.id }, // Exclui a própria turma
+            id: { not: params.id }, // Exclui o próprio grupo atual
           },
         });
 
         if (activeClassCount >= 1) {
           return NextResponse.json(
-            { error: 'Professor já tem 1 turma ativa' },
+            { error: 'Facilitador já tem 1 grupo ativo' },
             { status: 400 }
           );
         }
@@ -192,7 +192,7 @@ export async function PUT(
 
       if (existingLink) {
         return NextResponse.json(
-          { error: 'Link WhatsApp já usado em outra turma' },
+          { error: 'Link WhatsApp já usado em outro grupo' },
           { status: 400 }
         );
       }
@@ -246,7 +246,7 @@ export async function PUT(
       },
     });
 
-    // Após mudar professor ou status da turma, sincroniza status dos líderes
+    // Após mudar professor ou status do grupo, sincroniza status dos facilitadores
     await syncTeachersActiveStatus();
 
     return NextResponse.json({ class: updatedClass });
@@ -294,7 +294,7 @@ export async function DELETE(
 
     if (!currentClass) {
       return NextResponse.json(
-        { error: 'Turma não encontrada' },
+        { error: 'Grupo não encontrado' },
         { status: 404 }
       );
     }
@@ -309,12 +309,12 @@ export async function DELETE(
       },
     });
 
-    // Após arquivar (delete lógico) turma, sincroniza status dos líderes
+    // Após arquivar (delete lógico) grupo, sincroniza status dos facilitadores
     await syncTeachersActiveStatus();
 
     return NextResponse.json({
       success: true,
-      message: 'Turma arquivada com sucesso',
+      message: 'Grupo arquivado com sucesso',
       class: updatedClass,
     });
 

@@ -248,7 +248,7 @@ function ObservationsModal({ isOpen, onClose, student, onMarkRead }: Observation
         {/* Observations list */}
         {student.observations.length === 0 ? (
           <p className="text-center text-gray-500 py-8">
-            Nenhuma observação registrada para este aluno
+            Nenhuma observação registrada para este participante
           </p>
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -466,7 +466,7 @@ export default function ClassStudentsPage() {
           <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Voltar para Turmas
+          Voltar para Grupos
         </Link>
         <div className="animate-pulse bg-white rounded-xl p-6 mb-6 border border-gray-100">
           <div className="h-6 bg-gray-200 rounded w-48 mb-4" />
@@ -480,9 +480,9 @@ export default function ClassStudentsPage() {
   if (!classInfo) {
     return (
       <div className="py-12 text-center">
-        <p className="text-gray-500">Turma não encontrada</p>
+        <p className="text-gray-500">Grupo não encontrada</p>
         <Link href="/admin/classes" className="mt-4 text-blue-600 hover:underline">
-          Voltar para Turmas
+          Voltar para Grupos
         </Link>
       </div>
     );
@@ -502,7 +502,7 @@ export default function ClassStudentsPage() {
         <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
-        Voltar para Turmas
+        Voltar para Grupos
       </Link>
 
       {/* Class Info Card */}
@@ -530,7 +530,7 @@ export default function ClassStudentsPage() {
               {classInfo.horario || 'Horário não definido'}
             </h1>
             <p className="text-sm text-gray-600">
-              {classInfo.Teacher?.nome || 'Sem líder'} • {classInfo.eh_itu ? 'Itu' : 'Indaiatuba'}
+              {classInfo.Teacher?.nome || 'Sem facilitador'} • {classInfo.eh_itu ? 'Itu' : 'Indaiatuba'}
             </p>
           </div>
           <div className="text-right">
@@ -567,7 +567,7 @@ export default function ClassStudentsPage() {
       {/* Filter and Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h2 className="text-lg font-semibold text-gray-900">
-          Alunos ({filteredStudents.length})
+          Participantes ({filteredStudents.length})
         </h2>
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Filtrar:</label>
@@ -589,8 +589,8 @@ export default function ClassStudentsPage() {
         <Card className="py-12 text-center">
           <p className="text-gray-500">
             {filterStatus === 'all' 
-              ? 'Nenhum aluno inscrito nesta turma' 
-              : `Nenhum aluno com status "${filterStatus}"`}
+              ? 'Nenhum participante inscrito neste grupo' 
+              : `Nenhum participante com status "${filterStatus}"`}
           </p>
         </Card>
       ) : (
@@ -695,7 +695,7 @@ export default function ClassStudentsPage() {
                                 studentName: student.nome,
                               })}
                               className="px-3 py-1 text-xs font-medium text-amber-600 hover:text-amber-800 border border-amber-200 rounded-lg hover:bg-amber-50"
-                              title="Transferir para outra turma"
+                              title="Transferir para outro Grupo"
                             >
                               Mover
                             </button>
@@ -817,7 +817,7 @@ export default function ClassStudentsPage() {
           message={
             actionTarget.type === 'complete'
               ? `Deseja marcar ${actionTarget.student.nome} como concluído em ${classInfo?.grupo_repense} - ${classInfo?.horario || 'Horário não definido'}?`
-              : `Deseja cancelar a inscrição de ${actionTarget.student.nome}? Esta ação liberará 1 vaga na turma.`
+              : `Deseja cancelar a inscrição de ${actionTarget.student.nome}? Esta ação liberará 1 vaga no Grupo.`
           }
           confirmText={actionTarget.type === 'complete' ? 'Concluir' : 'Cancelar Inscrição'}
           variant={actionTarget.type === 'complete' ? 'info' : 'danger'}

@@ -100,9 +100,9 @@ const CloseIcon = () => (
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: <DashboardIcon /> },
-  { label: 'Turmas', href: '/admin/classes', icon: <ClassesIcon /> },
-  { label: 'Alunos', href: '/admin/students', icon: <StudentsIcon /> },
-  { label: 'Líderes', href: '/admin/teachers', icon: <TeachersIcon /> },
+  { label: 'Grupos', href: '/admin/classes', icon: <ClassesIcon /> },
+  { label: 'Participantes', href: '/admin/students', icon: <StudentsIcon /> },
+  { label: 'Facilitadores', href: '/admin/teachers', icon: <TeachersIcon /> },
 ];
 
 // ============================================================================

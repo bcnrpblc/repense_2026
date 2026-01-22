@@ -132,17 +132,17 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao criar turma');
+        throw new Error(result.error || 'Erro ao criar grupo');
       }
 
-      toast.success('Turma criada com sucesso!');
+      toast.success('Grupo criado com sucesso!');
       reset();
       onSuccess();
       onClose();
 
     } catch (error) {
       console.error('Error creating class:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao criar turma');
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar grupo');
     }
   };
 
@@ -170,19 +170,19 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Criar Nova Turma" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="Criar Novo Grupo" size="lg">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Líder Dropdown */}
+        {/* Facilitador Dropdown */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Líder
+            Facilitador
           </label>
           <select
             {...register('teacher_id')}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             disabled={loadingTeachers}
           >
-            <option value="">Selecione um líder (opcional)</option>
+            <option value="">Selecione um facilitador (opcional)</option>
             {teachers.map((teacher) => (
               <option key={teacher.id} value={teacher.id}>
                 {teacher.nome} ({teacher.email})
@@ -326,7 +326,7 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
               {...register('eh_16h')}
               className="mr-2 rounded text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm text-gray-700">Aula da Tarde (16h)</span>
+            <span className="text-sm text-gray-700">Grupo da Tarde (16h)</span>
           </label>
           <label className="flex items-center">
             <input
@@ -334,7 +334,7 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
               {...register('eh_ativo')}
               className="mr-2 rounded text-blue-600 focus:ring-blue-500"
             />
-            <span className="text-sm text-gray-700">Turma Ativa</span>
+            <span className="text-sm text-gray-700">Grupo Ativo</span>
           </label>
         </div>
 
@@ -360,7 +360,7 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
             Cancelar
           </Button>
           <Button type="submit" variant="primary" loading={isSubmitting}>
-            Criar Turma
+            Criar Grupo
           </Button>
         </div>
       </form>

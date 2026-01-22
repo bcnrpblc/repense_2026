@@ -157,7 +157,7 @@ export default function PriorityListSuccessPage() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Você foi adicionado à Lista de Prioridade!</h1>
-          <p className="text-gray-600">Entraremos em contato quando novas turmas estiverem disponíveis</p>
+          <p className="text-gray-600">Entraremos em contato quando novas grupos estiverem disponíveis</p>
         </div>
 
         {/* Confirmation Card */}
@@ -212,7 +212,7 @@ export default function PriorityListSuccessPage() {
                   <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Você receberá uma notificação quando novas turmas abrirem</span>
+                  <span>Você receberá uma notificação quando novas grupos abrirem</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     if (!classData) {
       return NextResponse.json(
-        { canEnroll: false, reason: 'Turma não encontrada' },
+        { canEnroll: false, reason: 'Grupo não encontrado' },
         { status: 200 }
       );
     }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Check if class is active
     if (!classData.eh_ativo) {
       return NextResponse.json(
-        { canEnroll: false, reason: 'Esta turma não está ativa para novas inscrições' },
+        { canEnroll: false, reason: 'Este grupo não está ativo para novas inscrições' },
         { status: 200 }
       );
     }
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     // Check class capacity
     if (classData.numero_inscritos >= classData.capacidade) {
       return NextResponse.json(
-        { canEnroll: false, reason: 'Esta turma está lotada' },
+        { canEnroll: false, reason: 'Este grupo está lotado' },
         { status: 200 }
       );
     }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     // Check women-only restriction
     if (classData.eh_mulheres && student.genero === 'Masculino') {
       return NextResponse.json(
-        { canEnroll: false, reason: 'Esta turma é exclusiva para mulheres' },
+        { canEnroll: false, reason: 'Este grupo é exclusivo para mulheres' },
         { status: 200 }
       );
     }
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           canEnroll: false,
-          reason: `Você já possui uma inscrição ativa no curso ${classData.grupo_repense}`,
+          reason: `Você já possui uma inscrição ativa no grupo ${classData.grupo_repense}`,
           existingEnrollmentId: activeEnrollment.id,
         },
         { status: 200 }
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           canEnroll: false,
-          reason: `Você já concluiu o curso ${classData.grupo_repense}`,
+          reason: `Você já concluiu o Repense ${classData.grupo_repense}`,
           completedAt: completedEnrollment.concluido_em,
         },
         { status: 200 }
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           canEnroll: true,
-          warning: `Você já se inscreveu neste curso anteriormente mas cancelou. Deseja se inscrever novamente?`,
+          warning: `Você já se inscreveu neste grupo anteriormente mas cancelou. Deseja se inscrever novamente?`,
           previousCancellation: {
             cancelledAt: cancelledEnrollment.cancelado_em,
             classInfo: cancelledEnrollment.Class.horario,
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             canEnroll: false,
-            reason: `Você já possui uma inscrição ativa no curso ${classData.grupo_repense} (transferida)`,
+            reason: `Você já possui uma inscrição ativa no grupo ${classData.grupo_repense} (transferida)`,
             existingEnrollmentId: activeFromTransfer.id,
           },
           { status: 200 }

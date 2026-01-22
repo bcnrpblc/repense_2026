@@ -347,7 +347,7 @@ async function main() {
           class_id: classItem.id,
           numero_sessao: 1,
           data_sessao: sevenDaysAgo,
-          relatorio: 'Primeira aula realizada. Boa participação dos alunos.',
+          relatorio: 'Primeira aula realizada. Boa participação dos participantes.',
         },
       });
       allSessions.push({

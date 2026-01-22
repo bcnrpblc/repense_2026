@@ -71,10 +71,6 @@ const PIE_COLORS = [
   'hsl(var(--chart-2))', 
   'hsl(var(--chart-4))'
 ];
-const CITY_COLORS = [
-  'hsl(var(--chart-3))', 
-  'hsl(var(--chart-2))'
-];
 
 // ============================================================================
 // ICONS
@@ -164,10 +160,6 @@ export default function AdminReportsPage() {
     { name: 'Evangelho', value: data.enrollmentsByGrupo.Evangelho },
   ] : [];
 
-  const cityChartData = data ? [
-    { name: 'Itu', value: data.enrollmentsByCity.Itu },
-    { name: 'Indaiatuba', value: data.enrollmentsByCity.Indaiatuba },
-  ] : [];
 
   if (loading) {
     return (
@@ -229,12 +221,12 @@ export default function AdminReportsPage() {
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard
-          title="Turmas Ativas"
+          title="Grupos Ativos"
           value={data.summary.totalActiveClasses}
           icon={<ClassesIcon />}
         />
         <StatCard
-          title="Alunos Ativos"
+          title="Participantes Ativos"
           value={data.summary.totalActiveStudents}
           icon={<UsersIcon />}
         />
@@ -278,38 +270,27 @@ export default function AdminReportsPage() {
           </ResponsiveContainer>
         </Card>
 
-        {/* Enrollments by City */}
+        {/* Taxa de Drop-off (geral) */}
         <Card>
           <h3 className="text-lg font-semibold text-foreground mb-4">
-            Inscrições por Cidade
+            Taxa de Drop-off (geral)
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={cityChartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                fill="hsl(var(--primary))"
-                paddingAngle={5}
-                dataKey="value"
-                label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
-              >
-                {cityChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={CITY_COLORS[index % CITY_COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'hsl(var(--card))', 
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 'var(--radius)',
-                }}
+          <div className="p-6 pt-0 flex flex-col justify-center" style={{ height: '300px' }}>
+            <div className="text-4xl font-bold mb-4">{data.summary.dropOffRate}%</div>
+            <div className="w-full bg-muted rounded-full h-6 overflow-hidden">
+              <div 
+                className={`h-full transition-all duration-500 ${
+                  data.summary.dropOffRate > 20 ? 'bg-destructive' : 'bg-chart-4'
+                }`}
+                style={{ width: `${data.summary.dropOffRate}%` }}
               />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+            </div>
+            <p className="text-sm text-muted-foreground mt-6">
+              {data.summary.dropOffRate > 20 
+                ? '⚠️ Atenção: Taxa de drop-off acima de 20%' 
+                : 'Taxa dentro do esperado'}
+            </p>
+          </div>
         </Card>
 
         {/* Sessions Per Week */}
@@ -344,7 +325,7 @@ export default function AdminReportsPage() {
         {/* Capacity Utilization */}
         <Card>
           <h3 className="text-lg font-semibold text-foreground mb-4">
-            Taxa de Ocupação por Turma
+            Taxa de Ocupação por Grupo
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={data.capacityUtilization} layout="vertical">

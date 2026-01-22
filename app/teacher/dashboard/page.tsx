@@ -268,7 +268,7 @@ function ClassCard({
         </div>
         <div className="flex items-center gap-2">
           <UsersIcon />
-          <span>{classData.enrollmentCount}/{classData.capacidade} alunos</span>
+          <span>{classData.enrollmentCount}/{classData.capacidade} participantes</span>
         </div>
         {classData.lastSession && (
           <div className="flex items-center gap-2 col-span-2 text-gray-400">
@@ -299,7 +299,7 @@ function ClassCard({
               hasActiveSession 
                 ? 'Finalize a sessão atual antes de iniciar outra' 
                 : !classData.eh_ativo 
-                  ? 'Turma inativa'
+                  ? 'Grupo inativo'
                   : 'Iniciar nova sessão'
             }
           >
@@ -486,7 +486,7 @@ export default function TeacherDashboardPage() {
               <p className="text-3xl font-bold text-primary">
                 {classesData.totalClasses}
               </p>
-              <p className="text-sm text-muted-foreground">Turmas Atribuídas</p>
+              <p className="text-sm text-muted-foreground">Grupos Atribuídos</p>
             </div>
           </Card>
           <Card>
@@ -494,7 +494,7 @@ export default function TeacherDashboardPage() {
               <p className="text-3xl font-bold text-chart-3">
                 {classesData.activeClasses}
               </p>
-              <p className="text-sm text-muted-foreground">Turmas Ativas</p>
+              <p className="text-sm text-muted-foreground">Grupos Ativos</p>
             </div>
           </Card>
           <Card>
@@ -502,7 +502,7 @@ export default function TeacherDashboardPage() {
               <p className="text-3xl font-bold text-chart-5">
                 {classesData.classes.reduce((sum, c) => sum + c.enrollmentCount, 0)}
               </p>
-              <p className="text-sm text-muted-foreground">Total de Alunos</p>
+              <p className="text-sm text-muted-foreground">Total de Participantes</p>
             </div>
           </Card>
         </div>
@@ -514,7 +514,7 @@ export default function TeacherDashboardPage() {
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
-              Minhas Turmas
+              Meus Grupos
             </h2>
             <Link
               href="/teacher/classes"
@@ -545,7 +545,7 @@ export default function TeacherDashboardPage() {
             </div>
           ) : (
             <Card className="text-center py-8">
-              <p className="text-gray-500">Nenhuma turma atribuída</p>
+              <p className="text-gray-500">Nenhum grupo atribuído</p>
             </Card>
           )}
         </div>

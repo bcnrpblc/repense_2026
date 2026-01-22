@@ -6,8 +6,8 @@ import { Metadata } from 'next';
 // ============================================================================
 
 export const metadata: Metadata = {
-  title: 'PG Repense - Login do Líder de Repense',
-  description: 'Login de Líderes do sistema PG Repense',
+  title: 'PG Repense - Login do Facilitador do PG Repense',
+  description: 'Login de Facilitadores do sistema PG Repense',
 };
 
 // ============================================================================
@@ -25,9 +25,9 @@ export const metadata: Metadata = {
 export default function TeacherLoginPage() {
   return (
     <LoginForm
-      title="Login do Líder de Repense"
+      title="Login do Facilitador do PG Repense"
       role="teacher"
-      subtitle="Acesse a área do líder"
+      subtitle="Acesse a área do facilitador"
       redirectPath="/teacher/dashboard"
     />
   );

@@ -54,8 +54,8 @@ export default function LoginPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900">Entrar como Líder</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Acesso para líderes de PG e professores</p>
+                  <h2 className="text-xl font-bold text-gray-900">Entrar como Facilitador</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Acesso para Facilitadores do PG Repense</p>
                 </div>
                 <div className="text-muted-foreground group-hover:text-primary transition-colors">
                   <svg 
@@ -102,8 +102,8 @@ export default function LoginPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-bold text-gray-900">Entrar como Pastor</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Acesso para administradores e pastores</p>
+                  <h2 className="text-xl font-bold text-gray-900">Entrar como Administrador</h2>
+                  <p className="text-sm text-muted-foreground mt-1">Acesso para Administradores e Pastores</p>
                 </div>
                 <div className="text-muted-foreground group-hover:text-primary transition-colors">
                   <svg 

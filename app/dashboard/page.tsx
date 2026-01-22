@@ -202,7 +202,7 @@ export default function DashboardPage() {
 
         {/* Top 5 Courses */}
         <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-700 mb-6">Top 5 Cursos por Inscrições</h2>
+          <h2 className="text-xl font-semibold text-gray-700 mb-6">Top 5 PG Repense por Inscrições</h2>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
