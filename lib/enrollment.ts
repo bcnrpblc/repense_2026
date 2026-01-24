@@ -316,6 +316,9 @@ export async function transferStudent(
     criado_em: Date;
   };
 }> {
+  // #region agent log
+  fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/enrollment.ts:319',message:'transferStudent entry',data:{hasEnrollmentId:!!enrollmentId,hasNewClassId:!!newClassId},timestamp:Date.now(),sessionId:'debug-session',runId:'run10',hypothesisId:'H4'})}).catch(()=>{});
+  // #endregion
   // First, get the old enrollment with class info
   const oldEnrollment = await prisma.enrollment.findUnique({
     where: { id: enrollmentId },
@@ -360,6 +363,24 @@ export async function transferStudent(
     throw new EnrollmentError('Novo grupo não está ativo', EnrollmentErrorCodes.CLASS_INACTIVE);
   }
 
+  const existingEnrollmentInTarget = await prisma.enrollment.findFirst({
+    where: {
+      student_id: oldEnrollment.student_id,
+      class_id: newClassId,
+    },
+    select: {
+      id: true,
+      status: true,
+    },
+  });
+  // #region agent log
+  fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/enrollment.ts:373',message:'Target enrollment check',data:{isSameClass:oldEnrollment.class_id===newClassId,hasExistingTarget:!!existingEnrollmentInTarget,existingStatus:existingEnrollmentInTarget?.status ?? null},timestamp:Date.now(),sessionId:'debug-session',runId:'run10',hypothesisId:'H4'})}).catch(()=>{});
+  // #endregion
+
+  if (existingEnrollmentInTarget?.status === 'concluido') {
+    throw new EnrollmentError('O participante já concluiu esse PG Repense', EnrollmentErrorCodes.ALREADY_COMPLETED);
+  }
+
   // Use transaction for atomic transfer
   const result = await prisma.$transaction(async (tx) => {
     // Update old enrollment to transferido
@@ -381,7 +402,30 @@ export async function transferStudent(
       },
     });
 
-    // Lock and check new class capacity atomically
+    // Check for existing enrollment in target class inside transaction
+    const targetEnrollment = await tx.enrollment.findFirst({
+      where: {
+        student_id: oldEnrollment.student_id,
+        class_id: newClassId,
+      },
+    });
+
+    // #region agent log
+    fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/enrollment.ts:393',message:'Transfer target resolved (tx)',data:{hasTarget:!!targetEnrollment,targetStatus:targetEnrollment?.status ?? null},timestamp:Date.now(),sessionId:'debug-session',runId:'run10',hypothesisId:'H4'})}).catch(()=>{});
+    // #endregion
+
+    if (targetEnrollment?.status === 'concluido') {
+      throw new EnrollmentError('você já concluiu esse PG Repense', EnrollmentErrorCodes.ALREADY_COMPLETED);
+    }
+
+    if (targetEnrollment && targetEnrollment.status === 'ativo') {
+      return {
+        oldEnrollment: updatedOldEnrollment,
+        newEnrollment: targetEnrollment,
+      };
+    }
+
+    // Lock and check new class capacity atomically only if we need to add a seat
     const newClassLocked = await tx.class.findUnique({
       where: { id: newClassId },
       select: {
@@ -397,6 +441,32 @@ export async function transferStudent(
 
     if (newClassLocked.numero_inscritos >= newClassLocked.capacidade) {
       throw new EnrollmentError('New class full');
+    }
+
+    if (targetEnrollment) {
+      const reactivatedEnrollment = await tx.enrollment.update({
+        where: { id: targetEnrollment.id },
+        data: {
+          status: 'ativo',
+          transferido_de_class_id: oldEnrollment.class_id,
+          cancelado_em: null,
+          concluido_em: null,
+        },
+      });
+
+      await tx.class.update({
+        where: { id: newClassId },
+        data: {
+          numero_inscritos: {
+            increment: 1,
+          },
+        },
+      });
+
+      return {
+        oldEnrollment: updatedOldEnrollment,
+        newEnrollment: reactivatedEnrollment,
+      };
     }
 
     // Create new enrollment

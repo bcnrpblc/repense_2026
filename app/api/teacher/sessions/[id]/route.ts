@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyTeacherToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { createNotificationsForAllAdmins } from '@/lib/notifications';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -240,6 +241,17 @@ export async function PUT(
     // #region agent log
     console.log('[DEBUG] PUT /api/teacher/sessions/[id] - Updating session with relatorio:', JSON.stringify({ relatorioValue, relatorioValueType: typeof relatorioValue, originalValue: relatorio }));
     // #endregion
+    
+    // Check if this is a new report (session didn't have relatorio before or was empty)
+    const existingSession = await prisma.session.findUnique({
+      where: { id: sessionId },
+      select: { relatorio: true },
+    });
+    
+    const hadReportBefore = existingSession?.relatorio && existingSession.relatorio.trim().length > 0;
+    const hasReportNow = relatorioValue && relatorioValue.trim().length > 0;
+    const isNewReport = !hadReportBefore && hasReportNow;
+    
     const updatedSession = await prisma.session.update({
       where: { id: sessionId },
       data: { 
@@ -256,6 +268,17 @@ export async function PUT(
         Attendance: true,
       },
     });
+
+    // #region agent log
+    fetch('http://127.0.0.1:7252/ingest/aa8eef57-c6f3-4787-9153-8fc4c14a5451',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/teacher/sessions/[id]/route.ts:272',message:'Before creating notification for session report',data:{isNewReport,sessionId,hadReportBefore,hasReportNow},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    // Create notification if this is a new session report
+    if (isNewReport) {
+      await createNotificationsForAllAdmins('session_report', sessionId);
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7252/ingest/aa8eef57-c6f3-4787-9153-8fc4c14a5451',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/teacher/sessions/[id]/route.ts:276',message:'After creating notification for session report',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
 
     return NextResponse.json({
       session: {

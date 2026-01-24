@@ -51,10 +51,11 @@ model Enrollment {
 }
 
 model Admin {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  password_hash String
-  criado_em     DateTime @default(now())
+  id              String            @id @default(uuid())
+  email           String            @unique
+  password_hash   String
+  criado_em       DateTime          @default(now())
+  NotificationRead NotificationRead[]
 
   @@map("admins")
 }
@@ -133,6 +134,22 @@ model Teacher {
   Class         Class[]
 
   @@index([eh_ativo])
+}
+
+model NotificationRead {
+  id              String   @id @default(uuid())
+  admin_id        String
+  notification_type String  // 'student_observation', 'session_report', 'final_report'
+  reference_id    String   // ID of Attendance, Session, or Class
+  read_at         DateTime?
+  criado_em       DateTime @default(now())
+  Admin           Admin    @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+
+  @@unique([admin_id, notification_type, reference_id])
+  @@index([admin_id, notification_type])
+  @@index([reference_id])
+  @@index([admin_id, read_at])
+  @@map("notification_reads")
 }
 
 enum GrupoRepense {

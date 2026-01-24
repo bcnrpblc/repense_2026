@@ -30,6 +30,30 @@ type ErrorResponse = {
   validation_errors?: Record<string, string>;
 };
 
+type CourseChangeResponse = {
+  requires_course_change: true;
+  existing_enrollment: {
+    id: string;
+    class_id: string;
+    status: string;
+    student_id: string;
+  };
+  current_course: {
+    id: string;
+    grupo_repense: string;
+    modelo: string;
+    horario: string | null;
+    data_inicio: Date | null;
+  };
+  new_course: {
+    id: string;
+    grupo_repense: string;
+    modelo: string;
+    horario: string | null;
+    data_inicio: Date | null;
+  };
+};
+
 export async function POST(request: NextRequest) {
   try {
     const body: RegisterRequest = await request.json();
@@ -115,63 +139,235 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for existing CPF
-    const existingCPF = await prisma.student.findUnique({
+    // Check for existing CPF with active enrollments
+    const existingStudent = await prisma.student.findUnique({
       where: { cpf: cleanedCPF },
+      include: {
+        enrollments: {
+          where: { status: 'ativo' },
+          include: {
+            Class: {
+              select: {
+                id: true,
+                grupo_repense: true,
+                modelo: true,
+                horario: true,
+                data_inicio: true,
+                capacidade: true,
+                numero_inscritos: true,
+              },
+            },
+          },
+        },
+      },
     });
 
-    if (existingCPF) {
-      return NextResponse.json<ErrorResponse>(
-        { error: 'CPF já cadastrado' },
-        { status: 409 }
+    // If student exists, check enrollment scenarios
+    if (existingStudent) {
+      const activeEnrollments = existingStudent.enrollments;
+      const selectedCourseGrupo = course.grupo_repense;
+      // #region agent log
+      fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/register/route.ts:168',message:'Existing student active enrollments',data:{studentId:existingStudent.id,activeEnrollmentCount:activeEnrollments.length,selectedGrupo:selectedCourseGrupo},timestamp:Date.now(),sessionId:'debug-session',runId:'run11',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
+
+      // First check: Is student already enrolled in the EXACT same class?
+      const exactClassEnrollment = activeEnrollments.find(
+        (e) => e.class_id === course_id
       );
-    }
 
-    // Check for existing phone
-    const existingPhone = await prisma.student.findUnique({
-      where: { telefone: cleanedPhone },
-    });
-
-    if (existingPhone) {
-      return NextResponse.json<ErrorResponse>(
-        { error: 'Telefone já cadastrado' },
-        { status: 409 }
-      );
-    }
-
-    // Check for existing email (only if email is provided)
-    if (student.email && student.email.trim().length > 0) {
-      const existingEmail = await prisma.student.findUnique({
-        where: { email: student.email.trim() },
-      });
-
-      if (existingEmail) {
+      if (exactClassEnrollment) {
         return NextResponse.json<ErrorResponse>(
-          { error: 'Email já cadastrado' },
+          { error: 'Você já está matriculado nesta turma' },
           { status: 409 }
         );
+      }
+
+      // Second check: Active enrollment in SAME grupo_repense (different class)
+      const sameGrupoEnrollment = activeEnrollments.find(
+        (e) => e.Class.grupo_repense === selectedCourseGrupo
+      );
+
+      if (sameGrupoEnrollment) {
+        // Different class but same grupo_repense - requires course change
+        return NextResponse.json<CourseChangeResponse>(
+          {
+            requires_course_change: true,
+            existing_enrollment: {
+              id: sameGrupoEnrollment.id,
+              class_id: sameGrupoEnrollment.class_id,
+              status: sameGrupoEnrollment.status,
+              student_id: existingStudent.id,
+            },
+            current_course: {
+              id: sameGrupoEnrollment.Class.id,
+              grupo_repense: sameGrupoEnrollment.Class.grupo_repense,
+              modelo: sameGrupoEnrollment.Class.modelo,
+              horario: sameGrupoEnrollment.Class.horario,
+              data_inicio: sameGrupoEnrollment.Class.data_inicio,
+            },
+            new_course: {
+              id: course.id,
+              grupo_repense: course.grupo_repense,
+              modelo: course.modelo,
+              horario: course.horario,
+              data_inicio: course.data_inicio,
+            },
+          },
+          { status: 200 }
+        );
+      }
+
+      const concludedEnrollment = await prisma.enrollment.findFirst({
+        where: {
+          student_id: existingStudent.id,
+          class_id: course_id,
+          status: 'concluido',
+        },
+        select: {
+          id: true,
+        },
+      });
+      // #region agent log
+      fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/register/route.ts:218',message:'Concluded enrollment check',data:{activeEnrollmentCount:activeEnrollments.length,hasConcluded:!!concludedEnrollment},timestamp:Date.now(),sessionId:'debug-session',runId:'run12',hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
+
+      if (concludedEnrollment) {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'você já concluiu esse PG Repense' },
+          { status: 409 }
+        );
+      }
+
+      // Scenario C: Active enrollment in DIFFERENT grupo_repense
+      // Check if user wants to enroll in multiple grupos simultaneously
+      // For now, we'll show a confirmation modal for this case too
+      // Return course change response for different grupo too (user should confirm)
+      if (activeEnrollments.length > 0) {
+        // #region agent log
+        fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/register/route.ts:231',message:'Scenario C fallback',data:{activeEnrollmentCount:activeEnrollments.length,hasFirstEnrollment:!!activeEnrollments[0]},timestamp:Date.now(),sessionId:'debug-session',runId:'run11',hypothesisId:'H2'})}).catch(()=>{});
+        // #endregion
+        const existingEnrollment = activeEnrollments[0]; // Use first active enrollment
+        return NextResponse.json<CourseChangeResponse>(
+          {
+            requires_course_change: true,
+            existing_enrollment: {
+              id: existingEnrollment.id,
+              class_id: existingEnrollment.class_id,
+              status: existingEnrollment.status,
+              student_id: existingStudent.id,
+            },
+            current_course: {
+              id: existingEnrollment.Class.id,
+              grupo_repense: existingEnrollment.Class.grupo_repense,
+              modelo: existingEnrollment.Class.modelo,
+              horario: existingEnrollment.Class.horario,
+              data_inicio: existingEnrollment.Class.data_inicio,
+            },
+            new_course: {
+              id: course.id,
+              grupo_repense: course.grupo_repense,
+              modelo: course.modelo,
+              horario: course.horario,
+              data_inicio: course.data_inicio,
+            },
+          },
+          { status: 200 }
+        );
+      }
+    }
+
+    // Check for existing phone (only if different student)
+    if (!existingStudent) {
+      const existingPhone = await prisma.student.findUnique({
+        where: { telefone: cleanedPhone },
+      });
+
+      if (existingPhone) {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'Telefone já cadastrado' },
+          { status: 409 }
+        );
+      }
+    } else if (existingStudent.telefone !== cleanedPhone) {
+      // Existing student changing phone - check if new phone is taken by another student
+      const existingPhone = await prisma.student.findUnique({
+        where: { telefone: cleanedPhone },
+      });
+
+      if (existingPhone && existingPhone.id !== existingStudent.id) {
+        return NextResponse.json<ErrorResponse>(
+          { error: 'Telefone já cadastrado' },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Check for existing email (only if email is provided and different student)
+    if (student.email && student.email.trim().length > 0) {
+      const trimmedEmail = student.email.trim();
+      
+      if (!existingStudent) {
+        const existingEmail = await prisma.student.findUnique({
+          where: { email: trimmedEmail },
+        });
+
+        if (existingEmail) {
+          return NextResponse.json<ErrorResponse>(
+            { error: 'Email já cadastrado' },
+            { status: 409 }
+          );
+        }
+      } else if (existingStudent.email !== trimmedEmail) {
+        // Existing student changing email - check if new email is taken by another student
+        const existingEmail = await prisma.student.findUnique({
+          where: { email: trimmedEmail },
+        });
+
+        if (existingEmail && existingEmail.id !== existingStudent.id) {
+          return NextResponse.json<ErrorResponse>(
+            { error: 'Email já cadastrado' },
+            { status: 409 }
+          );
+        }
       }
     }
 
     // Use Prisma transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx) => {
       // Check if student exists (might be on priority list)
-      const existingStudent = await tx.student.findUnique({
+      const existingStudentInTx = await tx.student.findUnique({
         where: { cpf: cleanedCPF },
       });
 
+      // Double-check: Verify student doesn't already have enrollment in this class
+      // This prevents race conditions where enrollment was created between checks
+      if (existingStudentInTx) {
+        const finalEnrollmentCheck = await tx.enrollment.findUnique({
+          where: {
+            student_id_class_id: {
+              student_id: existingStudentInTx.id,
+              class_id: course.id,
+            },
+          },
+        });
+
+        if (finalEnrollmentCheck) {
+          throw new Error('Você já está matriculado nesta turma');
+        }
+      }
+
       let newStudent;
-      if (existingStudent) {
+      if (existingStudentInTx) {
         // Update existing student (clear priority list flags)
         newStudent = await tx.student.update({
-          where: { id: existingStudent.id },
+          where: { id: existingStudentInTx.id },
           data: {
             nome: student.nome.trim(),
             telefone: cleanedPhone,
-            email: student.email && student.email.trim().length > 0 ? student.email.trim() : existingStudent.email,
-            genero: student.genero?.trim() || existingStudent.genero,
-            estado_civil: student.estado_civil?.trim() || existingStudent.estado_civil,
-            nascimento: student.nascimento ? new Date(student.nascimento) : existingStudent.nascimento,
+            email: student.email && student.email.trim().length > 0 ? student.email.trim() : existingStudentInTx.email,
+            genero: student.genero?.trim() || existingStudentInTx.genero,
+            estado_civil: student.estado_civil?.trim() || existingStudentInTx.estado_civil,
+            nascimento: student.nascimento ? new Date(student.nascimento) : existingStudentInTx.nascimento,
             priority_list: false,
             priority_list_course_id: null,
             priority_list_added_at: null,
@@ -227,6 +423,14 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Error registering student:', error);
+
+    // Handle duplicate enrollment error from transaction
+    if (error.message === 'Você já está matriculado nesta turma') {
+      return NextResponse.json<ErrorResponse>(
+        { error: error.message },
+        { status: 409 }
+      );
+    }
 
     // Handle Prisma unique constraint violations (fallback)
     if (error.code === 'P2002') {

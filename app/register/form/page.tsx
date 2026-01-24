@@ -12,6 +12,7 @@ import { isoDateToBrazilian, brazilianDateToISO } from '@/lib/utils/date';
 import { formatCourseSchedule, formatDayOfWeek, formatMonth, formatTime } from '@/lib/date-formatters';
 import AfternoonCourseWarning from '@/components/AfternoonCourseWarning';
 import { GrupoRepense, ModeloCurso } from '@prisma/client';
+import { CourseChangeModal } from '../components/CourseChangeModal';
 
 interface Course {
   id: string;
@@ -68,6 +69,30 @@ export default function RegisterFormPage() {
   const [priorityListSelectedCourse, setPriorityListSelectedCourse] = useState<string>('');
   const [allCoursesForPriority, setAllCoursesForPriority] = useState<Course[]>([]);
   const [loadingPriorityCourses, setLoadingPriorityCourses] = useState(false);
+  const [requiresCourseChange, setRequiresCourseChange] = useState(false);
+  const [courseChangeData, setCourseChangeData] = useState<{
+    existingEnrollment: {
+      id: string;
+      class_id: string;
+      status: string;
+      student_id: string;
+    };
+    currentCourse: {
+      id: string;
+      grupo_repense: GrupoRepense;
+      modelo: ModeloCurso;
+      horario: string | null;
+      data_inicio: Date | string | null;
+    };
+    newCourse: {
+      id: string;
+      grupo_repense: GrupoRepense;
+      modelo: ModeloCurso;
+      horario: string | null;
+      data_inicio: Date | string | null;
+    };
+  } | null>(null);
+  const [changingCourse, setChangingCourse] = useState(false);
 
   const {
     register,
@@ -227,6 +252,53 @@ export default function RegisterFormPage() {
     }
   };
 
+  const handleCourseChangeConfirm = async () => {
+    if (!courseChangeData) return;
+
+    setChangingCourse(true);
+    setSubmitError(null);
+
+    try {
+      const response = await fetch('/api/register/change-course', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cpf: watchedValues.cpf,
+          student_id: courseChangeData.existingEnrollment.student_id,
+          new_class_id: watchedValues.course_id,
+          old_enrollment_id: courseChangeData.existingEnrollment.id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setSubmitError(result.error || 'Erro ao alterar curso');
+        setChangingCourse(false);
+        return;
+      }
+
+      // Redirect to success page
+      if (result.enrollment_id) {
+        router.push(`/register/success/${result.enrollment_id}`);
+      } else {
+        setSubmitError('Erro ao obter ID da inscrição');
+        setChangingCourse(false);
+      }
+    } catch (error) {
+      setSubmitError('Erro ao conectar com o servidor');
+      setChangingCourse(false);
+    }
+  };
+
+  const handleCourseChangeCancel = () => {
+    setRequiresCourseChange(false);
+    setCourseChangeData(null);
+    setSubmitError(null);
+  };
+
   const onSubmit = async (data: RegisterFormData) => {
     setLoading(true);
     setSubmitError(null);
@@ -257,7 +329,22 @@ export default function RegisterFormPage() {
       const result = await response.json();
 
       if (!response.ok) {
+        // #region agent log
+        fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/register/form/page.tsx:334',message:'Register error response',data:{status:response.status,error:result?.error ?? null},timestamp:Date.now(),sessionId:'debug-session',runId:'run13',hypothesisId:'H4'})}).catch(()=>{});
+        // #endregion
         setSubmitError(result.error || 'Erro ao realizar inscrição');
+        setLoading(false);
+        return;
+      }
+
+      // Check if course change is required
+      if (result.requires_course_change) {
+        setCourseChangeData({
+          existingEnrollment: result.existing_enrollment,
+          currentCourse: result.current_course,
+          newCourse: result.new_course,
+        });
+        setRequiresCourseChange(true);
         setLoading(false);
         return;
       }
@@ -270,6 +357,9 @@ export default function RegisterFormPage() {
         setLoading(false);
       }
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/register/form/page.tsx:365',message:'Register request failed',data:{error:error instanceof Error ? error.message : String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run13',hypothesisId:'H4'})}).catch(()=>{});
+      // #endregion
       setSubmitError('Erro ao conectar com o servidor');
       setLoading(false);
     }
@@ -846,6 +936,19 @@ export default function RegisterFormPage() {
         onContinue={handleWarningContinue}
         onCancel={handleWarningCancel}
       />
+
+      {/* Course Change Modal */}
+      {courseChangeData && (
+        <CourseChangeModal
+          open={requiresCourseChange}
+          onClose={handleCourseChangeCancel}
+          onConfirm={handleCourseChangeConfirm}
+          existingEnrollment={courseChangeData.existingEnrollment}
+          currentCourse={courseChangeData.currentCourse}
+          newCourse={courseChangeData.newCourse}
+          loading={changingCourse}
+        />
+      )}
 
       {/* Priority List Confirmation Modal */}
       {showPriorityModal && (

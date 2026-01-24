@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyTeacherToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { createNotificationsForAllAdmins } from '@/lib/notifications';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -75,6 +76,14 @@ export async function PUT(
       );
     }
 
+    // Check if this is a new report (class didn't have final_report before)
+    const existingClass = await prisma.class.findUnique({
+      where: { id: classId },
+      select: { final_report: true },
+    });
+    
+    const isNewReport = !existingClass?.final_report;
+
     // Update class with final report
     const updatedClass = await prisma.class.update({
       where: { id: classId },
@@ -88,6 +97,17 @@ export async function PUT(
         final_report_em: true,
       },
     });
+
+    // #region agent log
+    fetch('http://127.0.0.1:7252/ingest/aa8eef57-c6f3-4787-9153-8fc4c14a5451',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/teacher/classes/[id]/final-report/route.ts:103',message:'Before creating notification for final report',data:{isNewReport,classId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
+    // Create notification if this is a new final report
+    if (isNewReport) {
+      await createNotificationsForAllAdmins('final_report', classId);
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7252/ingest/aa8eef57-c6f3-4787-9153-8fc4c14a5451',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/teacher/classes/[id]/final-report/route.ts:107',message:'After creating notification for final report',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
 
     return NextResponse.json({
       success: true,

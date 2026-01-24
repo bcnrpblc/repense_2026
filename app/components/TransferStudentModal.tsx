@@ -117,6 +117,9 @@ export function TransferStudentModal({
     setSubmitting(true);
     try {
       const token = getAuthToken();
+      // #region agent log
+      fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/components/TransferStudentModal.tsx:120',message:'Transfer submit clicked',data:{currentClassId,selectedClassId,isPriorityListStudent},timestamp:Date.now(),sessionId:'debug-session',runId:'run9',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
       
       // For priority list students, use different endpoint
       if (isPriorityListStudent) {
@@ -159,6 +162,9 @@ export function TransferStudentModal({
         });
 
         const result = await response.json();
+        // #region agent log
+        fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/components/TransferStudentModal.tsx:165',message:'Transfer response received',data:{status:response.status,ok:response.ok,error:result?.error ?? null},timestamp:Date.now(),sessionId:'debug-session',runId:'run9',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
 
         if (!response.ok) {
           throw new Error(result.error || 'Erro ao transferir participante');
@@ -170,6 +176,9 @@ export function TransferStudentModal({
       }
     } catch (error) {
       console.error('Error transferring student:', error);
+      // #region agent log
+      fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/components/TransferStudentModal.tsx:174',message:'Transfer failed',data:{error:error instanceof Error ? error.message : String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run9',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
       toast.error(error instanceof Error ? error.message : 'Erro ao transferir participante');
     } finally {
       setSubmitting(false);

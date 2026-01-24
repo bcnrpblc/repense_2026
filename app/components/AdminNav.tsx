@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { getAuthToken } from '@/lib/hooks/useAuth';
+import { NotificationDropdown } from './NotificationDropdown';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -130,6 +132,39 @@ const navItems: NavItem[] = [
 export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
+  const [notificationCounts, setNotificationCounts] = useState({
+    studentObservations: 0,
+    sessionReports: 0,
+    finalReports: 0,
+    total: 0,
+  });
+
+  // Fetch notification counts
+  useEffect(() => {
+    async function fetchCounts() {
+      try {
+        const token = getAuthToken();
+        if (!token) return;
+
+        const response = await fetch('/api/admin/notifications/count', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setNotificationCounts(data);
+        }
+      } catch (error) {
+        console.error('Error fetching notification counts:', error);
+      }
+    }
+
+    fetchCounts();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchCounts, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   /**
    * Check if a nav item is currently active
@@ -235,17 +270,39 @@ export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
 
           {/* User Section */}
           <div className="border-t border-gray-200 p-4">
-            {/* User Email */}
-            <div className="flex items-center px-4 py-2 mb-2">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                {userEmail.charAt(0).toUpperCase()}
-              </div>
-              <div className="ml-3 overflow-hidden">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {userEmail}
-                </p>
-                <p className="text-xs text-muted-foreground">Administrador</p>
-              </div>
+            {/* User Email with Notification Badge */}
+            <div className="relative">
+              <button
+                onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
+                className="w-full flex items-center px-4 py-2 mb-2 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="relative">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                    {userEmail.charAt(0).toUpperCase()}
+                  </div>
+                  {notificationCounts.total > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {notificationCounts.total > 9 ? '9+' : notificationCounts.total}
+                    </span>
+                  )}
+                </div>
+                <div className="ml-3 overflow-hidden flex-1 text-left">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {userEmail}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Administrador</p>
+                </div>
+              </button>
+              {/* Notification Dropdown */}
+              {notificationDropdownOpen && (
+                <div className="absolute bottom-full left-0 mb-2 z-[60]">
+                  <NotificationDropdown
+                    isOpen={notificationDropdownOpen}
+                    onClose={() => setNotificationDropdownOpen(false)}
+                    counts={notificationCounts}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Logout Button */}

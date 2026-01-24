@@ -476,6 +476,35 @@ export default function AdminDashboardPage() {
         </Card>
       </div>
 
+      {/* Middle Section: Operational Overview (Metric Cards) */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <StatCard 
+          title="Grupos Ativas" 
+          value={analytics.summary.totalActiveClasses} 
+          icon={<ClassesIcon />}
+        />
+        <StatCard 
+          title="Líderes Ativos" 
+          value={stats.activeTeachers} 
+          icon={<TeachersIcon />}
+        />
+        <StatCard 
+          title="Total de Participantes" 
+          value={stats.totalStudents} 
+          icon={<StudentsIcon />}
+        />
+        <StatCard 
+          title="Matrículas em Turmas Aguardando Início" 
+          value={analytics.summary.futureEnrollments} 
+          icon={<EnrollmentsIcon />}
+        />
+        <StatCard 
+          title="Lista de Prioridade" 
+          value={stats.priorityListCount || 0} 
+          icon={<StudentsIcon />}
+        />
+      </div>
+
       {/* Bottom Section: Status Breakdown */}
       <Card>
         <CardHeader title="Inscrições por Status" subtitle="Distribuição atual de todas as matrículas" />

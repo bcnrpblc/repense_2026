@@ -9,8 +9,8 @@ import { transferStudent, EnrollmentError } from '@/lib/enrollment';
 // ============================================================================
 
 const moveStudentSchema = z.object({
-  studentId: z.string().uuid(),
-  newClassId: z.string().uuid(),
+  studentId: z.string().min(1, 'ID do participante é obrigatório'),
+  newClassId: z.string().min(1, 'ID do novo grupo é obrigatório'),
 });
 
 // ============================================================================
@@ -30,6 +30,9 @@ export async function POST(
 
     const body = await request.json();
     const { studentId, newClassId } = moveStudentSchema.parse(body);
+    // #region agent log
+    fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/admin/classes/[id]/move-student/route.ts:32',message:'Move student parsed',data:{currentClassId:params.id,newClassId},timestamp:Date.now(),sessionId:'debug-session',runId:'run10',hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
 
     const currentClassId = params.id;
 
@@ -41,6 +44,7 @@ export async function POST(
         grupo_repense: true,
       },
     });
+
 
     if (!currentClass) {
       return NextResponse.json(
@@ -60,6 +64,10 @@ export async function POST(
         numero_inscritos: true,
       },
     });
+    // #region agent log
+    fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/admin/classes/[id]/move-student/route.ts:56',message:'Classes resolved',data:{hasCurrentClass:!!currentClass,hasNewClass:!!newClass,currentGrupo:currentClass?.grupo_repense ?? null,newGrupo:newClass?.grupo_repense ?? null},timestamp:Date.now(),sessionId:'debug-session',runId:'run10',hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
+
 
     if (!newClass) {
       return NextResponse.json(
@@ -68,13 +76,8 @@ export async function POST(
       );
     }
 
-    // Validate same grupo_repense
-    if (newClass.grupo_repense !== currentClass.grupo_repense) {
-      return NextResponse.json(
-        { error: 'Transferência só é permitida entre grupos do mesmo grupo' },
-        { status: 400 }
-      );
-    }
+    // Allow transfers across any grupo_repense from admin panel
+    // Allow cross-grupo transfers from admin panel
 
     // Find the active enrollment for this student in this class
     const enrollment = await prisma.enrollment.findFirst({
@@ -84,6 +87,9 @@ export async function POST(
         status: 'ativo',
       },
     });
+    // #region agent log
+    fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/admin/classes/[id]/move-student/route.ts:80',message:'Active enrollment lookup',data:{hasEnrollment:!!enrollment},timestamp:Date.now(),sessionId:'debug-session',runId:'run10',hypothesisId:'H3'})}).catch(()=>{});
+    // #endregion
 
     if (!enrollment) {
       return NextResponse.json(
@@ -93,6 +99,9 @@ export async function POST(
     }
 
     // Use the transferStudent function
+    // #region agent log
+    fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/admin/classes/[id]/move-student/route.ts:90',message:'Calling transferStudent',data:{enrollmentId:enrollment.id,newClassId},timestamp:Date.now(),sessionId:'debug-session',runId:'run10',hypothesisId:'H4'})}).catch(()=>{});
+    // #endregion
     const result = await transferStudent(enrollment.id, newClassId);
 
     return NextResponse.json({
@@ -103,6 +112,9 @@ export async function POST(
 
   } catch (error) {
     console.error('Error moving student:', error);
+    // #region agent log
+    fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/admin/classes/[id]/move-student/route.ts:102',message:'Move student failed',data:{errorName:error instanceof Error ? error.name : typeof error,errorMessage:error instanceof Error ? error.message : String(error),errorCode:typeof error === 'object' && error !== null && 'code' in error ? (error as { code?: string }).code ?? null : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run10',hypothesisId:'H5'})}).catch(()=>{});
+    // #endregion
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -118,6 +130,7 @@ export async function POST(
         'New class not found': 'Novo grupo não encontrado',
         'New class inactive': 'Novo grupo está inativo',
         'New class full': 'Novo grupo está lotado',
+        'você já concluiu esse PG Repense': 'você já concluiu esse PG Repense',
       };
       return NextResponse.json(
         { error: messages[error.message] || error.message },

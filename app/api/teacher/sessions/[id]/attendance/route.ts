@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyTeacherToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { randomUUID } from 'crypto';
+import { createNotificationsForAllAdmins } from '@/lib/notifications';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -105,6 +106,23 @@ export async function POST(
       );
     }
 
+    // Get existing attendance records to check if observations are new
+    const existingAttendances = await prisma.attendance.findMany({
+      where: {
+        session_id: sessionId,
+        student_id: { in: attendanceRecords.map((r) => r.studentId) },
+      },
+      select: {
+        id: true,
+        student_id: true,
+        observacao: true,
+      },
+    });
+
+    const existingMap = new Map(
+      existingAttendances.map((a) => [a.student_id, { id: a.id, observacao: a.observacao }])
+    );
+
     // Use transaction to create/update all attendance records atomically
     const result = await prisma.$transaction(
       attendanceRecords.map((record) =>
@@ -129,6 +147,31 @@ export async function POST(
         })
       )
     );
+
+    // Create notifications for student observations that are new or updated from empty to having content
+    const recordsWithNewObservations = result.filter((a) => {
+      const hasObservation = a.observacao && a.observacao.trim().length > 0;
+      if (!hasObservation) return false;
+
+      const existing = existingMap.get(a.student_id);
+      // Create notification if:
+      // 1. This is a new attendance record (no existing record), OR
+      // 2. Existing record had no observation (was null or empty)
+      const isNewObservation = !existing || !existing.observacao || existing.observacao.trim().length === 0;
+
+      return isNewObservation;
+    });
+
+    // #region agent log
+    fetch('http://127.0.0.1:7252/ingest/aa8eef57-c6f3-4787-9153-8fc4c14a5451',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/teacher/sessions/[id]/attendance/route.ts:165',message:'Before creating notifications for observations',data:{recordsWithNewObservationsCount:recordsWithNewObservations.length,attendanceIds:recordsWithNewObservations.map(a=>a.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    // Create notifications (skip duplicates will handle if notification already exists)
+    for (const attendance of recordsWithNewObservations) {
+      await createNotificationsForAllAdmins('student_observation', attendance.id);
+    }
+    // #region agent log
+    fetch('http://127.0.0.1:7252/ingest/aa8eef57-c6f3-4787-9153-8fc4c14a5451',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/teacher/sessions/[id]/attendance/route.ts:170',message:'After creating notifications for observations',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
 
     // Calculate stats
     const presentes = result.filter((a) => a.presente).length;
