@@ -48,6 +48,13 @@ export async function GET(request: NextRequest) {
         telefone: true,
         eh_ativo: true,
         criado_em: true,
+        Class: {
+          select: {
+            id: true,
+            eh_ativo: true,
+            arquivada: true,
+          },
+        },
         _count: {
           select: {
             Class: true,
@@ -69,6 +76,7 @@ export async function GET(request: NextRequest) {
       eh_ativo: t.eh_ativo,
       criado_em: t.criado_em,
       classCount: t._count.Class,
+      hasActiveClasses: t.Class.some(c => c.eh_ativo && !c.arquivada),
     }));
 
     return NextResponse.json({ teachers: response });

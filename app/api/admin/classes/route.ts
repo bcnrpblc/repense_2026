@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { randomUUID } from 'crypto';
-import { syncTeachersActiveStatus } from '@/lib/teacherStatus';
 import { isValidCity } from '@/lib/constants';
 
 // ============================================================================

@@ -19,6 +19,7 @@ interface Teacher {
   eh_ativo: boolean;
   criado_em: string;
   classCount: number;
+  hasActiveClasses: boolean;
 }
 
 // ============================================================================
@@ -107,38 +108,6 @@ export default function TeachersPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
-            variant="secondary"
-            onClick={async () => {
-              try {
-                const token = getAuthToken();
-                const response = await fetch('/api/admin/teachers/sync-status', {
-                  method: 'POST',
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                });
-
-                const result = await response.json();
-
-                if (!response.ok) {
-                  throw new Error(result.error || 'Erro ao sincronizar status');
-                }
-
-                toast.success(result.message || 'Status sincronizado com sucesso');
-                fetchTeachers();
-              } catch (error) {
-                console.error('Error syncing teacher status:', error);
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : 'Erro ao sincronizar status dos facilitadores'
-                );
-              }
-            }}
-          >
-            Sincronizar Status
-          </Button>
-          <Button
             variant="primary"
             onClick={() => setShowCreateModal(true)}
           >
@@ -214,6 +183,9 @@ export default function TeachersPage() {
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Status
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Atribuição
+                  </th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
                     Ações
                   </th>
@@ -242,6 +214,17 @@ export default function TeachersPage() {
                       }`}>
                         {teacher.eh_ativo ? 'Ativo' : 'Inativo'}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {teacher.hasActiveClasses ? (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {teacher.classCount} grupo{teacher.classCount !== 1 ? 's' : ''}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          Sem grupo
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
@@ -279,7 +262,18 @@ export default function TeachersPage() {
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 mb-1">{teacher.telefone}</p>
-                <p className="text-sm text-gray-500 mb-4">{teacher.classCount} grupo(s)</p>
+                <div className="flex items-center gap-2 mb-4">
+                  <p className="text-sm text-gray-500">{teacher.classCount} grupo(s)</p>
+                  {teacher.hasActiveClasses ? (
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {teacher.classCount} grupo{teacher.classCount !== 1 ? 's' : ''}
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      Sem grupo
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={() => setToggleTarget(teacher)}
                   className={`w-full px-3 py-2 text-sm font-medium rounded-lg border ${

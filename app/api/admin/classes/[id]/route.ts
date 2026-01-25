@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { syncTeachersActiveStatus } from '@/lib/teacherStatus';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -251,9 +250,6 @@ export async function PUT(
       },
     });
 
-    // Após mudar facilitador ou status do grupo, sincroniza status dos facilitadores
-    await syncTeachersActiveStatus();
-
     return NextResponse.json({ class: updatedClass });
 
   } catch (error) {
@@ -313,9 +309,6 @@ export async function DELETE(
         atualizado_em: new Date(),
       },
     });
-
-    // Após arquivar (delete lógico) grupo, sincroniza status dos facilitadores
-    await syncTeachersActiveStatus();
 
     return NextResponse.json({
       success: true,

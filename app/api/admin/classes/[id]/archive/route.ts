@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { syncTeachersActiveStatus } from '@/lib/teacherStatus';
 
 // ============================================================================
 // PUT /api/admin/classes/[id]/archive
@@ -79,9 +78,6 @@ export async function PUT(
         },
       },
     });
-
-    // Após arquivar/desarquivar grupo, sincroniza status dos facilitadores
-    await syncTeachersActiveStatus();
 
     return NextResponse.json({
       success: true,

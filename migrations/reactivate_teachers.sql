@@ -1,0 +1,45 @@
+-- ============================================================================
+-- Teacher Status Migration: Reactivate Auto-Deactivated Teachers
+-- ============================================================================
+-- 
+-- This migration reactivates teachers who were automatically deactivated
+-- because they had no active classes. After this migration, teacher status
+-- (eh_ativo) will be manually controlled by admins and independent of
+-- class assignment.
+--
+-- IMPORTANT: Review the results before running this migration.
+-- You may want to selectively reactivate teachers instead of all at once.
+--
+-- To review which teachers will be affected:
+-- SELECT id, nome, email, eh_ativo FROM "Teacher" WHERE eh_ativo = false;
+--
+-- ============================================================================
+
+-- Option 1: Reactivate ALL inactive teachers
+-- Uncomment the line below if you want to reactivate all teachers
+-- UPDATE "Teacher" SET eh_ativo = true WHERE eh_ativo = false;
+
+-- Option 2: Reactivate only teachers who have classes (but were deactivated)
+-- Uncomment the lines below if you want to be more selective
+-- UPDATE "Teacher" 
+-- SET eh_ativo = true 
+-- WHERE eh_ativo = false 
+-- AND id IN (
+--   SELECT DISTINCT teacher_id 
+--   FROM "Class" 
+--   WHERE teacher_id IS NOT NULL
+-- );
+
+-- Option 3: Manually review and reactivate via admin UI
+-- This is the recommended approach - use the admin interface to selectively
+-- reactivate teachers who should have access.
+
+-- ============================================================================
+-- Verification Query
+-- ============================================================================
+-- After running the migration, verify the results:
+-- SELECT 
+--   COUNT(*) FILTER (WHERE eh_ativo = true) as active_count,
+--   COUNT(*) FILTER (WHERE eh_ativo = false) as inactive_count,
+--   COUNT(*) as total_count
+-- FROM "Teacher";
