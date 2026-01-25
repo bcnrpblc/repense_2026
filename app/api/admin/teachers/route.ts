@@ -3,6 +3,7 @@ import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { normalizeNameBR } from '@/lib/utils/names';
 import { randomUUID } from 'crypto';
 
 // ============================================================================
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
     const teacher = await prisma.teacher.create({
       data: {
         id: randomUUID(),
-        nome: data.nome,
+        nome: normalizeNameBR(data.nome.trim()),
         email: data.email,
         telefone: data.telefone,
         password_hash: passwordHash,

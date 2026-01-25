@@ -203,7 +203,7 @@ async function main() {
         eh_ativo: true,
         eh_16h: false,
         eh_mulheres: false,
-        eh_itu: false, // Indaiatuba
+        cidade: 'Indaiatuba',
         teacher_id: joao.id,
         numero_sessoes: 8,
         data_inicio: nextMonday,
@@ -224,7 +224,7 @@ async function main() {
         eh_ativo: true,
         eh_16h: true,
         eh_mulheres: true,
-        eh_itu: true, // Itu
+        cidade: 'Itu',
         teacher_id: maria.id,
         numero_sessoes: 8,
         data_inicio: nextMonday,
@@ -246,7 +246,7 @@ async function main() {
         eh_ativo: true,
         eh_16h: false,
         eh_mulheres: false,
-        eh_itu: false, // Indaiatuba
+        cidade: 'Indaiatuba',
         teacher_id: pedro.id,
         numero_sessoes: 8,
         data_inicio: nextMonday,
@@ -267,7 +267,7 @@ async function main() {
         eh_ativo: true,
         eh_16h: false,
         eh_mulheres: false,
-        eh_itu: true, // Itu
+        cidade: 'Itu',
         teacher_id: joao.id,
         numero_sessoes: 8,
         data_inicio: nextMonday,
@@ -289,7 +289,7 @@ async function main() {
         eh_ativo: true,
         eh_16h: false,
         eh_mulheres: false,
-        eh_itu: false, // Indaiatuba
+        cidade: 'Indaiatuba',
         teacher_id: maria.id,
         numero_sessoes: 8,
         data_inicio: nextMonday,
@@ -310,7 +310,7 @@ async function main() {
         eh_ativo: true,
         eh_16h: true,
         eh_mulheres: false,
-        eh_itu: true, // Itu
+        cidade: 'Itu',
         teacher_id: pedro.id,
         numero_sessoes: 8,
         data_inicio: nextMonday,

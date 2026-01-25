@@ -22,7 +22,7 @@ export default function TeacherNotFound() {
           Página não encontrada
         </h1>
         <p className="text-gray-600 mb-6">
-          A página do professor que você está procurando não existe.
+          A página do facilitador que você está procurando não existe.
         </p>
 
         {/* Action */}

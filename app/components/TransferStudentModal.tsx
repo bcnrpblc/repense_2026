@@ -15,7 +15,7 @@ interface ClassOption {
   grupo_repense: string;
   modelo: string;
   horario: string | null;
-  eh_itu: boolean;
+  cidade: string | null;
   capacidade: number;
   numero_inscritos: number;
   teacher?: {
@@ -241,7 +241,7 @@ export function TransferStudentModal({
                         {classItem.grupo_repense} - {classItem.horario || 'Horário não definido'}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {classItem.modelo} • {classItem.eh_itu ? 'Itu' : 'Indaiatuba'}
+                        {classItem.modelo} • {classItem.cidade || 'Indaiatuba'}
                         {classItem.teacher && ` • Facilitador ${classItem.teacher.nome}`}
                       </p>
                     </div>
@@ -283,7 +283,7 @@ export function TransferStudentModal({
                   O participante <strong>{studentName}</strong> será transferido para o grupo:
                 </p>
                 <p className="mt-2 text-sm font-medium text-yellow-800">
-                  {selectedClass?.grupo_repense} - {selectedClass?.horario || 'Horário não definido'} - {selectedClass?.eh_itu ? 'Itu' : 'Indaiatuba'}
+                  {selectedClass?.grupo_repense} - {selectedClass?.horario || 'Horário não definido'} - {selectedClass?.cidade || 'Indaiatuba'}
                 </p>
                 <p className="mt-2 text-sm text-yellow-700">
                   <strong>Atenção:</strong> O progresso do participante será resetado no novo grupo.

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     if (!student) {
       return NextResponse.json(
-        { canEnroll: false, reason: 'Aluno não encontrado' },
+        { canEnroll: false, reason: 'Participante não encontrado' },
         { status: 200 }
       );
     }

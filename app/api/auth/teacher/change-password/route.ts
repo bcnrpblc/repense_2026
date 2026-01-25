@@ -18,22 +18,22 @@ const changePasswordSchema = z.object({
 // ============================================================================
 
 /**
- * Permite o professor trocar sua própria senha.
+ * Permite o facilitador trocar sua própria senha.
  *
  * Regras:
- * - Requer token de professor válido (Authorization: Bearer <token>)
+ * - Requer token de facilitador válido (Authorization: Bearer <token>)
  * - Deve informar senha atual correta
  * - Nova senha mínima de 8 caracteres
  */
 export async function POST(request: NextRequest) {
   try {
-    // Autentica professor via JWT
+    // Autentica facilitador via JWT
     const tokenPayload = await verifyTeacherToken(request);
 
     const body = await request.json();
     const { currentPassword, newPassword } = changePasswordSchema.parse(body);
 
-    // Busca professor no banco
+    // Busca facilitador no banco
     const teacher = await prisma.teacher.findUnique({
       where: { id: tokenPayload.teacherId },
       select: {
@@ -45,14 +45,14 @@ export async function POST(request: NextRequest) {
 
     if (!teacher) {
       return NextResponse.json(
-        { error: 'Professor não encontrado' },
+        { error: 'Facilitador não encontrado' },
         { status: 404 }
       );
     }
 
     if (!teacher.eh_ativo) {
       return NextResponse.json(
-        { error: 'Professor inativo' },
+        { error: 'Facilitador inativo' },
         { status: 403 }
       );
     }

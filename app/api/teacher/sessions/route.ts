@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     if (activeSession) {
       return NextResponse.json(
         {
-          error: 'Você já tem uma sessão ativa',
+          error: 'Você já tem um encontro em andamento',
           activeSession: {
             id: activeSession.id,
             classId: activeSession.Class.id,
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
             grupo_repense: true,
             modelo: true,
             horario: true,
-            eh_itu: true,
+            cidade: true,
             numero_sessoes: true,
           },
         },
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
             grupo_repense: newSession.Class.grupo_repense,
             modelo: newSession.Class.modelo,
             horario: newSession.Class.horario,
-            cidade: newSession.Class.eh_itu ? 'Itu' : 'Indaiatuba',
+            cidade: newSession.Class.cidade || 'Indaiatuba',
             numero_sessoes: newSession.Class.numero_sessoes,
           },
         },

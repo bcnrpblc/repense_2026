@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { normalizeNameBR } from '@/lib/utils/names';
 
 // ============================================================================
 // GET /api/admin/students/[id]
@@ -32,7 +33,6 @@ export async function GET(
                 grupo_repense: true,
                 modelo: true,
                 horario: true,
-                eh_itu: true,
                 eh_ativo: true,
                 numero_sessoes: true,
                 Teacher: {
@@ -85,7 +85,7 @@ export async function GET(
 
     if (!student) {
       return NextResponse.json(
-        { error: 'Aluno não encontrado' },
+        { error: 'Participante não encontrado' },
         { status: 404 }
       );
     }
@@ -116,7 +116,6 @@ export async function GET(
           grupo_repense: enrollment.Class.grupo_repense,
           modelo: enrollment.Class.modelo,
           horario: enrollment.Class.horario,
-          eh_itu: enrollment.Class.eh_itu,
           eh_ativo: enrollment.Class.eh_ativo,
           numero_sessoes: enrollment.Class.numero_sessoes,
           teacher: enrollment.Class.Teacher,
@@ -167,7 +166,6 @@ export async function GET(
           id: true,
           grupo_repense: true,
           horario: true,
-          eh_itu: true,
           eh_ativo: true,
         },
       });
@@ -253,7 +251,7 @@ export async function PUT(
 
     if (!existingStudent) {
       return NextResponse.json(
-        { error: 'Aluno não encontrado' },
+        { error: 'Participante não encontrado' },
         { status: 404 }
       );
     }
@@ -316,7 +314,7 @@ export async function PUT(
       estado_civil?: string | null;
       nascimento?: Date | null;
     } = {
-      nome: nome.trim(),
+      nome: normalizeNameBR(nome.trim()),
       telefone: telefone.trim(),
     };
 
@@ -342,7 +340,7 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: 'Aluno atualizado com sucesso',
+      message: 'Participante atualizado com sucesso',
       student: updatedStudent,
     });
 

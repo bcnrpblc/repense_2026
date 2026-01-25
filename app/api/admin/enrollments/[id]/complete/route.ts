@@ -71,7 +71,6 @@ export async function POST(
             grupo_repense: true,
             modelo: true,
             horario: true,
-            eh_itu: true,
           },
         },
       },

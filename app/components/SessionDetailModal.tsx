@@ -147,7 +147,7 @@ export function SessionDetailModal({ sessionId, onClose }: SessionDetailModalPro
               ) : session ? (
                 <>
                   <h3 className="text-lg font-semibold text-gray-900">
-                    Sessão #{session.numero_sessao}
+                    Encontro #{session.numero_sessao}
                   </h3>
                   <p className="text-sm text-gray-500">
                     {formatDate(session.data_sessao)}
@@ -155,7 +155,7 @@ export function SessionDetailModal({ sessionId, onClose }: SessionDetailModalPro
                 </>
               ) : (
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Detalhes da Sessão
+                  Detalhes do Encontro
                 </h3>
               )}
             </div>
@@ -242,7 +242,7 @@ export function SessionDetailModal({ sessionId, onClose }: SessionDetailModalPro
               </>
             ) : (
               <div className="text-center py-8">
-                <p className="text-gray-500">Não foi possível carregar os detalhes da sessão</p>
+                <p className="text-gray-500">Não foi possível carregar os detalhes desse encontro</p>
               </div>
             )}
           </div>

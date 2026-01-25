@@ -44,6 +44,9 @@ export const registerSchema = z.object({
     },
     { message: 'Data de nascimento deve estar no formato dd-MM-yyyy (ex: 25-12-1990)' }
   ),
+  cidade_preferencia: z.enum(['Indaiatuba', 'Itu'], {
+    message: 'Selecione uma cidade',
+  }),
   
   // Step 2 - Course Selection
   course_id: z.string().min(1, 'Selecione um curso'),

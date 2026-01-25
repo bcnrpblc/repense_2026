@@ -51,7 +51,7 @@ export async function GET(
             grupo_repense: true,
             modelo: true,
             horario: true,
-            eh_itu: true,
+            cidade: true,
             numero_sessoes: true,
           },
         },
@@ -79,7 +79,7 @@ export async function GET(
     // Verify teacher owns this class
     if (session.Class.teacher_id !== teacherId) {
       return NextResponse.json(
-        { error: 'Você não tem permissão para visualizar esta sessão' },
+        { error: 'Você não tem permissão para visualizar esse encontro' },
         { status: 403 }
       );
     }
@@ -96,7 +96,7 @@ export async function GET(
           grupo_repense: session.Class.grupo_repense,
           modelo: session.Class.modelo,
           horario: session.Class.horario,
-          cidade: session.Class.eh_itu ? 'Itu' : 'Indaiatuba',
+          cidade: session.Class.cidade || 'Indaiatuba',
           numero_sessoes: session.Class.numero_sessoes,
         },
         attendance: session.Attendance.map((a) => ({
@@ -203,7 +203,7 @@ export async function PUT(
 
     if (session.Class.teacher_id !== teacherId) {
       return NextResponse.json(
-        { error: 'Você não tem permissão para atualizar esta sessão' },
+        { error: 'Você não tem permissão para atualizar esse encontro' },
         { status: 403 }
       );
     }
@@ -224,7 +224,7 @@ export async function PUT(
     if (missingAttendance.length > 0) {
       return NextResponse.json(
         {
-          error: 'Você precisa registrar a presença de todos os participantes antes de finalizar a sessão',
+          error: 'Você precisa registrar a presença de todos os participantes antes de finalizar esse encontro',
           code: 'CHECK_IN_REQUIRED',
         },
         { status: 400 }
@@ -296,7 +296,7 @@ export async function PUT(
           presentes: updatedSession.Attendance.filter((a) => a.presente).length,
         },
       },
-      message: 'Sessão finalizada com sucesso',
+      message: 'Encontro finalizado com sucesso',
     });
   } catch (error) {
     console.error('Error updating session:', error);

@@ -22,7 +22,6 @@ interface Course {
   numero_inscritos: number;
   eh_ativo: boolean;
   eh_mulheres: boolean;
-  eh_itu: boolean;
   data_inicio: string | null;
   horario: string | null;
 }
@@ -108,10 +107,15 @@ export default function RegisterFormPage() {
 
   const watchedValues = watch();
 
-  // Fetch courses when step 2 is shown or when genero changes
+  // Fetch courses when step 2 is shown or when genero/cidade changes
   useEffect(() => {
     // Only fetch courses when we're on step 2 or about to go to step 2
     if (step < 2) {
+      return;
+    }
+
+    // Don't fetch if cidade_preferencia is not selected
+    if (!watchedValues.cidade_preferencia) {
       return;
     }
 
@@ -119,13 +123,24 @@ export default function RegisterFormPage() {
       setFetchingCourses(true);
       try {
         const genero = watchedValues.genero;
-        const url = genero ? `/api/courses?genero=${encodeURIComponent(genero)}` : '/api/courses';
+        const cidade = watchedValues.cidade_preferencia;
         
+        // Build URL with cidade and genero parameters
+        const params = new URLSearchParams();
+        if (cidade) {
+          params.append('cidade', cidade);
+        }
+        if (genero) {
+          params.append('genero', genero);
+        }
+        
+        const url = `/api/courses?${params.toString()}`;
         const response = await fetch(url);
+        
         if (response.ok) {
           const data = await response.json();
           
-          // API returns grouped by city structure
+          // API returns grouped by city structure, but we only show selected city
           setGroupedCourses({
             indaiatuba: data.indaiatuba || { Igreja: [], Espiritualidade: [], Evangelho: [] },
             itu: data.itu || { Igreja: [], Espiritualidade: [], Evangelho: [] },
@@ -139,7 +154,7 @@ export default function RegisterFormPage() {
     };
 
     fetchCourses();
-  }, [step, watchedValues.genero]);
+  }, [step, watchedValues.genero, watchedValues.cidade_preferencia]);
 
   // Flatten all courses for finding selected course
   const allCourses: Course[] = [
@@ -149,7 +164,7 @@ export default function RegisterFormPage() {
 
   const handleNext = async () => {
     if (step === 1) {
-      const isValid = await trigger(['nome', 'cpf', 'telefone', 'nascimento']);
+      const isValid = await trigger(['nome', 'cpf', 'telefone', 'nascimento', 'cidade_preferencia']);
       if (isValid) {
         setStep(2);
       }
@@ -198,7 +213,7 @@ export default function RegisterFormPage() {
     }
 
     // Validate step 1 fields first
-    const isValid = await trigger(['nome', 'cpf', 'telefone', 'nascimento']);
+    const isValid = await trigger(['nome', 'cpf', 'telefone', 'nascimento', 'cidade_preferencia']);
     if (!isValid) {
       setSubmitError('Por favor, preencha todos os campos obrigatórios');
       setShowPriorityModal(false);
@@ -222,6 +237,7 @@ export default function RegisterFormPage() {
           nascimento: watchedValues.nascimento 
             ? (brazilianDateToISO(watchedValues.nascimento) || null)
             : undefined,
+          cidade_preferencia: watchedValues.cidade_preferencia || undefined,
           course_id: priorityListSelectedCourse,
         }),
       });
@@ -314,6 +330,7 @@ export default function RegisterFormPage() {
           genero: data.genero,
           estado_civil: data.estado_civil,
           nascimento: data.nascimento,
+          cidade_preferencia: data.cidade_preferencia,
         },
         course_id: data.course_id,
       };
@@ -366,6 +383,126 @@ export default function RegisterFormPage() {
   };
 
   const selectedCourse = allCourses.find((c) => c.id === watchedValues.course_id);
+
+  // Helper function to render course selection content
+  const renderCourseSelection = () => {
+    // Determine which city's courses to show
+    const selectedCity = watchedValues.cidade_preferencia;
+    if (!selectedCity) {
+      return null;
+    }
+    
+    const cityKey = selectedCity === 'Itu' ? 'itu' : 'indaiatuba';
+    const cityCourses = groupedCourses[cityKey];
+    
+    // Check if there are any courses
+    const hasCourses = Object.values(cityCourses).some(courses => courses.length > 0);
+    
+    if (!hasCourses) {
+      return (
+        <div className="text-center py-12">
+          <p className="text-lg text-gray-700 mb-4">
+            No momento não há turmas disponíveis em {selectedCity}.
+          </p>
+          <p className="text-sm text-gray-600 mb-6">
+            Você pode escolher outra cidade ou entrar na lista de prioridade.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Escolher outra cidade
+            </button>
+          </div>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="space-y-8">
+        <h3 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-300">
+          Opções PG Repense {selectedCity}
+        </h3>
+        {Object.entries(cityCourses).map(([grupo, grupoCourses]) => (
+          grupoCourses.length > 0 && (
+            <div key={`${cityKey}-${grupo}`}>
+              <h4 className="text-xl font-semibold text-gray-900 mb-4">
+                {grupoLabels[grupo as GrupoRepense]}
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {grupoCourses.map((course) => {
+                  const isFull = course.numero_inscritos >= course.capacidade;
+                  const isSelected = watchedValues.course_id === course.id;
+                  const vagasDisponiveis = course.capacidade - course.numero_inscritos;
+
+                  return (
+                    <div
+                      key={course.id}
+                      onClick={() => {
+                        if (!isFull) {
+                          // Toggle: if already selected, deselect; otherwise select
+                          if (isSelected) {
+                            setValue('course_id', '', { shouldValidate: true });
+                          } else {
+                            setValue('course_id', course.id, { shouldValidate: true });
+                          }
+                        }
+                      }}
+                      className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-[#c92041] bg-red-50'
+                          : isFull
+                          ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                          : 'border-gray-200 hover:border-[#c92041] hover:bg-red-50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-900">
+                            {course.data_inicio && course.horario
+                              ? formatCourseSchedule(course.modelo, course.data_inicio, course.horario)
+                              : modeloLabels[course.modelo]}
+                          </div>
+                          {course.eh_mulheres && (
+                            <div className="mt-2 text-sm text-purple-600 font-medium">
+                              Esse PG Repense é exclusivo para mulheres
+                            </div>
+                          )}
+                          <div className="text-sm text-gray-600 mt-1">
+                            Capacidade: {course.capacidade}
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="w-6 h-6 bg-[#c92041] rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-2">
+                        {isFull ? (
+                          <span className="inline-block px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded">
+                            PG Repense lotado
+                          </span>
+                        ) : (
+                          <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+                            {vagasDisponiveis} {vagasDisponiveis === 1 ? 'vaga disponível' : 'vagas disponíveis'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -577,13 +714,51 @@ export default function RegisterFormPage() {
                   <p className="mt-1 text-sm text-red-500">{errors.nascimento.message}</p>
                 )}
               </div>
+
+              <div>
+                <label htmlFor="cidade_preferencia" className="block text-sm font-medium text-gray-700 mb-2">
+                  Onde você prefere fazer o PG Repense? <span className="text-red-500">*</span>
+                </label>
+                <select
+                  {...register('cidade_preferencia')}
+                  id="cidade_preferencia"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c92041] focus:border-transparent ${
+                    errors.cidade_preferencia ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Selecione uma cidade...</option>
+                  <option value="Indaiatuba">Indaiatuba</option>
+                  <option value="Itu">Itu</option>
+                </select>
+                {errors.cidade_preferencia && (
+                  <p className="mt-1 text-sm text-red-500">{errors.cidade_preferencia.message}</p>
+                )}
+              </div>
             </div>
           )}
 
           {/* Step 2: Course Selection */}
           {step === 2 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-6">Seleção de PG Repense</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold text-gray-900">Seleção de PG Repense</h2>
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-sm text-[#c92041] hover:underline"
+                >
+                  Mudar cidade
+                </button>
+              </div>
+
+              {/* Display selected city */}
+              {watchedValues.cidade_preferencia && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">📍 Turmas disponíveis em {watchedValues.cidade_preferencia}</span>
+                  </p>
+                </div>
+              )}
 
               {fetchingCourses ? (
                 <div className="text-center py-12">
@@ -591,171 +766,7 @@ export default function RegisterFormPage() {
                   <p className="mt-4 text-gray-600">Carregando opções...</p>
                 </div>
               ) : (
-                <div className="space-y-12">
-                  {/* Opções Repense Indaiatuba */}
-                  <div className="space-y-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-300">
-                      Opções PG Repense Indaiatuba
-                    </h3>
-                    {Object.entries(groupedCourses.indaiatuba).map(([grupo, grupoCourses]) => (
-                      grupoCourses.length > 0 && (
-                        <div key={`indaiatuba-${grupo}`}>
-                          <h4 className="text-xl font-semibold text-gray-900 mb-4">
-                            {grupoLabels[grupo as GrupoRepense]}
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {grupoCourses.map((course) => {
-                              const isFull = course.numero_inscritos >= course.capacidade;
-                              const isSelected = watchedValues.course_id === course.id;
-                              const vagasDisponiveis = course.capacidade - course.numero_inscritos;
-
-                              return (
-                                <div
-                                  key={course.id}
-                                  onClick={() => {
-                                    if (!isFull) {
-                                      // Toggle: if already selected, deselect; otherwise select
-                                      if (isSelected) {
-                                        setValue('course_id', '', { shouldValidate: true });
-                                      } else {
-                                        setValue('course_id', course.id, { shouldValidate: true });
-                                      }
-                                    }
-                                  }}
-                                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                                    isSelected
-                                      ? 'border-[#c92041] bg-red-50'
-                                      : isFull
-                                      ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
-                                      : 'border-gray-200 hover:border-[#c92041] hover:bg-red-50'
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between mb-2">
-                                    <div className="flex-1">
-                                      <div className="font-semibold text-gray-900">
-                                        {course.data_inicio && course.horario
-                                          ? formatCourseSchedule(course.modelo, course.data_inicio, course.horario)
-                                          : modeloLabels[course.modelo]}
-                                      </div>
-                                      {course.eh_mulheres && (
-                                        <div className="mt-2 text-sm text-purple-600 font-medium">
-                                          Esse PG Repense é exclusivo para mulheres
-                                        </div>
-                                      )}
-                                      <div className="text-sm text-gray-600 mt-1">
-                                        Capacidade: {course.capacidade}
-                                      </div>
-                                    </div>
-                                    {isSelected && (
-                                      <div className="w-6 h-6 bg-[#c92041] rounded-full flex items-center justify-center flex-shrink-0 ml-2">
-                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="mt-2">
-                                    {isFull ? (
-                                      <span className="inline-block px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded">
-                                        PG Repense lotado
-                                      </span>
-                                    ) : (
-                                      <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
-                                        {vagasDisponiveis} {vagasDisponiveis === 1 ? 'vaga disponível' : 'vagas disponíveis'}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )
-                    ))}
-                  </div>
-
-                  {/* Opções Repense Itu */}
-                  <div className="space-y-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-gray-300">
-                      Opções PG Repense Itu
-                    </h3>
-                    {Object.entries(groupedCourses.itu).map(([grupo, grupoCourses]) => (
-                      grupoCourses.length > 0 && (
-                        <div key={`itu-${grupo}`}>
-                          <h4 className="text-xl font-semibold text-gray-900 mb-4">
-                            {grupoLabels[grupo as GrupoRepense]}
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {grupoCourses.map((course) => {
-                              const isFull = course.numero_inscritos >= course.capacidade;
-                              const isSelected = watchedValues.course_id === course.id;
-                              const vagasDisponiveis = course.capacidade - course.numero_inscritos;
-
-                              return (
-                                <div
-                                  key={course.id}
-                                  onClick={() => {
-                                    if (!isFull) {
-                                      // Toggle: if already selected, deselect; otherwise select
-                                      if (isSelected) {
-                                        setValue('course_id', '', { shouldValidate: true });
-                                      } else {
-                                        setValue('course_id', course.id, { shouldValidate: true });
-                                      }
-                                    }
-                                  }}
-                                  className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                                    isSelected
-                                      ? 'border-[#c92041] bg-red-50'
-                                      : isFull
-                                      ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
-                                      : 'border-gray-200 hover:border-[#c92041] hover:bg-red-50'
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between mb-2">
-                                    <div className="flex-1">
-                                      <div className="font-semibold text-gray-900">
-                                        {course.data_inicio && course.horario
-                                          ? formatCourseSchedule(course.modelo, course.data_inicio, course.horario)
-                                          : modeloLabels[course.modelo]}
-                                      </div>
-                                      {course.eh_mulheres && (
-                                        <div className="mt-2 text-sm text-purple-600 font-medium">
-                                          Esse PG Repense é exclusivo para mulheres
-                                        </div>
-                                      )}
-                                      <div className="text-sm text-gray-600 mt-1">
-                                        Capacidade: {course.capacidade}
-                                      </div>
-                                    </div>
-                                    {isSelected && (
-                                      <div className="w-6 h-6 bg-[#c92041] rounded-full flex items-center justify-center flex-shrink-0 ml-2">
-                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="mt-2">
-                                    {isFull ? (
-                                      <span className="inline-block px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded">
-                                        PG Repense lotado
-                                      </span>
-                                    ) : (
-                                      <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
-                                        {vagasDisponiveis} {vagasDisponiveis === 1 ? 'vaga disponível' : 'vagas disponíveis'}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )
-                    ))}
-                  </div>
-                </div>
+                renderCourseSelection()
               )}
 
               {errors.course_id && (
@@ -844,6 +855,14 @@ export default function RegisterFormPage() {
                         <span className="text-gray-600">Data de Nascimento:</span>
                         <p className="font-medium text-gray-900">
                           {watchedValues.nascimento}
+                        </p>
+                      </div>
+                    )}
+                    {watchedValues.cidade_preferencia && (
+                      <div>
+                        <span className="text-gray-600">Cidade:</span>
+                        <p className="font-medium text-gray-900">
+                          {watchedValues.cidade_preferencia}
                         </p>
                       </div>
                     )}

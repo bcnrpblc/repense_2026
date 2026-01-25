@@ -31,7 +31,7 @@ const loginSchema = z.object({
  * 
  * Request body:
  * {
- *   "email": "professor@example.com",
+ *   "email": "facilitador@example.com",
  *   "password": "senha123"
  * }
  * 
@@ -40,15 +40,15 @@ const loginSchema = z.object({
  *   "token": "eyJhbGciOiJIUzI1NiIs...",
  *   "teacher": {
  *     "id": "uuid",
- *     "nome": "Professor Name",
- *     "email": "professor@example.com"
+ *     "nome": "Facilitador Name",
+ *     "email": "facilitador@example.com"
  *   }
  * }
  * 
  * Error responses:
  * - 400: Invalid request data (Zod validation failed)
  * - 401: "Credenciais inválidas" (wrong email or password)
- * - 403: "Professor inativo" (teacher is deactivated)
+ * - 403: "Facilitador inativo" (teacher is deactivated)
  * - 500: Internal server error
  */
 export async function POST(request: NextRequest) {

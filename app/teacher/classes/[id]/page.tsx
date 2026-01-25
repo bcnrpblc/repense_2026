@@ -163,7 +163,7 @@ function SessionDetailModal({ session, classInfo, onClose }: SessionDetailModalP
           <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Sessão #{session.numero_sessao}
+                Encontro #{session.numero_sessao}
               </h3>
               <p className="text-sm text-gray-500">
                 {formatDate(session.data_sessao)}
@@ -455,7 +455,7 @@ export default function TeacherClassDetailPage() {
             {classInfo.eh_ativo && (
               <Link href={`/teacher/classes/${classId}/session`}>
                 <Button variant="primary" size="sm">
-                  Iniciar Nova Sessão
+                  Iniciar Novo Encontro
                 </Button>
               </Link>
             )}
@@ -466,21 +466,21 @@ export default function TeacherClassDetailPage() {
       {/* Sessions History */}
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900">
-          Histórico de Sessões
+          Histórico de Encontros
         </h2>
         <p className="text-sm text-gray-500">
-          {sessions.length} de {classInfo.numero_sessoes} sessões
+          {sessions.length} de {classInfo.numero_sessoes} encontros
         </p>
       </div>
 
       {sessions.length === 0 ? (
         <Card className="text-center py-12">
           <ClockIcon />
-          <p className="text-gray-500 mt-4">Nenhuma sessão realizada ainda</p>
+          <p className="text-gray-500 mt-4">Nenhum encontro realizado ainda</p>
           {classInfo.eh_ativo && (
             <Link href={`/teacher/classes/${classId}/session`}>
               <Button variant="primary" size="sm" className="mt-4">
-                Iniciar Primeira Sessão
+                Iniciar Primeiro Encontro
               </Button>
             </Link>
           )}
@@ -497,7 +497,7 @@ export default function TeacherClassDetailPage() {
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-gray-900">
-                      Sessão #{session.numero_sessao}
+                      Encontro #{session.numero_sessao}
                     </h3>
                     {session.relatorio ? (
                       <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">

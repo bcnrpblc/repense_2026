@@ -101,7 +101,7 @@ export async function GET(
         grupo_repense: classData.grupo_repense,
         modelo: classData.modelo,
         horario: classData.horario,
-        cidade: classData.eh_itu ? 'Itu' : 'Indaiatuba',
+        cidade: classData.cidade || 'Indaiatuba',
         capacidade: classData.capacidade,
         numero_inscritos: classData.numero_inscritos,
         activeEnrollments: classData._count.enrollments,

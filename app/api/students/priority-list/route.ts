@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { cleanCPF, validateCPF } from '@/lib/utils/cpf';
 import { cleanPhone } from '@/lib/utils/phone';
+import { normalizeNameBR } from '@/lib/utils/names';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -17,6 +18,7 @@ const priorityListSchema = z.object({
   estado_civil: z.string().optional(),
   nascimento: z.string().optional(),
   course_id: z.string().min(1, 'course_id é obrigatório'),
+  cidade_preferencia: z.string().optional(),
 });
 
 // ============================================================================
@@ -87,7 +89,7 @@ export async function POST(request: NextRequest) {
     // If student exists and has active enrollment, cannot add to priority list
     if (existingStudent && existingStudent.enrollments.length > 0) {
       return NextResponse.json(
-        { error: 'Aluno já possui inscrição ativa. Não é possível adicionar à lista de prioridade.' },
+        { error: 'O participante já possui inscrição ativa. Não é possível adicionar à lista de prioridade.' },
         { status: 409 }
       );
     }
@@ -101,7 +103,7 @@ export async function POST(request: NextRequest) {
         student = await tx.student.update({
           where: { id: existingStudent.id },
           data: {
-            nome: data.nome.trim(),
+            nome: normalizeNameBR(data.nome.trim()),
             telefone: cleanedPhone,
             email: data.email && data.email.trim().length > 0 ? data.email.trim() : existingStudent.email,
             genero: data.genero?.trim() || existingStudent.genero,
@@ -109,6 +111,7 @@ export async function POST(request: NextRequest) {
             nascimento: data.nascimento && data.nascimento.trim() 
               ? (isNaN(new Date(data.nascimento).getTime()) ? existingStudent.nascimento : new Date(data.nascimento))
               : existingStudent.nascimento,
+            cidade_preferencia: data.cidade_preferencia?.trim() || existingStudent.cidade_preferencia,
             priority_list: true,
             priority_list_course_id: data.course_id,
             priority_list_added_at: new Date(),
@@ -118,7 +121,7 @@ export async function POST(request: NextRequest) {
         // Create new student with priority list flag
         student = await tx.student.create({
           data: {
-            nome: data.nome.trim(),
+            nome: normalizeNameBR(data.nome.trim()),
             cpf: cleanedCPF,
             telefone: cleanedPhone,
             email: data.email && data.email.trim().length > 0 ? data.email.trim() : null,
@@ -131,6 +134,7 @@ export async function POST(request: NextRequest) {
               const dateObj = new Date(data.nascimento);
               return !isNaN(dateObj.getTime()) ? dateObj : null;
             })(),
+            cidade_preferencia: data.cidade_preferencia?.trim() || null,
             priority_list: true,
             priority_list_course_id: data.course_id,
             priority_list_added_at: new Date(),

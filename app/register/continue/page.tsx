@@ -21,7 +21,6 @@ interface Course {
   numero_inscritos: number;
   eh_ativo: boolean;
   eh_mulheres: boolean;
-  eh_itu: boolean;
   vagas_disponiveis: number;
   data_inicio: string | null;
   horario: string | null;
@@ -135,6 +134,7 @@ function ContinueForm() {
           genero: (studentData.genero as 'Masculino' | 'Feminino' | 'Outro') || undefined,
           estado_civil: (studentData.estado_civil as 'Solteiro' | 'Casado' | 'Divorciado' | 'Viúvo') || undefined,
           nascimento: studentData.nascimento ? isoDateToBrazilian(studentData.nascimento) || undefined : undefined,
+          cidade_preferencia: (studentData as any).cidade_preferencia || undefined,
           course_id: '',
         });
 
@@ -142,12 +142,19 @@ function ContinueForm() {
         setValue('nome', studentData.nome);
         setValue('cpf', formatCPF(studentData.cpf));
 
-        // Fetch available courses (excluding already enrolled and filtered by gender)
+        // Fetch available courses (excluding already enrolled and filtered by gender and city)
         const genero = studentData.genero;
-        const coursesUrl = genero
-          ? `/api/courses?student_id=${studentId}&genero=${encodeURIComponent(genero)}`
-          : `/api/courses?student_id=${studentId}`;
+        const cidadePreferencia = (studentData as any).cidade_preferencia;
+        const params = new URLSearchParams();
+        params.append('student_id', studentId);
+        if (genero) {
+          params.append('genero', genero);
+        }
+        if (cidadePreferencia) {
+          params.append('cidade', cidadePreferencia);
+        }
         
+        const coursesUrl = `/api/courses?${params.toString()}`;
         const coursesResponse = await fetch(coursesUrl);
         if (!coursesResponse.ok) {
           setError('Erro ao carregar PG Repense disponíveis');
@@ -179,7 +186,7 @@ function ContinueForm() {
 
   const handleNext = async () => {
     if (step === 1) {
-      const isValid = await trigger(['telefone', 'genero', 'estado_civil']);
+      const isValid = await trigger(['telefone', 'genero', 'estado_civil', 'cidade_preferencia']);
       if (isValid) {
         setStep(2);
       }
@@ -492,6 +499,26 @@ function ContinueForm() {
                     <option value="Viúvo">Viúvo</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label htmlFor="cidade_preferencia" className="block text-sm font-medium text-gray-700 mb-2">
+                  Onde você prefere fazer o PG Repense? <span className="text-red-500">*</span>
+                </label>
+                <select
+                  {...register('cidade_preferencia')}
+                  id="cidade_preferencia"
+                  className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c92041] focus:border-transparent ${
+                    errors.cidade_preferencia ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Selecione uma cidade...</option>
+                  <option value="Indaiatuba">Indaiatuba</option>
+                  <option value="Itu">Itu</option>
+                </select>
+                {errors.cidade_preferencia && (
+                  <p className="mt-1 text-sm text-red-500">{errors.cidade_preferencia.message}</p>
+                )}
               </div>
             </div>
           )}

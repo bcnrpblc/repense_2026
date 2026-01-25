@@ -219,7 +219,7 @@ export function TeacherNav({ userName, userEmail, onLogout }: TeacherNavProps) {
               <Link
                 href={`/teacher/classes/${activeSession.class.id}/session`}
                 className="p-2 bg-green-100 text-green-600 rounded-lg"
-                title="Sessão ativa"
+                title="Encontro ativo"
               >
                 <PlayIcon />
               </Link>
@@ -271,7 +271,7 @@ export function TeacherNav({ userName, userEmail, onLogout }: TeacherNavProps) {
               <div className="flex items-center gap-2 text-green-700">
                 <PlayIcon />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Sessão Ativa</p>
+                  <p className="text-sm font-medium">Encontro Ativo</p>
                   <p className="text-xs text-green-600 truncate">
                     {activeSession.class.grupo_repense} - {activeSession.class.horario || 'Sem horário'}
                   </p>

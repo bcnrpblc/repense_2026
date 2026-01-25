@@ -28,7 +28,7 @@ interface ClassItem {
   eh_ativo: boolean;
   eh_16h: boolean;
   eh_mulheres: boolean;
-  eh_itu: boolean;
+  cidade: string | null;
   horario: string | null;
   data_inicio: string | null;
   arquivada: boolean;
@@ -333,7 +333,7 @@ export default function ClassesPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gruposs</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Grupos</h1>
           <p className="mt-1 text-gray-600">
             Gerencie as grupos do sistema
           </p>
@@ -525,7 +525,7 @@ export default function ClassesPage() {
                       {classItem.horario || '-'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {classItem.eh_itu ? 'Itu' : 'Indaiatuba'}
+                      {classItem.cidade || 'Indaiatuba'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {classItem.numero_inscritos}/{classItem.capacidade}
@@ -641,7 +641,7 @@ export default function ClassesPage() {
                 <p className="text-sm text-gray-500 mb-3">
                   {classItem.teacher?.nome || (
                     <span className="italic">Esperando em Deus</span>
-                  )} • {classItem.eh_itu ? 'Itu' : 'Indaiatuba'}
+                  )} • {classItem.cidade || 'Indaiatuba'}
                 </p>
                 <p className="text-sm text-gray-500 mb-4">
                   {classItem.numero_inscritos}/{classItem.capacidade} vagas ocupadas

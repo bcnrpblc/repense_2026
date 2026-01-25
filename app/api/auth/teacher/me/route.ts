@@ -20,8 +20,8 @@ import { prisma } from '@/lib/prisma';
  * {
  *   "teacher": {
  *     "id": "uuid",
- *     "nome": "Professor Name",
- *     "email": "professor@example.com",
+ *     "nome": "Facilitador Name",
+ *     "email": "facilitador@example.com",
  *     "telefone": "11999999999",
  *     "eh_ativo": true,
  *     "criado_em": "2024-01-01T00:00:00.000Z"
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     // Teacher not found (should not happen if token is valid)
     if (!teacher) {
       return NextResponse.json(
-        { error: 'Professor não encontrado' },
+        { error: 'Facilitador não encontrado' },
         { status: 404 }
       );
     }
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
             grupo_repense: true,
             horario: true,
             modelo: true,
-            eh_itu: true,
+            cidade: true,
           },
         },
       },
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
             grupo_repense: session.Class.grupo_repense,
             horario: session.Class.horario,
             modelo: session.Class.modelo,
-            cidade: session.Class.eh_itu ? 'Itu' : 'Indaiatuba',
+            cidade: session.Class.cidade || 'Indaiatuba',
           },
         })),
       },

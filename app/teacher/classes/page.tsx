@@ -18,7 +18,6 @@ interface TeacherClass {
   eh_ativo: boolean;
   eh_16h: boolean;
   eh_mulheres: boolean;
-  eh_itu: boolean;
   horario: string | null;
   data_inicio: string | null;
   link_whatsapp: string | null;
@@ -280,7 +279,7 @@ export default function TeacherClassesPage() {
                         <div className="flex items-center gap-1">
                           <CalendarIcon />
                           <span>
-                            Última sessão: {formatDate(classItem.lastSession.data_sessao)} 
+                            Último encontro: {formatDate(classItem.lastSession.data_sessao)} 
                             (#{classItem.lastSession.numero_sessao})
                           </span>
                         </div>
@@ -288,7 +287,7 @@ export default function TeacherClassesPage() {
                       {!classItem.lastSession && (
                         <div className="flex items-center gap-1 text-gray-400">
                           <CalendarIcon />
-                          <span>Nenhuma sessão realizada</span>
+                          <span>Nenhum encontro realizado</span>
                         </div>
                       )}
                     </div>

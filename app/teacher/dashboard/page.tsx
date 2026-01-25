@@ -20,7 +20,6 @@ interface TeacherClass {
   eh_ativo: boolean;
   eh_16h: boolean;
   eh_mulheres: boolean;
-  eh_itu: boolean;
   horario: string | null;
   data_inicio: string | null;
   link_whatsapp: string | null;
@@ -181,10 +180,10 @@ function ActiveSessionBanner({ session }: ActiveSessionBannerProps) {
             <PlayIcon />
           </div>
           <div>
-            <h3 className="font-semibold">Sessão em Andamento</h3>
+            <h3 className="font-semibold">Encontro em Andamento</h3>
             <p className="text-sm text-green-100">
               {session.class.grupo_repense} - {session.class.horario || 'Sem horário'} • 
-              Sessão #{session.numero_sessao}
+              Encontro #{session.numero_sessao}
             </p>
           </div>
         </div>
@@ -192,7 +191,7 @@ function ActiveSessionBanner({ session }: ActiveSessionBannerProps) {
           href={`/teacher/classes/${session.class.id}/session`}
           className="inline-flex items-center justify-center px-4 py-2 bg-white text-green-600 rounded-lg font-medium hover:bg-green-50 transition-colors"
         >
-          Continuar Sessão
+          Continuar Encontro
         </Link>
       </div>
     </div>
@@ -274,7 +273,7 @@ function ClassCard({
           <div className="flex items-center gap-2 col-span-2 text-gray-400">
             <ClockIcon />
             <span>
-              Última: Sessão {classData.lastSession.numero_sessao} - {formatDate(classData.lastSession.data_sessao)}
+              Última: Encontro {classData.lastSession.numero_sessao} - {formatDate(classData.lastSession.data_sessao)}
             </span>
           </div>
         )}
@@ -287,7 +286,7 @@ function ClassCard({
             href={`/teacher/classes/${classData.id}/session`}
             className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
           >
-            Continuar Sessão
+            Continuar Encontro
           </Link>
         ) : (
           <Button
@@ -297,13 +296,13 @@ function ClassCard({
             onClick={() => onStartSession(classData.id)}
             title={
               hasActiveSession 
-                ? 'Finalize a sessão atual antes de iniciar outra' 
+                ? 'Finalize o encontro atual antes de iniciar outro' 
                 : !classData.eh_ativo 
                   ? 'Grupo inativo'
-                  : 'Iniciar nova sessão'
+                  : 'Iniciar novo encontro'
             }
           >
-            {startingSession ? 'Iniciando...' : 'Iniciar Sessão'}
+            {startingSession ? 'Iniciando...' : 'Iniciar Encontro'}
           </Button>
         )}
         <Link
@@ -348,7 +347,7 @@ function UpcomingSessions({ classes }: UpcomingSessionsProps) {
   if (upcomingSessions.length === 0) {
     return (
       <Card className="text-center py-8">
-        <p className="text-gray-500">Nenhuma sessão agendada</p>
+        <p className="text-gray-500">Nenhum encontro agendado</p>
       </Card>
     );
   }
@@ -359,7 +358,7 @@ function UpcomingSessions({ classes }: UpcomingSessionsProps) {
         <Card key={session.id} className="flex items-center justify-between">
           <div>
             <p className="font-medium text-gray-900">
-              Sessão {session.numero_sessao} - {session.classData.grupo_repense}
+              Encontro {session.numero_sessao} - {session.classData.grupo_repense}
             </p>
             <p className="text-sm text-gray-500">
               {session.classData.horario} - {session.classData.cidade}
@@ -451,15 +450,15 @@ export default function TeacherDashboardPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.error || 'Erro ao iniciar sessão');
+        toast.error(data.error || 'Erro ao iniciar encontro');
         return;
       }
 
-      toast.success('Sessão iniciada!');
+      toast.success('Encontro iniciado!');
       router.push(`/teacher/classes/${classId}/session`);
     } catch (err) {
       console.error('Error starting session:', err);
-      toast.error('Erro ao iniciar sessão');
+      toast.error('Erro ao iniciar encontro');
     } finally {
       setStartingSession(false);
     }

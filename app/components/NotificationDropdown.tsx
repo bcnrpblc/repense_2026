@@ -115,7 +115,7 @@ function getTypeLabel(type: string): string {
     case 'student_observation':
       return 'Relatório Participante';
     case 'session_report':
-      return 'Relatório de Sessão';
+      return 'Relatório de Encontro';
     case 'final_report':
       return 'Relatório de Grupo';
     default:
@@ -269,7 +269,7 @@ export function NotificationDropdown({ isOpen, onClose, counts }: NotificationDr
             Participante: <span className="font-medium text-blue-600">{counts.studentObservations}</span>
           </span>
           <span className="text-gray-600">
-            Sessão: <span className="font-medium text-green-600">{counts.sessionReports}</span>
+            Encontro: <span className="font-medium text-green-600">{counts.sessionReports}</span>
           </span>
           <span className="text-gray-600">
             Grupo: <span className="font-medium text-purple-600">{counts.finalReports}</span>
@@ -317,7 +317,7 @@ export function NotificationDropdown({ isOpen, onClose, counts }: NotificationDr
                     )}
                     {notification.session && (
                       <p className="text-xs text-gray-500 mb-1">
-                        Sessão {notification.session.numero_sessao} - {notification.class.grupo_repense}
+                        Encontro {notification.session.numero_sessao} - {notification.class.grupo_repense}
                       </p>
                     )}
                     {notification.class && !notification.session && (

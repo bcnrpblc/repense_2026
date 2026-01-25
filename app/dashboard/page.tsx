@@ -21,9 +21,9 @@ interface DashboardData {
     modelo: ModeloCurso;
     data_inicio: string | null;
     horario: string | null;
+    cidade: string | null;
     numero_inscritos: number;
     capacidade: number;
-    eh_itu: boolean;
   }[];
   last_updated: string;
 }
@@ -223,7 +223,7 @@ export default function DashboardPage() {
                     <td className="py-4 px-4 text-sm text-gray-700">
                       {formatCourseDate(course.data_inicio, course.horario)}
                     </td>
-                    <td className="py-4 px-4 text-sm text-gray-700">{course.eh_itu ? 'Itu' : 'Indaiatuba'}</td>
+                    <td className="py-4 px-4 text-sm text-gray-700">{course.cidade || 'Indaiatuba'}</td>
                     <td className="py-4 px-4 text-sm font-medium text-gray-900">{course.numero_inscritos}</td>
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">

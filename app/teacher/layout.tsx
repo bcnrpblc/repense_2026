@@ -31,7 +31,7 @@ function ProtectedTeacherContent({ children }: { children: React.ReactNode }) {
     loginPath: '/teacher/login',
   });
 
-  const [teacherName, setTeacherName] = useState<string>('Professor');
+  const [teacherName, setTeacherName] = useState<string>('Facilitador');
 
   useEffect(() => {
     async function fetchTeacherName() {

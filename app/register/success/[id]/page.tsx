@@ -49,7 +49,7 @@ export default function SuccessPage() {
 
   useEffect(() => {
     if (!enrollmentId) {
-      setError('ID da matrícula não fornecido');
+      setError('ID da inscrição não fornecido');
       setLoading(false);
       return;
     }
@@ -60,9 +60,9 @@ export default function SuccessPage() {
         
         if (!response.ok) {
           if (response.status === 404) {
-            setError('Matrícula não encontrada');
+            setError('Inscrição não encontrada');
           } else {
-            setError('Erro ao carregar dados da matrícula');
+            setError('Erro ao carregar dados da inscrição');
           }
           setLoading(false);
           return;
@@ -152,7 +152,7 @@ export default function SuccessPage() {
               </svg>
             </div>
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Erro</h2>
-            <p className="text-gray-600">{error || 'Matrícula não encontrada'}</p>
+            <p className="text-gray-600">{error || 'Inscrição não encontrada'}</p>
           </div>
           <a
             href="/"

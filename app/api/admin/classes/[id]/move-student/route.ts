@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { transferStudent, EnrollmentError } from '@/lib/enrollment';
+import { logger } from '@/lib/logger';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -25,6 +26,22 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const requestId = request.headers.get('x-request-id') ?? 'unknown';
+  const route = `/api/admin/classes/${params.id}/move-student`;
+  const method = request.method;
+  const start = Date.now();
+  logger.info('request start', { requestId, route, method });
+  const respond = (body: Record<string, unknown>, status: number) => {
+    logger.info('request end', {
+      requestId,
+      route,
+      method,
+      status,
+      duration_ms: Date.now() - start,
+    });
+    return NextResponse.json(body, { status });
+  };
+
   try {
     await verifyAdminToken(request);
 
@@ -47,10 +64,7 @@ export async function POST(
 
 
     if (!currentClass) {
-      return NextResponse.json(
-        { error: 'Grupo atual não encontrado' },
-        { status: 404 }
-      );
+      return respond({ error: 'Grupo atual não encontrado' }, 404);
     }
 
     // Verify new class exists and has same grupo_repense
@@ -70,10 +84,7 @@ export async function POST(
 
 
     if (!newClass) {
-      return NextResponse.json(
-        { error: 'Novo grupo não encontrado' },
-        { status: 404 }
-      );
+      return respond({ error: 'Novo grupo não encontrado' }, 404);
     }
 
     // Allow transfers across any grupo_repense from admin panel
@@ -92,10 +103,7 @@ export async function POST(
     // #endregion
 
     if (!enrollment) {
-      return NextResponse.json(
-        { error: 'Inscrição ativa não encontrada para este participante nesse grupo' },
-        { status: 404 }
-      );
+      return respond({ error: 'Inscrição ativa não encontrada para este participante nesse grupo' }, 404);
     }
 
     // Use the transferStudent function
@@ -104,23 +112,30 @@ export async function POST(
     // #endregion
     const result = await transferStudent(enrollment.id, newClassId);
 
-    return NextResponse.json({
-      message: 'Participante transferido com sucesso',
-      oldEnrollment: result.oldEnrollment,
-      newEnrollment: result.newEnrollment,
-    });
+    return respond(
+      {
+        message: 'Participante transferido com sucesso',
+        oldEnrollment: result.oldEnrollment,
+        newEnrollment: result.newEnrollment,
+      },
+      200
+    );
 
   } catch (error) {
     console.error('Error moving student:', error);
+    logger.error('request error', {
+      requestId,
+      route,
+      method,
+      duration_ms: Date.now() - start,
+      err: error,
+    });
     // #region agent log
     fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/admin/classes/[id]/move-student/route.ts:102',message:'Move student failed',data:{errorName:error instanceof Error ? error.name : typeof error,errorMessage:error instanceof Error ? error.message : String(error),errorCode:typeof error === 'object' && error !== null && 'code' in error ? (error as { code?: string }).code ?? null : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run10',hypothesisId:'H5'})}).catch(()=>{});
     // #endregion
 
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Dados inválidos', details: error.issues },
-        { status: 400 }
-      );
+      return respond({ error: 'Dados inválidos', details: error.issues }, 400);
     }
 
     if (error instanceof EnrollmentError) {
@@ -132,19 +147,13 @@ export async function POST(
         'New class full': 'Novo grupo está lotado',
         'você já concluiu esse PG Repense': 'você já concluiu esse PG Repense',
       };
-      return NextResponse.json(
-        { error: messages[error.message] || error.message },
-        { status: 400 } 
-      );
+      return respond({ error: messages[error.message] || error.message }, 400);
     }
 
     if (error instanceof Error && error.message.includes('token')) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+      return respond({ error: 'Não autorizado' }, 401);
     }
 
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    );
+    return respond({ error: 'Erro interno do servidor' }, 500);
   }
 }

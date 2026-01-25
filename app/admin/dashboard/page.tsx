@@ -233,7 +233,7 @@ export default function AdminDashboardPage() {
           icon={<StudentsIcon />}
         />
         <StatCard 
-          title="Matrículas em Turmas Aguardando Início" 
+          title="Inscrições em grupos Aguardando Início" 
           value={analytics.summary.futureEnrollments} 
           icon={<EnrollmentsIcon />}
         />
@@ -246,9 +246,9 @@ export default function AdminDashboardPage() {
 
       {/* Top Section: Growth & Engagement Trends */}
       <div className="grid gap-4 md:grid-cols-3">
-        {/* Row 1: Area Chart - Matrículas no Ano */}
+        {/* Row 1: Area Chart - Inscrições no Ano */}
         <Card className="md:col-span-3">
-          <CardHeader title="Matrículas no Ano (YTD)" subtitle="Tendência mensal de novas inscrições" />
+          <CardHeader title="Inscrições no Ano (YTD)" subtitle="Tendência mensal de novas inscrições" />
           <div className="h-[200px] w-full p-6 pt-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={ytdEnrollmentTrend}>
@@ -286,9 +286,9 @@ export default function AdminDashboardPage() {
           </div>
         </Card>
 
-        {/* Row 1: Alunos Ativos & Sparkline (Combined Card) */}
+        {/* Row 1: Participantes Ativos & Sparkline (Combined Card) */}
         <Card className="flex flex-col justify-between">
-          <CardHeader title="Alunos Ativos" />
+          <CardHeader title="Participantes Ativos" />
           <div className="px-6 flex-1 flex flex-col justify-center">
             <div className="text-4xl font-bold mb-2">{analytics.summary.totalActiveStudents}</div>
             <div className="h-[60px] w-full">
@@ -305,7 +305,7 @@ export default function AdminDashboardPage() {
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Tendência baseada em matrículas recentes</p>
+            <p className="text-xs text-muted-foreground mt-2">Tendência baseada em inscrições recentes</p>
           </div>
         </Card>
 
@@ -494,7 +494,7 @@ export default function AdminDashboardPage() {
           icon={<StudentsIcon />}
         />
         <StatCard 
-          title="Matrículas em Turmas Aguardando Início" 
+          title="Inscrições em grupos Aguardando Início" 
           value={analytics.summary.futureEnrollments} 
           icon={<EnrollmentsIcon />}
         />
@@ -507,7 +507,7 @@ export default function AdminDashboardPage() {
 
       {/* Bottom Section: Status Breakdown */}
       <Card>
-        <CardHeader title="Inscrições por Status" subtitle="Distribuição atual de todas as matrículas" />
+        <CardHeader title="Inscrições por Status" subtitle="Distribuição atual de todas as inscrições" />
         <div className="h-[250px] w-full p-6 pt-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={statusData} layout="vertical">

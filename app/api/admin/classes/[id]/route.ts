@@ -16,6 +16,7 @@ const updateClassSchema = z.object({
   horario: z.string().optional().nullable(),
   data_inicio: z.string().optional().nullable(),
   numero_sessoes: z.number().int().min(1).max(20).optional(),
+  cidade: z.enum(['Indaiatuba', 'Itu']).optional(),
 });
 
 // ============================================================================
@@ -159,7 +160,7 @@ export async function PUT(
         );
       }
 
-      // Regra: Professor pode ter no máximo 1 grupo ativo (eh_ativo = true, arquivada = false).
+      // Regra: Facilitador pode ter no máximo 1 grupo ativo (eh_ativo = true, arquivada = false).
       // Só validamos essa regra se o grupo estiver (ou for ficar) ativo.
       if (nextEhAtivo) {
         const activeClassCount = await prisma.class.count({
@@ -231,6 +232,10 @@ export async function PUT(
       updateData.numero_sessoes = data.numero_sessoes;
     }
 
+    if (data.cidade !== undefined) {
+      updateData.cidade = data.cidade;
+    }
+
     // Update class
     const updatedClass = await prisma.class.update({
       where: { id: params.id },
@@ -246,7 +251,7 @@ export async function PUT(
       },
     });
 
-    // Após mudar professor ou status do grupo, sincroniza status dos facilitadores
+    // Após mudar facilitador ou status do grupo, sincroniza status dos facilitadores
     await syncTeachersActiveStatus();
 
     return NextResponse.json({ class: updatedClass });

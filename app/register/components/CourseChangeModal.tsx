@@ -158,8 +158,8 @@ export function CourseChangeModal({
               <p className="text-sm text-yellow-800">
                 <strong>Atenção:</strong>{' '}
                 {currentCourse.grupo_repense === newCourse.grupo_repense
-                  ? 'Seu progresso na turma atual será mantido no histórico, mas você será transferido para a nova turma.'
-                  : 'Sua inscrição atual será cancelada e você será inscrito no novo curso.'}
+                  ? 'Seu progresso no grupo atual será mantido no histórico, mas você será transferido para o novo grupo.'
+                  : 'Sua inscrição atual será cancelada e você será inscrito em um novo PG Repense.'}
               </p>
             </div>
           </div>

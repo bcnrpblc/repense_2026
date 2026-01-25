@@ -1,6 +1,6 @@
 /**
- * Converts Brazilian date format (dd-MM-yyyy) to ISO date string
- * @param dateStr - Date in format dd-MM-yyyy (e.g., "25-12-1990")
+ * Converts Brazilian date format (dd-MM-yyyy or dd/MM/yyyy) to ISO date string
+ * @param dateStr - Date in format dd-MM-yyyy or dd/MM/yyyy (e.g., "25-12-1990", "25/12/1990")
  * @returns ISO date string or null if invalid
  */
 export function brazilianDateToISO(dateStr: string): string | null {
@@ -8,8 +8,9 @@ export function brazilianDateToISO(dateStr: string): string | null {
     return null;
   }
 
-  // Remove any non-digit characters except hyphens
-  const cleaned = dateStr.replace(/[^\d-]/g, '');
+  // Normalize slashes to hyphens so dd/MM/yyyy is accepted
+  const normalized = dateStr.trim().replace(/\//g, '-');
+  const cleaned = normalized.replace(/[^\d-]/g, '');
   
   // Match dd-MM-yyyy format
   const match = cleaned.match(/^(\d{2})-(\d{2})-(\d{4})$/);
@@ -49,6 +50,7 @@ export function brazilianDateToISO(dateStr: string): string | null {
 
 /**
  * Converts ISO date string to Brazilian format (dd-MM-yyyy)
+ * Parses ISO as local date to avoid timezone shifts (e.g. "1990-12-25" → 25/12/1990 in BR).
  * @param isoDate - ISO date string (e.g., "1990-12-25") or Date object
  * @returns Date in format dd-MM-yyyy or null if invalid
  */
@@ -58,13 +60,19 @@ export function isoDateToBrazilian(isoDate: string | Date | null | undefined): s
   }
 
   let date: Date;
-  
+
   if (isoDate instanceof Date) {
     date = isoDate;
   } else {
-    date = new Date(isoDate);
-    if (isNaN(date.getTime())) {
-      return null;
+    const part = String(isoDate).split('T')[0];
+    const match = part.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const [, y, m, d] = match.map(Number);
+      date = new Date(y, m - 1, d);
+      if (isNaN(date.getTime())) return null;
+    } else {
+      date = new Date(isoDate);
+      if (isNaN(date.getTime())) return null;
     }
   }
 

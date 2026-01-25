@@ -11,7 +11,6 @@ export type AvailableClass = {
   eh_ativo: boolean;
   eh_16h: boolean;
   eh_mulheres: boolean;
-  eh_itu: boolean;
   link_whatsapp: string | null;
   data_inicio: Date | null;
   horario: string | null;
@@ -74,7 +73,7 @@ export async function validateEnrollment(
   });
 
   if (!student) {
-    return { canEnroll: false, error: 'Aluno não encontrado', code: EnrollmentErrorCodes.STUDENT_NOT_FOUND };
+    return { canEnroll: false, error: 'Participante não encontrado', code: EnrollmentErrorCodes.STUDENT_NOT_FOUND };
   }
 
   // Check class exists and is active
@@ -639,17 +638,17 @@ export async function getAvailableClasses(
     where: whereClause,
     orderBy: [
       { grupo_repense: 'asc' },
-      { eh_itu: 'asc' },
+      { cidade: 'asc' },
       { data_inicio: 'asc' },
     ],
   });
 
-  // Calculate vagas_disponiveis and group by grupo_repense and city (eh_itu)
+  // Calculate vagas_disponiveis and group by grupo_repense and city
   const grouped: AvailableClassesGrouped = {};
 
   for (const classItem of classes) {
     const grupo = classItem.grupo_repense;
-    const city = classItem.eh_itu ? 'ITU' : 'Other';
+    const city = classItem.cidade === 'Itu' ? 'ITU' : (classItem.cidade || 'Other');
 
     if (!grouped[grupo]) {
       grouped[grupo] = {};
@@ -668,7 +667,6 @@ export async function getAvailableClasses(
       eh_ativo: classItem.eh_ativo,
       eh_16h: classItem.eh_16h,
       eh_mulheres: classItem.eh_mulheres,
-      eh_itu: classItem.eh_itu,
       link_whatsapp: classItem.link_whatsapp,
       data_inicio: classItem.data_inicio,
       horario: classItem.horario,

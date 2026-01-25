@@ -33,7 +33,6 @@ interface PriorityListCourse {
   id: string;
   grupo_repense: string;
   horario: string | null;
-  eh_itu: boolean;
   eh_ativo: boolean;
 }
 
@@ -47,7 +46,7 @@ interface ClassInfo {
   grupo_repense: string;
   modelo: string;
   horario: string | null;
-  eh_itu: boolean;
+  cidade: string | null;
   eh_ativo: boolean;
   numero_sessoes: number;
   teacher: TeacherInfo | null;
@@ -562,7 +561,7 @@ export default function StudentProfilePage() {
                         {enrollment.class.horario || 'Horário não definido'}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {enrollment.class.teacher?.nome || 'Sem facilitador'} • {enrollment.class.eh_itu ? 'Itu' : 'Indaiatuba'}
+                        {enrollment.class.teacher?.nome || 'Sem facilitador'} • {enrollment.class.cidade || 'Indaiatuba'}
                       </p>
                       <p className="text-sm text-gray-500 mt-1">
                         Inscrito em: {formatDate(enrollment.criado_em)}
@@ -718,7 +717,7 @@ export default function StudentProfilePage() {
                       Grupo
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                      Sessão
+                      Encontro
                     </th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">
                       Presença
@@ -743,7 +742,7 @@ export default function StudentProfilePage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
-                        Sessão {record.session.numero_sessao}
+                        Encontro {record.session.numero_sessao}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {record.presente ? (

@@ -38,7 +38,6 @@ export async function GET(request: NextRequest) {
         select: {
           id: true,
           grupo_repense: true,
-          eh_itu: true,
           capacidade: true,
           numero_inscritos: true,
           eh_ativo: true,
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest) {
           Class: {
             select: {
               grupo_repense: true,
-              eh_itu: true,
+              cidade: true,
               data_inicio: true,
             },
           },
@@ -95,8 +94,12 @@ export async function GET(request: NextRequest) {
     // Calculate enrollments by city
     // =========================================================================
     const enrollmentsByCity = {
-      Itu: enrollments.filter((e) => e.Class.eh_itu).length,
-      Indaiatuba: enrollments.filter((e) => !e.Class.eh_itu).length,
+      Itu: enrollments.filter((e) => {
+        return e.Class.cidade === 'Itu';
+      }).length,
+      Indaiatuba: enrollments.filter((e) => {
+        return e.Class.cidade === 'Indaiatuba' || !e.Class.cidade;
+      }).length,
     };
 
     // =========================================================================
@@ -173,14 +176,14 @@ export async function GET(request: NextRequest) {
 
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
-    // Matrículas em grupos aguardando inicio
+    // Inscrições em grupos aguardando inicio
     const futureEnrollmentsCount = enrollments.filter((e) => {
       if (e.status !== 'ativo') return false;
       const start = e.Class.data_inicio;
       return start !== null && start > now;
     }).length;
 
-    // Matrículas criadas no ano (todas, independente do status)
+    // Inscrições criadas no ano (todas, independente do status)
     const yearToDateEnrollments = enrollments.filter((e) => {
       const created = e.criado_em;
       return created >= startOfYear && created <= now;

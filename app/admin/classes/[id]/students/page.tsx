@@ -18,7 +18,7 @@ interface ClassInfo {
   grupo_repense: string;
   modelo: string;
   horario: string | null;
-  eh_itu: boolean;
+  cidade: string | null;
   capacidade: number;
   numero_inscritos: number;
   eh_ativo: boolean;
@@ -266,7 +266,7 @@ function ObservationsModal({ isOpen, onClose, student, onMarkRead }: Observation
                     {/* Session info */}
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xs font-medium text-gray-500">
-                        Sessão {obs.sessao}
+                        Encontro {obs.sessao}
                       </span>
                       <span className="text-xs text-gray-400">•</span>
                       <span className="text-xs text-gray-500">
@@ -530,7 +530,7 @@ export default function ClassStudentsPage() {
               {classInfo.horario || 'Horário não definido'}
             </h1>
             <p className="text-sm text-gray-600">
-              {classInfo.Teacher?.nome || 'Sem facilitador'} • {classInfo.eh_itu ? 'Itu' : 'Indaiatuba'}
+              {classInfo.Teacher?.nome || 'Sem facilitador'} • {classInfo.cidade || 'Indaiatuba'}
             </p>
           </div>
           <div className="text-right">

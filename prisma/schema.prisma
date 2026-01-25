@@ -21,6 +21,7 @@ model Student {
   priority_list         Boolean      @default(false)
   priority_list_course_id String?
   priority_list_added_at DateTime?
+  cidade_preferencia    String?
   Attendance            Attendance[]
   enrollments           Enrollment[]
 
@@ -92,7 +93,7 @@ model Class {
   data_inicio      DateTime?
   horario          String?
   eh_mulheres      Boolean      @default(false)
-  eh_itu           Boolean      @default(false)
+  cidade           String?
   teacher_id       String?
   numero_sessoes   Int          @default(8)
   atualizado_em    DateTime     @default(now())
@@ -106,6 +107,8 @@ model Class {
   @@index([teacher_id])
   @@index([eh_ativo])
   @@index([arquivada])
+  @@index([cidade])
+  @@map("Class")
 }
 
 model Session {

@@ -39,7 +39,7 @@ export async function GET(
 
     if (!teacher) {
       return NextResponse.json(
-        { error: 'Professor não encontrado' },
+        { error: 'Facilitador não encontrado' },
         { status: 404 }
       );
     }
@@ -84,7 +84,7 @@ export async function PATCH(
 
     if (!teacher) {
       return NextResponse.json(
-        { error: 'Professor não encontrado' },
+        { error: 'Facilitador não encontrado' },
         { status: 404 }
       );
     }
@@ -108,8 +108,8 @@ export async function PATCH(
     return NextResponse.json({
       teacher: updatedTeacher,
       message: updatedTeacher.eh_ativo
-        ? 'Professor ativado com sucesso'
-        : 'Professor desativado com sucesso',
+        ? 'Facilitador ativado com sucesso'
+        : 'Facilitador desativado com sucesso',
     });
 
   } catch (error) {

@@ -4,6 +4,7 @@ import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { randomUUID } from 'crypto';
 import { syncTeachersActiveStatus } from '@/lib/teacherStatus';
+import { isValidCity } from '@/lib/constants';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -30,7 +31,7 @@ const createClassSchema = z.object({
   capacidade: z.number().int().min(1).max(100),
   eh_16h: z.boolean().default(false),
   eh_mulheres: z.boolean().default(false),
-  eh_itu: z.boolean().default(false),
+  cidade: z.enum(['Indaiatuba', 'Itu']),
   link_whatsapp: z.string().url().optional().nullable(),
   data_inicio: z.string().optional().nullable(), // ISO date string
   horario: z.string().optional().nullable(),
@@ -131,7 +132,7 @@ export async function GET(request: NextRequest) {
       eh_ativo: c.eh_ativo,
       eh_16h: c.eh_16h,
       eh_mulheres: c.eh_mulheres,
-      eh_itu: c.eh_itu,
+      cidade: c.cidade,
       link_whatsapp: c.link_whatsapp,
       data_inicio: c.data_inicio,
       horario: c.horario,
@@ -180,18 +181,18 @@ export async function POST(request: NextRequest) {
       });
       if (!teacher) {
         return NextResponse.json(
-          { error: 'Professor não encontrado' },
+          { error: 'Facilitador não encontrado' },
           { status: 400 }
         );
       }
       if (!teacher.eh_ativo) {
         return NextResponse.json(
-          { error: 'Professor está inativo' },
+          { error: 'Facilitador está inativo' },
           { status: 400 }
         );
       }
 
-      // Regra: Professor pode ter no máximo 1 grupo ativo (eh_ativo = true, arquivada = false).
+      // Regra: Facilitador pode ter no máximo 1 grupo ativo (eh_ativo = true, arquivada = false).
       // Só validamos essa regra se a nova grupo for criada como ativa.
       if (data.eh_ativo) {
         const activeClassCount = await prisma.class.count({
@@ -204,7 +205,7 @@ export async function POST(request: NextRequest) {
 
         if (activeClassCount >= 1) {
           return NextResponse.json(
-            { error: 'Professor já tem 1 grupo ativo' },
+            { error: 'Facilitador já tem 1 grupo ativo' },
             { status: 400 }
           );
         }
@@ -243,7 +244,7 @@ export async function POST(request: NextRequest) {
         eh_ativo: data.eh_ativo,
         eh_16h: data.eh_16h,
         eh_mulheres: data.eh_mulheres,
-        eh_itu: data.eh_itu,
+        cidade: data.cidade,
         link_whatsapp: data.link_whatsapp || null,
         data_inicio: data.data_inicio ? new Date(data.data_inicio) : null,
         horario: data.horario || null,

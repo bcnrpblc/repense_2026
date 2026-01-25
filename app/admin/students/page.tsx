@@ -282,7 +282,7 @@ function ObservationsModal({ isOpen, onClose, student, onMarkRead }: Observation
                       </span>
                       <span className="text-xs text-gray-400">•</span>
                       <span className="text-xs font-medium text-gray-500">
-                        Sessão {obs.sessao}
+                        Encontro {obs.sessao}
                       </span>
                       <span className="text-xs text-gray-400">•</span>
                       <span className="text-xs text-gray-500">

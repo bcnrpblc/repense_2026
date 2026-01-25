@@ -35,7 +35,7 @@ export async function GET() {
       byRepense[repenseType] = (byRepense[repenseType] || 0) + 1;
 
       // Count by city
-      if (enrollment.Class.eh_itu) {
+      if (enrollment.Class.cidade === 'Itu') {
         byCity.Itu += 1;
       } else {
         byCity.Indaiatuba += 1;
@@ -57,9 +57,9 @@ export async function GET() {
         modelo: true,
         data_inicio: true,
         horario: true,
+        cidade: true,
         numero_inscritos: true,
         capacidade: true,
-        eh_itu: true,
       },
     });
 
@@ -70,9 +70,9 @@ export async function GET() {
       modelo: course.modelo,
       data_inicio: course.data_inicio ? course.data_inicio.toISOString() : null,
       horario: course.horario,
+      cidade: course.cidade,
       numero_inscritos: course.numero_inscritos,
       capacidade: course.capacidade,
-      eh_itu: course.eh_itu,
     }));
 
     return NextResponse.json({

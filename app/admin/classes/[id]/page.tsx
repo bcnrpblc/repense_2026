@@ -21,7 +21,7 @@ interface ClassData {
   eh_ativo: boolean;
   eh_16h: boolean;
   eh_mulheres: boolean;
-  eh_itu: boolean;
+  cidade: string | null;
   horario: string | null;
   data_inicio: string | null;
   numero_sessoes: number;
@@ -273,7 +273,7 @@ export default function ClassDetailPage() {
             {classData.horario || 'Horário não definido'}
           </h1>
           <p className="text-gray-500">
-            {classData.eh_itu ? 'Itu' : 'Indaiatuba'}
+            {classData.cidade || 'Indaiatuba'}
           </p>
         </div>
 
@@ -462,17 +462,17 @@ export default function ClassDetailPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Sessões</h2>
           <p className="text-sm text-gray-500">
-            {classData._count.Session} sessão(ões) cadastrada(s)
+            {classData._count.Session} Encontro(s) cadastrado(s)
           </p>
         </div>
 
         {sessionsLoading ? (
           <div className="py-8 text-center text-sm text-gray-500">
-            Carregando sessões...
+            Carregando encontros...
           </div>
         ) : sessions.length === 0 ? (
           <div className="py-8 text-center text-sm text-gray-500">
-            Nenhuma sessão registrada para este grupo
+            Nenhum encontro registrado para este grupo
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -480,7 +480,7 @@ export default function ClassDetailPage() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Sessão
+                    Encontro
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Data
@@ -506,7 +506,7 @@ export default function ClassDetailPage() {
                     <tr key={session.id} className="align-top">
                       <td className="px-4 py-3 text-sm text-gray-900">
                         <div className="font-medium">
-                          Sessão {session.numero_sessao}
+                          Encontro {session.numero_sessao}
                         </div>
                         {session.isActive && (
                           <span className="mt-1 inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 text-amber-800">

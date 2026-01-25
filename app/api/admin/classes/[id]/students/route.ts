@@ -26,7 +26,6 @@ export async function GET(
         grupo_repense: true,
         modelo: true,
         horario: true,
-        eh_itu: true,
         capacidade: true,
         numero_inscritos: true,
         eh_ativo: true,

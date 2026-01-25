@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cleanCPF, validateCPF } from '@/lib/utils/cpf';
 import { cleanPhone } from '@/lib/utils/phone';
+import { normalizeNameBR } from '@/lib/utils/names';
+import { logger } from '@/lib/logger';
 
 // TypeScript types for request body
 type StudentData = {
@@ -12,6 +14,7 @@ type StudentData = {
   genero?: string;
   estado_civil?: string;
   nascimento?: string;
+  cidade_preferencia?: string;
 };
 
 type RegisterRequest = {
@@ -55,15 +58,31 @@ type CourseChangeResponse = {
 };
 
 export async function POST(request: NextRequest) {
+  const requestId = request.headers.get('x-request-id') ?? 'unknown';
+  const route = '/api/register';
+  const method = request.method;
+  const start = Date.now();
+  logger.info('request start', { requestId, route, method });
+  const respond = <T,>(body: T, status: number) => {
+    logger.info('request end', {
+      requestId,
+      route,
+      method,
+      status,
+      duration_ms: Date.now() - start,
+    });
+    return NextResponse.json<T>(body, { status });
+  };
+
   try {
     const body: RegisterRequest = await request.json();
     const { student, course_id } = body;
 
     // Validate request structure
     if (!student || !course_id) {
-      return NextResponse.json<ErrorResponse>(
+      return respond<ErrorResponse>(
         { error: 'Missing required fields: student and course_id are required' },
-        { status: 400 }
+        400
       );
     }
 
@@ -98,12 +117,12 @@ export async function POST(request: NextRequest) {
 
     // If there are validation errors, return 400
     if (Object.keys(validationErrors).length > 0) {
-      return NextResponse.json<ErrorResponse>(
+      return respond<ErrorResponse>(
         { 
           error: 'Dados inválidos',
           validation_errors: validationErrors
         },
-        { status: 400 }
+        400
       );
     }
 
@@ -117,25 +136,25 @@ export async function POST(request: NextRequest) {
     });
 
     if (!course) {
-      return NextResponse.json<ErrorResponse>(
+      return respond<ErrorResponse>(
         { error: 'Curso não encontrado' },
-        { status: 404 }
+        404
       );
     }
 
     // Check if course is active
     if (!course.eh_ativo) {
-      return NextResponse.json<ErrorResponse>(
+      return respond<ErrorResponse>(
         { error: 'Curso não está ativo' },
-        { status: 400 }
+        400
       );
     }
 
     // Check course capacity
     if (course.numero_inscritos >= course.capacidade) {
-      return NextResponse.json<ErrorResponse>(
+      return respond<ErrorResponse>(
         { error: 'Curso lotado' },
-        { status: 409 }
+        409
       );
     }
 
@@ -176,9 +195,9 @@ export async function POST(request: NextRequest) {
       );
 
       if (exactClassEnrollment) {
-        return NextResponse.json<ErrorResponse>(
-          { error: 'Você já está matriculado nesta turma' },
-          { status: 409 }
+        return respond<ErrorResponse>(
+          { error: 'Você já está matriculado nesta grupo' },
+          409
         );
       }
 
@@ -189,7 +208,7 @@ export async function POST(request: NextRequest) {
 
       if (sameGrupoEnrollment) {
         // Different class but same grupo_repense - requires course change
-        return NextResponse.json<CourseChangeResponse>(
+        return respond<CourseChangeResponse>(
           {
             requires_course_change: true,
             existing_enrollment: {
@@ -213,7 +232,7 @@ export async function POST(request: NextRequest) {
               data_inicio: course.data_inicio,
             },
           },
-          { status: 200 }
+          200
         );
       }
 
@@ -232,9 +251,9 @@ export async function POST(request: NextRequest) {
       // #endregion
 
       if (concludedEnrollment) {
-        return NextResponse.json<ErrorResponse>(
+        return respond<ErrorResponse>(
           { error: 'você já concluiu esse PG Repense' },
-          { status: 409 }
+          409
         );
       }
 
@@ -247,7 +266,7 @@ export async function POST(request: NextRequest) {
         fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/register/route.ts:231',message:'Scenario C fallback',data:{activeEnrollmentCount:activeEnrollments.length,hasFirstEnrollment:!!activeEnrollments[0]},timestamp:Date.now(),sessionId:'debug-session',runId:'run11',hypothesisId:'H2'})}).catch(()=>{});
         // #endregion
         const existingEnrollment = activeEnrollments[0]; // Use first active enrollment
-        return NextResponse.json<CourseChangeResponse>(
+        return respond<CourseChangeResponse>(
           {
             requires_course_change: true,
             existing_enrollment: {
@@ -271,7 +290,7 @@ export async function POST(request: NextRequest) {
               data_inicio: course.data_inicio,
             },
           },
-          { status: 200 }
+          200
         );
       }
     }
@@ -283,9 +302,9 @@ export async function POST(request: NextRequest) {
       });
 
       if (existingPhone) {
-        return NextResponse.json<ErrorResponse>(
+        return respond<ErrorResponse>(
           { error: 'Telefone já cadastrado' },
-          { status: 409 }
+          409
         );
       }
     } else if (existingStudent.telefone !== cleanedPhone) {
@@ -295,9 +314,9 @@ export async function POST(request: NextRequest) {
       });
 
       if (existingPhone && existingPhone.id !== existingStudent.id) {
-        return NextResponse.json<ErrorResponse>(
+        return respond<ErrorResponse>(
           { error: 'Telefone já cadastrado' },
-          { status: 409 }
+          409
         );
       }
     }
@@ -312,9 +331,9 @@ export async function POST(request: NextRequest) {
         });
 
         if (existingEmail) {
-          return NextResponse.json<ErrorResponse>(
+          return respond<ErrorResponse>(
             { error: 'Email já cadastrado' },
-            { status: 409 }
+            409
           );
         }
       } else if (existingStudent.email !== trimmedEmail) {
@@ -324,9 +343,9 @@ export async function POST(request: NextRequest) {
         });
 
         if (existingEmail && existingEmail.id !== existingStudent.id) {
-          return NextResponse.json<ErrorResponse>(
+          return respond<ErrorResponse>(
             { error: 'Email já cadastrado' },
-            { status: 409 }
+            409
           );
         }
       }
@@ -352,7 +371,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (finalEnrollmentCheck) {
-          throw new Error('Você já está matriculado nesta turma');
+          throw new Error('Você já está matriculado neste grupo');
         }
       }
 
@@ -362,12 +381,13 @@ export async function POST(request: NextRequest) {
         newStudent = await tx.student.update({
           where: { id: existingStudentInTx.id },
           data: {
-            nome: student.nome.trim(),
+            nome: normalizeNameBR(student.nome.trim()),
             telefone: cleanedPhone,
             email: student.email && student.email.trim().length > 0 ? student.email.trim() : existingStudentInTx.email,
             genero: student.genero?.trim() || existingStudentInTx.genero,
             estado_civil: student.estado_civil?.trim() || existingStudentInTx.estado_civil,
             nascimento: student.nascimento ? new Date(student.nascimento) : existingStudentInTx.nascimento,
+            cidade_preferencia: student.cidade_preferencia?.trim() || existingStudentInTx.cidade_preferencia,
             priority_list: false,
             priority_list_course_id: null,
             priority_list_added_at: null,
@@ -377,13 +397,14 @@ export async function POST(request: NextRequest) {
         // Create Student record
         newStudent = await tx.student.create({
           data: {
-            nome: student.nome.trim(),
+            nome: normalizeNameBR(student.nome.trim()),
             cpf: cleanedCPF,
             telefone: cleanedPhone,
             email: student.email && student.email.trim().length > 0 ? student.email.trim() : null,
             genero: student.genero?.trim() || null,
             estado_civil: student.estado_civil?.trim() || null,
             nascimento: student.nascimento ? new Date(student.nascimento) : null,
+            cidade_preferencia: student.cidade_preferencia?.trim() || null,
           },
         });
       }
@@ -413,22 +434,29 @@ export async function POST(request: NextRequest) {
     });
 
     // Return success response
-    return NextResponse.json<RegisterResponse>(
+    return respond<RegisterResponse>(
       {
         success: true,
         enrollment_id: result.enrollment_id,
         student_id: result.student_id,
       },
-      { status: 201 }
+      201
     );
   } catch (error: any) {
     console.error('Error registering student:', error);
+    logger.error('request error', {
+      requestId,
+      route,
+      method,
+      duration_ms: Date.now() - start,
+      err: error,
+    });
 
     // Handle duplicate enrollment error from transaction
-    if (error.message === 'Você já está matriculado nesta turma') {
-      return NextResponse.json<ErrorResponse>(
+    if (error.message === 'Você já está matriculado neste grupo') {
+      return respond<ErrorResponse>(
         { error: error.message },
-        { status: 409 }
+        409
       );
     }
 
@@ -445,24 +473,24 @@ export async function POST(request: NextRequest) {
         errorMessage = 'Email já cadastrado';
       }
 
-      return NextResponse.json<ErrorResponse>(
+      return respond<ErrorResponse>(
         { error: errorMessage },
-        { status: 409 }
+        409
       );
     }
 
     // Handle other Prisma errors
     if (error.code && error.code.startsWith('P')) {
-      return NextResponse.json<ErrorResponse>(
+      return respond<ErrorResponse>(
         { error: 'Erro ao processar registro' },
-        { status: 500 }
+        500
       );
     }
 
     // Handle general errors
-    return NextResponse.json<ErrorResponse>(
+    return respond<ErrorResponse>(
       { error: 'Erro interno do servidor' },
-      { status: 500 }
+      500
     );
   }
 }

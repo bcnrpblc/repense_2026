@@ -62,7 +62,7 @@ function getDayOrder(horario: string | null): number {
  *       "eh_ativo": true,
  *       "eh_16h": false,
  *       "eh_mulheres": false,
- *       "eh_itu": true,
+ *       "cidade": "Itu",
  *       "horario": "Segunda 19h",
  *       "data_inicio": "2024-01-08T00:00:00.000Z",
  *       "link_whatsapp": "https://...",
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
         eh_ativo: true,
         eh_16h: true,
         eh_mulheres: true,
-        eh_itu: true,
+        cidade: true,
         horario: true,
         data_inicio: true,
         link_whatsapp: true,
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
 
       return {
         ...classData,
-        cidade: classItem.eh_itu ? 'Itu' : 'Indaiatuba',
+        cidade: classItem.cidade || 'Indaiatuba',
         enrollmentCount: enrollments.length,
         nextSession: nextSession
           ? {

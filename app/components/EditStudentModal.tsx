@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import InputMask from 'react-input-mask';
 import { Modal } from './Modal';
 import { Button, Input } from './ui';
 import { getAuthToken } from '@/lib/hooks/useAuth';
+import { brazilianDateToISO, isoDateToBrazilian } from '@/lib/utils/date';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -36,10 +38,11 @@ function formatCPF(cpf: string): string {
   return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
+/** Format ISO date for BR date input (dd-mm-yyyy) */
 function formatDateForInput(dateString: string | null): string {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toISOString().split('T')[0];
+  const br = isoDateToBrazilian(dateString);
+  return br ?? '';
 }
 
 // ============================================================================
@@ -113,6 +116,13 @@ export function EditStudentModal({
       newErrors.email = 'Email inválido';
     }
 
+    if (formData.nascimento?.trim()) {
+      const iso = brazilianDateToISO(formData.nascimento);
+      if (!iso) {
+        newErrors.nascimento = 'Data inválida. Use dd-mm-aaaa (ex: 25-12-1990).';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -140,7 +150,9 @@ export function EditStudentModal({
           telefone: formData.telefone.trim(),
           genero: formData.genero || null,
           estado_civil: formData.estado_civil || null,
-          nascimento: formData.nascimento || null,
+          nascimento: formData.nascimento?.trim()
+            ? (brazilianDateToISO(formData.nascimento) ?? null)
+            : null,
         }),
       });
 
@@ -287,13 +299,38 @@ export function EditStudentModal({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Data de Nascimento
           </label>
-          <input
-            type="date"
-            name="nascimento"
+          <InputMask
+            mask="99-99-9999"
             value={formData.nascimento}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+            onChange={(e) => {
+              // Update nascimento field directly to avoid synthetic event type issues
+              const value = e.target.value;
+              setFormData((prev) => ({ ...prev, nascimento: value }));
+              if (errors.nascimento) {
+                setErrors((prev) => {
+                  const newErrors = { ...prev };
+                  delete newErrors.nascimento;
+                  return newErrors;
+                });
+              }
+            }}
+            placeholder="dd-mm-aaaa"
+          >
+            {(inputProps: React.InputHTMLAttributes<HTMLInputElement>) => (
+              <input
+                {...inputProps}
+                name="nascimento"
+                type="text"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.nascimento ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="dd-mm-aaaa (ex: 25-12-1990)"
+              />
+            )}
+          </InputMask>
+          {errors.nascimento && (
+            <p className="mt-1 text-sm text-red-600">{errors.nascimento}</p>
+          )}
         </div>
 
         {/* Actions */}

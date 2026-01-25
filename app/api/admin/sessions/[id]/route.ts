@@ -26,7 +26,7 @@ export async function GET(
             grupo_repense: true,
             modelo: true,
             horario: true,
-            eh_itu: true,
+            cidade: true,
           },
         },
         Attendance: {
@@ -73,7 +73,7 @@ export async function GET(
           grupo_repense: session.Class.grupo_repense,
           modelo: session.Class.modelo,
           horario: session.Class.horario,
-          cidade: session.Class.eh_itu ? 'Itu' : 'Indaiatuba',
+          cidade: session.Class.cidade || 'Indaiatuba',
         },
         attendance,
         stats: {

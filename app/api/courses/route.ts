@@ -15,7 +15,7 @@ type CourseWithVacancies = {
   eh_ativo: boolean;
   eh_16h: boolean;
   eh_mulheres: boolean;
-  eh_itu: boolean;
+  cidade: string | null;
   link_whatsapp: string | null;
   data_inicio: string | null;
   horario: string | null;
@@ -36,11 +36,17 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const studentId = searchParams.get('student_id');
     const genero = searchParams.get('genero');
+    const cidade = searchParams.get('cidade');
 
     // Build where clause for courses
     const whereClause: any = {
       eh_ativo: true,
     };
+
+    // Filter by city if provided
+    if (cidade) {
+      whereClause.cidade = cidade;
+    }
 
     // Filter by gender: if Masculino, exclude women-only courses
     if (genero === 'Masculino') {
@@ -99,7 +105,7 @@ export async function GET(request: NextRequest) {
         eh_ativo: course.eh_ativo,
         eh_16h: course.eh_16h,
         eh_mulheres: course.eh_mulheres,
-        eh_itu: course.eh_itu,
+        cidade: course.cidade,
         link_whatsapp: course.link_whatsapp,
         data_inicio: course.data_inicio ? course.data_inicio.toISOString() : null,
         horario: course.horario,
@@ -107,7 +113,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Group courses by city (eh_itu), then by grupo_repense
+    // Group courses by city, then by grupo_repense
     const groupedCourses: GroupedCoursesResponse = {
       indaiatuba: {
         Igreja: [],
@@ -122,7 +128,8 @@ export async function GET(request: NextRequest) {
     };
 
     coursesWithVacancies.forEach((course) => {
-      const cityKey = course.eh_itu ? 'itu' : 'indaiatuba';
+      const city = course.cidade || 'Indaiatuba';
+      const cityKey = city === 'Itu' ? 'itu' : 'indaiatuba';
       groupedCourses[cityKey][course.grupo_repense].push(course);
     });
 

@@ -75,17 +75,17 @@ export function CreateTeacherModal({ isOpen, onClose, onSuccess }: CreateTeacher
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao criar professor');
+        throw new Error(result.error || 'Erro ao criar facilitador');
       }
 
-      toast.success('Professor criado com sucesso!');
+      toast.success('Facilitador criado com sucesso!');
       reset();
       onSuccess();
       onClose();
 
     } catch (error) {
       console.error('Error creating teacher:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao criar professor');
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar facilitador');
     }
   };
 
@@ -97,7 +97,7 @@ export function CreateTeacherModal({ isOpen, onClose, onSuccess }: CreateTeacher
   }, [isOpen, reset]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Adicionar Professor" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Adicionar Facilitador" size="md">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Nome */}
         <div>
@@ -108,7 +108,7 @@ export function CreateTeacherModal({ isOpen, onClose, onSuccess }: CreateTeacher
             type="text"
             {...register('nome')}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Nome do professor"
+            placeholder="Nome do facilitador"
           />
           {errors.nome && (
             <p className="mt-1 text-sm text-red-600">{errors.nome.message}</p>
@@ -185,7 +185,7 @@ export function CreateTeacherModal({ isOpen, onClose, onSuccess }: CreateTeacher
             Cancelar
           </Button>
           <Button type="submit" variant="primary" loading={isSubmitting}>
-            Adicionar Professor
+            Adicionar Facilitador
           </Button>
         </div>
       </form>

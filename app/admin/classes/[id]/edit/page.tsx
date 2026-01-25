@@ -8,7 +8,9 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { Button, Card } from '@/app/components/ui';
+import { DatePicker } from '@/app/components/DatePicker';
 import { getAuthToken } from '@/lib/hooks/useAuth';
+import { AVAILABLE_CITIES } from '@/lib/constants';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -30,7 +32,7 @@ interface ClassData {
   eh_ativo: boolean;
   eh_16h: boolean;
   eh_mulheres: boolean;
-  eh_itu: boolean;
+  cidade: string | null;
   horario: string | null;
   data_inicio: string | null;
   numero_sessoes: number;
@@ -55,6 +57,7 @@ const editClassSchema = z.object({
   horario: z.string().optional().nullable(),
   data_inicio: z.string().optional().nullable(),
   numero_sessoes: z.number().int().min(1).max(20),
+  cidade: z.enum(['Indaiatuba', 'Itu']).optional(),
 });
 
 type EditClassFormData = z.infer<typeof editClassSchema>;
@@ -77,6 +80,7 @@ export default function EditClassPage() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<EditClassFormData>({
     resolver: zodResolver(editClassSchema) as Resolver<EditClassFormData>,
@@ -114,10 +118,12 @@ export default function EditClassPage() {
           setTeachers(teachersResult.teachers);
         }
 
-        // Format date for input
-        const dataInicio = classResult.class.data_inicio 
-          ? new Date(classResult.class.data_inicio).toISOString().split('T')[0]
+        const dataInicio = classResult.class.data_inicio
+          ? String(classResult.class.data_inicio).split('T')[0]
           : '';
+
+        // Use cidade from existing data
+        const cidade = classResult.class.cidade || 'Indaiatuba';
 
         reset({
           capacidade: classResult.class.capacidade,
@@ -127,6 +133,7 @@ export default function EditClassPage() {
           horario: classResult.class.horario || '',
           data_inicio: dataInicio,
           numero_sessoes: classResult.class.numero_sessoes,
+          cidade: cidade as 'Indaiatuba' | 'Itu',
         });
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -144,15 +151,15 @@ export default function EditClassPage() {
     try {
       const token = getAuthToken();
 
-      // Prepare data for submission
       const submitData = {
         capacidade: data.capacidade,
         eh_ativo: data.eh_ativo,
         teacher_id: data.teacher_id || null,
         link_whatsapp: data.link_whatsapp || null,
         horario: data.horario || null,
-        data_inicio: data.data_inicio || null,
+        data_inicio: data.data_inicio?.trim() || null,
         numero_sessoes: data.numero_sessoes,
+        cidade: data.cidade,
       };
 
       const response = await fetch(`/api/admin/classes/${classId}`, {
@@ -231,7 +238,7 @@ export default function EditClassPage() {
           <div>
             <p className="text-gray-500">Cidade</p>
             <p className="font-medium text-gray-900">
-              {classData.eh_itu ? 'Itu' : 'Indaiatuba'}
+              {classData.cidade || 'Indaiatuba'}
             </p>
           </div>
           <div>
@@ -324,10 +331,10 @@ export default function EditClassPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Data de Início
             </label>
-            <input
-              type="date"
-              {...register('data_inicio')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            <DatePicker
+              value={watch('data_inicio') ?? ''}
+              onChange={(iso) => setValue('data_inicio', iso, { shouldValidate: true })}
+              placeholder="Selecione a data"
             />
             {errors.data_inicio && (
               <p className="mt-1 text-sm text-red-600">
@@ -352,6 +359,28 @@ export default function EditClassPage() {
               <p className="mt-1 text-sm text-red-600">
                 {errors.numero_sessoes.message}
               </p>
+            )}
+          </div>
+
+          {/* Cidade */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Cidade <span className="text-red-500">*</span>
+            </label>
+            <select
+              {...register('cidade')}
+              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.cidade ? 'border-red-500' : ''
+              }`}
+            >
+              {AVAILABLE_CITIES.map((city) => (
+                <option key={city.value} value={city.value}>
+                  {city.label}
+                </option>
+              ))}
+            </select>
+            {errors.cidade && (
+              <p className="mt-1 text-sm text-red-600">{errors.cidade.message}</p>
             )}
           </div>
 

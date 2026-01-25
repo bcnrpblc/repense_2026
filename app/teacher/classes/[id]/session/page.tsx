@@ -188,7 +188,7 @@ export default function TeacherSessionPage() {
         setRelatorio(activeData.session.relatorio || '');
       } else if (activeData.session) {
         // Active session exists but for a different class
-        toast.error('Você tem uma sessão ativa em outro grupo');
+        toast.error('Você tem um encontro em andamento em outro grupo');
         router.push(`/teacher/classes/${activeData.session.class.id}/session`);
         return;
       } else {
@@ -205,7 +205,7 @@ export default function TeacherSessionPage() {
         const createData = await createResponse.json();
 
         if (!createResponse.ok) {
-          toast.error(createData.error || 'Erro ao criar sessão');
+          toast.error(createData.error || 'Erro ao criar encontro');
           router.push('/teacher/dashboard');
           return;
         }
@@ -229,11 +229,11 @@ export default function TeacherSessionPage() {
         });
         setAttendanceRecords(records);
 
-        toast.success(`Sessão #${newActiveData.session.numero_sessao} iniciada!`);
+        toast.success(`Encontro #${newActiveData.session.numero_sessao} iniciado!`);
       }
     } catch (error) {
       console.error('Error fetching session:', error);
-      toast.error('Erro ao carregar sessão');
+      toast.error('Erro ao carregar encontro');
     } finally {
       setLoading(false);
     }
@@ -398,7 +398,7 @@ export default function TeacherSessionPage() {
     }
 
     // First save attendance if there are unsaved changes.
-    // Se salvar presenças falhar, não finaliza a sessão.
+    // Se salvar presenças falhar, não finaliza o encontro.
     if (hasUnsavedChanges) {
       // #region agent log
       if (typeof window !== 'undefined') {
@@ -436,7 +436,7 @@ export default function TeacherSessionPage() {
         fetch('http://127.0.0.1:7249/ingest/968788e1-fcc3-43a8-9503-ceefa9c559f1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/teacher/classes/[id]/session/page.tsx:348',message:'Check-in not completed, showing error',data:{checkInDone},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
       }
       // #endregion
-      toast.error('Você precisa registrar a presença de todos os participantes antes de finalizar a sessão');
+      toast.error('Você precisa registrar a presença de todos os participantes antes de finalizar esse grupo');
       return;
     }
 
@@ -469,14 +469,14 @@ export default function TeacherSessionPage() {
 
       if (!response.ok) {
         if (data.code === 'CHECK_IN_REQUIRED') {
-          toast.error('Você precisa registrar a presença de todos os participantes antes de finalizar a sessão');
+          toast.error('Você precisa registrar a presença de todos os participantes antes de finalizar esse grupo');
         } else {
-          toast.error(data.error || 'Erro ao finalizar sessão');
+          toast.error(data.error || 'Erro ao finalizar encontro');
         }
         return;
       }
 
-      toast.success('Sessão finalizada com sucesso!');
+      toast.success('Encontro finalizado com sucesso!');
       router.push('/teacher/dashboard');
     } catch (error) {
       console.error('Error finalizing session:', error);
@@ -485,7 +485,7 @@ export default function TeacherSessionPage() {
         fetch('http://127.0.0.1:7249/ingest/968788e1-fcc3-43a8-9503-ceefa9c559f1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/teacher/classes/[id]/session/page.tsx:378',message:'Error finalizing session',data:{errorMessage:error instanceof Error ? error.message : String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
       }
       // #endregion
-      toast.error('Erro ao finalizar sessão');
+      toast.error('Erro ao finalizar encontro');
     } finally {
       setFinalizingSession(false);
     }
@@ -500,7 +500,7 @@ export default function TeacherSessionPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando sessão...</p>
+          <p className="mt-4 text-gray-600">Carregando encontro...</p>
         </div>
       </div>
     );
@@ -541,10 +541,10 @@ export default function TeacherSessionPage() {
               </span>
             </div>
             <h1 className="text-xl font-bold">
-              {session.class.horario || 'Sessão em Andamento'}
+              {session.class.horario || 'Encontro em Andamento'}
             </h1>
             <p className="text-blue-100">
-              Sessão #{session.numero_sessao} • {formatDate(session.data_sessao)}
+              Encontro #{session.numero_sessao} • {formatDate(session.data_sessao)}
             </p>
           </div>
 
@@ -605,7 +605,7 @@ export default function TeacherSessionPage() {
       {/* Report Section */}
       <Card className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Relatório da Sessão (Opcional)
+          Relatório do Encontro (Opcional)
         </h2>
         <textarea
           value={relatorio}
@@ -616,7 +616,7 @@ export default function TeacherSessionPage() {
           style={{ minHeight: '150px' }}
         />
         <p className="mt-2 text-sm text-gray-500">
-          O relatório é opcional. Você pode adicionar observações sobre a sessão se desejar.
+          O relatório é opcional. Você pode adicionar observações sobre esse encontro se desejar.
         </p>
       </Card>
 
@@ -642,7 +642,7 @@ export default function TeacherSessionPage() {
           }}
           disabled={finalizingSession || !isCheckInCompleted()}
         >
-          {finalizingSession ? 'Finalizando...' : 'Finalizar Sessão'}
+          {finalizingSession ? 'Finalizando...' : 'Finalizar Encontro'}
         </Button>
       </div>
 

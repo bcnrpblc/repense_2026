@@ -7,7 +7,9 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Modal } from './Modal';
 import { Button, Input } from './ui';
+import { DatePicker } from './DatePicker';
 import { getAuthToken } from '@/lib/hooks/useAuth';
+import { AVAILABLE_CITIES } from '@/lib/constants';
 
 // ============================================================================
 // VALIDATION SCHEMA
@@ -27,7 +29,9 @@ const createClassSchema = z.object({
   numero_sessoes: z.number().int().min(1).max(20).default(8),
   eh_16h: z.boolean().default(false),
   eh_mulheres: z.boolean().default(false),
-  eh_itu: z.boolean().default(false),
+  cidade: z.enum(['Indaiatuba', 'Itu'], {
+    message: 'Selecione uma cidade',
+  }),
   link_whatsapp: z.string().url('URL inválida').optional().or(z.literal('')),
   eh_ativo: z.boolean().default(true),
 });
@@ -71,11 +75,12 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
   } = useForm<CreateClassForm>({
     resolver: zodResolver(createClassSchema) as Resolver<CreateClassForm>,
     defaultValues: {
+      data_inicio: '',
       numero_sessoes: 8,
       capacidade: 15,
       eh_16h: false,
       eh_mulheres: false,
-      eh_itu: false,
+      cidade: 'Indaiatuba',
       eh_ativo: true,
     },
   });
@@ -110,13 +115,12 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
   const onSubmit = async (data: CreateClassForm) => {
     try {
       const token = getAuthToken();
-      
-      // Clean up data
+
       const payload = {
         ...data,
         teacher_id: data.teacher_id || null,
         link_whatsapp: data.link_whatsapp || null,
-        data_inicio: data.data_inicio || null,
+        data_inicio: data.data_inicio?.trim() || null,
         horario: data.horario || null,
       };
 
@@ -246,10 +250,10 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Data Início
             </label>
-            <input
-              type="date"
-              {...register('data_inicio')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            <DatePicker
+              value={watch('data_inicio') ?? ''}
+              onChange={(iso) => setValue('data_inicio', iso, { shouldValidate: true })}
+              placeholder="Selecione a data"
             />
           </div>
           <div>
@@ -315,14 +319,6 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
           <label className="flex items-center">
             <input
               type="checkbox"
-              {...register('eh_itu')}
-              className="mr-2 rounded text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">Cidade: Itu</span>
-          </label>
-          <label className="flex items-center">
-            <input
-              type="checkbox"
               {...register('eh_16h')}
               className="mr-2 rounded text-blue-600 focus:ring-blue-500"
             />
@@ -336,6 +332,28 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
             />
             <span className="text-sm text-gray-700">Grupo Ativo</span>
           </label>
+        </div>
+
+        {/* Cidade */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Cidade <span className="text-red-500">*</span>
+          </label>
+          <select
+            {...register('cidade')}
+            className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.cidade ? 'border-red-500' : ''
+            }`}
+          >
+            {AVAILABLE_CITIES.map((city) => (
+              <option key={city.value} value={city.value}>
+                {city.label}
+              </option>
+            ))}
+          </select>
+          {errors.cidade && (
+            <p className="mt-1 text-sm text-red-600">{errors.cidade.message}</p>
+          )}
         </div>
 
         {/* Link WhatsApp */}

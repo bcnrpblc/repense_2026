@@ -75,14 +75,14 @@ export async function POST(
 
     if (!session) {
       return NextResponse.json(
-        { error: 'Sessão não encontrada' },
+        { error: ' não encontrada' },
         { status: 404 }
       );
     }
 
     if (session.Class.teacher_id !== teacherId) {
       return NextResponse.json(
-        { error: 'Você não tem permissão para registrar presenças nesta sessão' },
+        { error: 'Você não tem permissão para registrar presenças nesse encontro' },
         { status: 403 }
       );
     }
@@ -264,7 +264,7 @@ export async function GET(
 
     if (session.Class.teacher_id !== teacherId) {
       return NextResponse.json(
-        { error: 'Você não tem permissão para visualizar esta sessão' },
+        { error: 'Você não tem permissão para visualizar esse encontro' },
         { status: 403 }
       );
     }
