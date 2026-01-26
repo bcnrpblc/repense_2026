@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Card, Button } from '@/app/components/ui';
+import { StudentListAccordion } from '@/app/components/StudentListAccordion';
+import { AtRiskStudentsCard } from '@/app/components/AtRiskStudentsCard';
 import toast from 'react-hot-toast';
 
 // ============================================================================
@@ -217,6 +219,7 @@ function ClassCard({
   onStartSession,
   startingSession,
 }: ClassCardProps) {
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   const isThisClassActive = activeSessionClassId === classData.id;
   const canStartSession = !hasActiveSession && classData.eh_ativo;
 
@@ -322,6 +325,13 @@ function ClassCard({
           </a>
         )}
       </div>
+
+      {/* Student List Accordion */}
+      <StudentListAccordion
+        classId={classData.id}
+        isOpen={isAccordionOpen}
+        onToggle={() => setIsAccordionOpen(!isAccordionOpen)}
+      />
     </Card>
   );
 }
@@ -477,6 +487,9 @@ export default function TeacherDashboardPage() {
       {/* Active Session Banner */}
       {activeSession && <ActiveSessionBanner session={activeSession} />}
 
+      {/* At-Risk Students Card */}
+      <AtRiskStudentsCard />
+
       {/* Quick Stats */}
       {classesData && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -508,9 +521,9 @@ export default function TeacherDashboardPage() {
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8">
         {/* My Classes Section */}
-        <div className="lg:col-span-2">
+        <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
               Meus Grupos
@@ -531,7 +544,7 @@ export default function TeacherDashboardPage() {
             </Card>
           ) : classesData && classesData.classes.length > 0 ? (
             <div className="space-y-4">
-              {classesData.classes.slice(0, 5).map((classItem) => (
+              {classesData.classes.filter(c => c.eh_ativo).slice(0, 5).map((classItem) => (
                 <ClassCard 
                   key={classItem.id} 
                   classData={classItem}
@@ -547,19 +560,6 @@ export default function TeacherDashboardPage() {
               <p className="text-gray-500">Nenhum grupo atribuído</p>
             </Card>
           )}
-        </div>
-
-        {/* Upcoming Sessions Section */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Próximas Aulas
-          </h2>
-
-          {loading ? (
-            <ClassesSkeleton />
-          ) : classesData ? (
-            <UpcomingSessions classes={classesData.classes} />
-          ) : null}
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Button, Card } from '@/app/components/ui';
 import { CreateTeacherModal } from '@/app/components/CreateTeacherModal';
 import { ConfirmModal } from '@/app/components/Modal';
+import { WhatsAppButton } from '@/app/components/WhatsAppButton';
 import { getAuthToken } from '@/lib/hooks/useAuth';
 
 // ============================================================================
@@ -227,16 +228,19 @@ export default function TeachersPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => setToggleTarget(teacher)}
-                        className={`px-3 py-1 text-xs font-medium rounded-lg border ${
-                          teacher.eh_ativo
-                            ? 'text-red-600 border-red-200 hover:bg-red-50'
-                            : 'text-green-600 border-green-200 hover:bg-green-50'
-                        }`}
-                      >
-                        {teacher.eh_ativo ? 'Desativar' : 'Ativar'}
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <WhatsAppButton telefone={teacher.telefone} size="sm" />
+                        <button
+                          onClick={() => setToggleTarget(teacher)}
+                          className={`px-3 py-1 text-xs font-medium rounded-lg border ${
+                            teacher.eh_ativo
+                              ? 'text-red-600 border-red-200 hover:bg-red-50'
+                              : 'text-green-600 border-green-200 hover:bg-green-50'
+                          }`}
+                        >
+                          {teacher.eh_ativo ? 'Desativar' : 'Ativar'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -274,16 +278,19 @@ export default function TeachersPage() {
                     </span>
                   )}
                 </div>
-                <button
-                  onClick={() => setToggleTarget(teacher)}
-                  className={`w-full px-3 py-2 text-sm font-medium rounded-lg border ${
-                    teacher.eh_ativo
-                      ? 'text-red-600 border-red-200 hover:bg-red-50'
-                      : 'text-green-600 border-green-200 hover:bg-green-50'
-                  }`}
-                >
-                  {teacher.eh_ativo ? 'Desativar Facilitador' : 'Ativar Facilitador'}
-                </button>
+                <div className="flex flex-col gap-2">
+                  <WhatsAppButton telefone={teacher.telefone} size="sm" />
+                  <button
+                    onClick={() => setToggleTarget(teacher)}
+                    className={`w-full px-3 py-2 text-sm font-medium rounded-lg border ${
+                      teacher.eh_ativo
+                        ? 'text-red-600 border-red-200 hover:bg-red-50'
+                        : 'text-green-600 border-green-200 hover:bg-green-50'
+                    }`}
+                  >
+                    {teacher.eh_ativo ? 'Desativar Facilitador' : 'Ativar Facilitador'}
+                  </button>
+                </div>
               </Card>
             ))}
           </div>

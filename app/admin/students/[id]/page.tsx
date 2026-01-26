@@ -8,6 +8,7 @@ import { Card, Button } from '@/app/components/ui';
 import { ConfirmModal } from '@/app/components/Modal';
 import { EditStudentModal } from '@/app/components/EditStudentModal';
 import { TransferStudentModal } from '@/app/components/TransferStudentModal';
+import { WhatsAppButton } from '@/app/components/WhatsAppButton';
 import { getAuthToken } from '@/lib/hooks/useAuth';
 
 // ============================================================================
@@ -400,7 +401,10 @@ export default function StudentProfilePage() {
           </div>
           <div>
             <p className="text-xs text-gray-500 uppercase">Telefone</p>
-            <p className="text-sm font-medium text-gray-900">{student.telefone}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium text-gray-900">{student.telefone}</p>
+              <WhatsAppButton telefone={student.telefone} size="sm" />
+            </div>
           </div>
           <div>
             <p className="text-xs text-gray-500 uppercase">Gênero</p>
