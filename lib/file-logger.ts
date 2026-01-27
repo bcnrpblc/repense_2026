@@ -1,26 +1,36 @@
+// Server-only module - uses Node.js fs
 import fs from 'fs';
 import path from 'path';
+
+// Only run on server side
+if (typeof window !== 'undefined') {
+  throw new Error('file-logger can only be used on the server side');
+}
 
 const LOG_DIR = process.env.LOG_DIR || '/app/logs';
 const ERROR_LOG_FILE = path.join(LOG_DIR, 'errors.log');
 const APP_LOG_FILE = path.join(LOG_DIR, 'app.log');
 
-// Ensure log directory exists
+// Lazy initialization - only create directory when first needed
+let logDirInitialized = false;
+
 function ensureLogDir() {
+  if (logDirInitialized) return;
+  
   try {
     if (!fs.existsSync(LOG_DIR)) {
       fs.mkdirSync(LOG_DIR, { recursive: true });
     }
+    logDirInitialized = true;
   } catch (error) {
     // If we can't create the directory, log to console as fallback
     console.error('Failed to create log directory:', error);
   }
 }
 
-// Initialize log directory on module load
-ensureLogDir();
-
 function writeToFile(filePath: string, data: string) {
+  ensureLogDir(); // Ensure directory exists before writing
+  
   try {
     // Append to file with newline
     fs.appendFileSync(filePath, data + '\n', { encoding: 'utf8' });

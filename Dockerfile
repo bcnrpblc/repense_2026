@@ -52,6 +52,8 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+# Copy sharp for image optimization (required in standalone mode)
+COPY --from=builder /app/node_modules/sharp ./node_modules/sharp
 COPY --from=builder /app/prisma ./prisma
 
 # Copy package.json and package-lock.json for Prisma
