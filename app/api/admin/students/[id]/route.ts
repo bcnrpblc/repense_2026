@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { normalizeNameBR } from '@/lib/utils/names';
+import { logAuditEvent, getChangedFields, maskPhone } from '@/lib/audit';
 
 // ============================================================================
 // GET /api/admin/students/[id]
@@ -236,7 +237,7 @@ export async function PUT(
 ) {
   try {
     // Verify admin authentication
-    await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminToken(request);
 
     const studentId = params.id;
     const body = await request.json();
@@ -337,6 +338,32 @@ export async function PUT(
       where: { id: studentId },
       data: updateData,
     });
+
+    // Log audit event
+    await logAuditEvent(
+      {
+        event_type: 'data_student_update',
+        actor_id: tokenPayload.adminId,
+        actor_type: 'admin',
+        target_entity: 'Student',
+        target_id: studentId,
+        action: 'update',
+        metadata: {
+          changed_fields: getChangedFields(existingStudent, updatedStudent),
+          old_values: {
+            nome: existingStudent.nome,
+            telefone: maskPhone(existingStudent.telefone),
+            email: existingStudent.email ? existingStudent.email.substring(0, 3) + '***' : null,
+          },
+          new_values: {
+            nome: updatedStudent.nome,
+            telefone: maskPhone(updatedStudent.telefone),
+            email: updatedStudent.email ? updatedStudent.email.substring(0, 3) + '***' : null,
+          },
+        },
+      },
+      request
+    );
 
     return NextResponse.json({
       success: true,

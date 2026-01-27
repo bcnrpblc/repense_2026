@@ -52,11 +52,13 @@ model Enrollment {
 }
 
 model Admin {
-  id              String            @id @default(uuid())
-  email           String            @unique
-  password_hash   String
-  criado_em       DateTime          @default(now())
+  id               String             @id @default(uuid())
+  email            String             @unique
+  password_hash    String
+  role             String             @default("admin")
+  criado_em        DateTime           @default(now())
   NotificationRead NotificationRead[]
+  AuditLog         AuditLog[]         @relation("Actor")
 
   @@map("admins")
 }
@@ -137,6 +139,30 @@ model Teacher {
   Class         Class[]
 
   @@index([eh_ativo])
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  event_type    String
+  actor_id      String?
+  actor_type    String?
+  target_entity String?
+  target_id     String?
+  action        String?
+  metadata      Json?
+  ip_address    String?
+  user_agent    String?
+  status        String   @default("success")
+  error_message String?
+  criado_em     DateTime @default(now())
+
+  Actor Admin? @relation("Actor", fields: [actor_id], references: [id])
+
+  @@index([event_type, criado_em])
+  @@index([actor_id, criado_em])
+  @@index([target_entity, target_id])
+  @@index([criado_em])
+  @@map("audit_logs")
 }
 
 model NotificationRead {

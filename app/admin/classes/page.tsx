@@ -647,7 +647,7 @@ export default function ClassesPage() {
                   {classItem.numero_inscritos}/{classItem.capacidade} vagas ocupadas
                 </p>
 
-                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex gap-6 mt-4" onClick={(e) => e.stopPropagation()}>
                   {!classItem.arquivada ? (
                     <>
                       <Link

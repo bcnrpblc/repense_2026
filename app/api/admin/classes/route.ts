@@ -4,6 +4,7 @@ import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { randomUUID } from 'crypto';
 import { isValidCity } from '@/lib/constants';
+import { logAuditEvent } from '@/lib/audit';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -167,7 +168,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminToken(request);
 
     const body = await request.json();
     const data = createClassSchema.parse(body);
@@ -261,8 +262,25 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Opcional: após criar grupo podemos sincronizar status dos líderes,
-    // mas como a regra principal é usada em updates/arquivamentos, mantemos simples aqui.
+    // Log audit event
+    await logAuditEvent(
+      {
+        event_type: 'data_class_create',
+        actor_id: tokenPayload.adminId,
+        actor_type: 'admin',
+        target_entity: 'Class',
+        target_id: newClass.id,
+        action: 'create',
+        metadata: {
+          grupo_repense: newClass.grupo_repense,
+          modelo: newClass.modelo,
+          cidade: newClass.cidade,
+          capacidade: newClass.capacidade,
+          teacher_id: newClass.teacher_id,
+        },
+      },
+      request
+    );
 
     return NextResponse.json({ class: newClass }, { status: 201 });
 

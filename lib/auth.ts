@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
+import { prisma } from '@/lib/prisma';
+import { ForbiddenError } from '@/lib/errors';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -11,7 +13,7 @@ import jwt from 'jsonwebtoken';
 export type AdminTokenPayload = {
   adminId: string;
   email: string;
-  role?: 'admin'; // Optional for backward compatibility
+  role?: 'admin' | 'superadmin'; // Optional for backward compatibility
 };
 
 /**
@@ -134,6 +136,43 @@ export async function verifyAdminToken(
   }
 
   return decoded;
+}
+
+/**
+ * Verify admin token and ensure the authenticated admin is a superadmin.
+ * Fetches the admin from the database to guarantee the latest role.
+ *
+ * @param request - The Next.js request object
+ * @returns Promise<{ adminId: string; email: string; role: string }>
+ * @throws Error if not authenticated or not superadmin
+ */
+export async function requireSuperadmin(
+  request: NextRequest
+): Promise<{
+  adminId: string;
+  email: string;
+  role: string;
+}> {
+  const tokenPayload = await verifyAdminToken(request);
+
+  const admin = await prisma.admin.findUnique({
+    where: { id: tokenPayload.adminId },
+    select: { id: true, email: true, role: true },
+  });
+
+  if (!admin) {
+    throw new Error('Admin not found');
+  }
+
+  if (admin.role !== 'superadmin') {
+    throw new ForbiddenError('Superadmin access required');
+  }
+
+  return {
+    adminId: admin.id,
+    email: admin.email,
+    role: admin.role,
+  };
 }
 
 // ============================================================================

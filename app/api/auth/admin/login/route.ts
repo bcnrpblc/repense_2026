@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { rateLimit, RateLimitConfigs } from '@/lib/rateLimit'
+import { logAuditEvent } from '@/lib/audit'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -19,45 +20,71 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Parse request body
     const body = await request.json()
-    
-    // Validate input
     const { email, password, rememberMe } = loginSchema.parse(body)
-    
-    // Find admin
+
     const admin = await prisma.admin.findUnique({
       where: { email }
     })
-    
+
     if (!admin) {
+      await logAuditEvent(
+        {
+          event_type: 'auth_login_failure',
+          actor_type: 'admin',
+          action: 'login',
+          status: 'failure',
+          metadata: { email, reason: 'Admin not found' },
+        },
+        request
+      )
+
       return NextResponse.json(
         { error: 'Credenciais inválidas' },
         { status: 401 }
       )
     }
-    
-    // Verify password
+
     const isValid = await bcrypt.compare(password, admin.password_hash)
-    
+
     if (!isValid) {
+      await logAuditEvent(
+        {
+          event_type: 'auth_login_failure',
+          actor_id: admin.id,
+          actor_type: 'admin',
+          action: 'login',
+          status: 'failure',
+          metadata: { email, reason: 'Invalid credentials' },
+        },
+        request
+      )
+
       return NextResponse.json(
         { error: 'Credenciais inválidas' },
         { status: 401 }
       )
     }
     
-    // Generate JWT with expiration based on rememberMe
-    // If rememberMe is true: 90 days, otherwise: 30 days
     const expiresIn = rememberMe ? '90d' : '30d';
     const token = jwt.sign(
-      { adminId: admin.id, email: admin.email },
+      { adminId: admin.id, email: admin.email, role: admin.role },
       process.env.JWT_SECRET!,
       { expiresIn }
     )
-    
+
+    await logAuditEvent(
+      {
+        event_type: 'auth_login_success',
+        actor_id: admin.id,
+        actor_type: 'admin',
+        action: 'login',
+        metadata: { email: admin.email, role: admin.role },
+      },
+      request
+    )
+
     return NextResponse.json({ token })
-    
   } catch (error) {
     console.error('Error logging in admin:', error)
     

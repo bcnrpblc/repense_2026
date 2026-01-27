@@ -6,6 +6,7 @@ type MeResponse = {
   admin: {
     id: string;
     email: string;
+    role: string;
   };
 };
 
@@ -24,6 +25,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         email: true,
+        role: true,
       },
     });
 

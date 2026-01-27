@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminToken } from '@/lib/auth';
 import { cancelEnrollment, EnrollmentError } from '@/lib/enrollment';
 import { prisma } from '@/lib/prisma';
+import { logAuditEvent } from '@/lib/audit';
 
 // ============================================================================
 // POST /api/admin/enrollments/[id]/cancel
@@ -17,7 +18,7 @@ export async function POST(
 ) {
   try {
     // Verify admin authentication
-    await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminToken(request);
 
     const enrollmentId = params.id;
 
@@ -75,6 +76,25 @@ export async function POST(
         },
       },
     });
+
+    // Log audit event
+    await logAuditEvent(
+      {
+        event_type: 'data_enrollment_update',
+        actor_id: tokenPayload.adminId,
+        actor_type: 'admin',
+        target_entity: 'Enrollment',
+        target_id: enrollmentId,
+        action: 'cancel',
+        metadata: {
+          student_id: enrollment.student.id,
+          student_nome: enrollment.student.nome,
+          class_id: enrollment.Class.id,
+          grupo_repense: enrollment.Class.grupo_repense,
+        },
+      },
+      request
+    );
 
     return NextResponse.json({
       success: true,

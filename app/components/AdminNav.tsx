@@ -100,12 +100,40 @@ const CloseIcon = () => (
 // NAVIGATION ITEMS
 // ============================================================================
 
-const navItems: NavItem[] = [
+const baseNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: <DashboardIcon /> },
   { label: 'Grupos', href: '/admin/classes', icon: <ClassesIcon /> },
   { label: 'Participantes', href: '/admin/students', icon: <StudentsIcon /> },
   { label: 'Facilitadores', href: '/admin/teachers', icon: <TeachersIcon /> },
 ];
+
+const PasswordsIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 11c.5304 0 1.0391.2107 1.4142.5858C13.7893 11.9609 14 12.4696 14 13v3h-4v-3c0-.5304.2107-1.0391.5858-1.4142C10.9609 11.2107 11.4696 11 12 11z"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M17 8V7a5 5 0 00-10 0v1M5 9h14a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2v-7a2 2 0 012-2z"
+    />
+  </svg>
+);
+
+const ActivityIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M3 12h3l3 8 4-16 3 8h5"
+    />
+  </svg>
+);
 
 // ============================================================================
 // ADMIN NAVIGATION COMPONENT
@@ -139,30 +167,43 @@ export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
     finalReports: 0,
     total: 0,
   });
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
 
-  // Fetch notification counts
+  // Fetch notification counts and admin role
   useEffect(() => {
-    async function fetchCounts() {
+    async function fetchCountsAndRole() {
       try {
         const token = getAuthToken();
         if (!token) return;
 
-        const response = await fetch('/api/admin/notifications/count', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const [countsRes, meRes] = await Promise.all([
+          fetch('/api/admin/notifications/count', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch('/api/auth/admin/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-        if (response.ok) {
-          const data = await response.json();
+        if (countsRes.ok) {
+          const data = await countsRes.json();
           setNotificationCounts(data);
         }
+
+        if (meRes.ok) {
+          const data = await meRes.json();
+          if (data.admin?.role === 'superadmin') {
+            setIsSuperadmin(true);
+          }
+        }
       } catch (error) {
-        console.error('Error fetching notification counts:', error);
+        console.error('Error fetching notification counts or admin role:', error);
       }
     }
 
-    fetchCounts();
+    fetchCountsAndRole();
     // Poll every 30 seconds
-    const interval = setInterval(fetchCounts, 30000);
+    const interval = setInterval(fetchCountsAndRole, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -265,7 +306,25 @@ export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
 
           {/* Navigation Links */}
           <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            {navItems.map(renderNavLink)}
+            {baseNavItems.map(renderNavLink)}
+            {isSuperadmin && (
+              <>
+                <div className="my-4 border-t border-gray-200"></div>
+                <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Superadmin
+                </div>
+                {renderNavLink({
+                  label: 'Gerenciar Senhas',
+                  href: '/superadmin/passwords',
+                  icon: <PasswordsIcon />,
+                })}
+                {renderNavLink({
+                  label: 'Histórico de Atividades',
+                  href: '/superadmin/activity',
+                  icon: <ActivityIcon />,
+                })}
+              </>
+            )}
           </nav>
 
           {/* User Section */}

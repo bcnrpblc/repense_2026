@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { logAuditEvent } from '@/lib/audit';
 
 // ============================================================================
 // PUT /api/admin/classes/[id]/archive
@@ -15,7 +16,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminToken(request);
 
     // Check if class exists
     const currentClass = await prisma.class.findUnique({
@@ -79,6 +80,24 @@ export async function PUT(
       },
     });
 
+    // Log audit event
+    await logAuditEvent(
+      {
+        event_type: 'data_class_update',
+        actor_id: tokenPayload.adminId,
+        actor_type: 'admin',
+        target_entity: 'Class',
+        target_id: params.id,
+        action: newArquivada ? 'archive' : 'unarchive',
+        metadata: {
+          grupo_repense: currentClass.grupo_repense,
+          horario: currentClass.horario,
+          arquivada: newArquivada,
+        },
+      },
+      request
+    );
+
     return NextResponse.json({
       success: true,
       message: newArquivada
@@ -111,7 +130,7 @@ export async function PUT(
  */
 export async function POST(request: NextRequest) {
   try {
-    await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminToken(request);
 
     const body = await request.json();
     const { classIds } = body;
@@ -134,6 +153,22 @@ export async function POST(request: NextRequest) {
         atualizado_em: new Date(),
       },
     });
+
+    // Log audit event for batch archive
+    await logAuditEvent(
+      {
+        event_type: 'data_class_delete',
+        actor_id: tokenPayload.adminId,
+        actor_type: 'admin',
+        target_entity: 'Class',
+        action: 'batch_archive',
+        metadata: {
+          class_ids: classIds,
+          count: result.count,
+        },
+      },
+      request
+    );
 
     return NextResponse.json({
       success: true,

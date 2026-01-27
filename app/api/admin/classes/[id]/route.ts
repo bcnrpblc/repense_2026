@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { logAuditEvent, getChangedFields } from '@/lib/audit';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -95,7 +96,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminToken(request);
 
     const body = await request.json();
     const data = updateClassSchema.parse(body);
@@ -250,6 +251,32 @@ export async function PUT(
       },
     });
 
+    // Log audit event
+    await logAuditEvent(
+      {
+        event_type: 'data_class_update',
+        actor_id: tokenPayload.adminId,
+        actor_type: 'admin',
+        target_entity: 'Class',
+        target_id: params.id,
+        action: 'update',
+        metadata: {
+          changed_fields: getChangedFields(currentClass, updatedClass),
+          old_values: {
+            capacidade: currentClass.capacidade,
+            eh_ativo: currentClass.eh_ativo,
+            teacher_id: currentClass.teacher_id,
+          },
+          new_values: {
+            capacidade: updatedClass.capacidade,
+            eh_ativo: updatedClass.eh_ativo,
+            teacher_id: updatedClass.teacher_id,
+          },
+        },
+      },
+      request
+    );
+
     return NextResponse.json({ class: updatedClass });
 
   } catch (error) {
@@ -285,12 +312,12 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminToken(request);
 
     // Check if class exists
     const currentClass = await prisma.class.findUnique({
       where: { id: params.id },
-      select: { id: true, arquivada: true },
+      select: { id: true, arquivada: true, grupo_repense: true },
     });
 
     if (!currentClass) {
@@ -309,6 +336,23 @@ export async function DELETE(
         atualizado_em: new Date(),
       },
     });
+
+    // Log audit event
+    await logAuditEvent(
+      {
+        event_type: 'data_class_delete',
+        actor_id: tokenPayload.adminId,
+        actor_type: 'admin',
+        target_entity: 'Class',
+        target_id: params.id,
+        action: 'delete',
+        metadata: {
+          method: 'archive',
+          grupo_repense: currentClass.grupo_repense,
+        },
+      },
+      request
+    );
 
     return NextResponse.json({
       success: true,

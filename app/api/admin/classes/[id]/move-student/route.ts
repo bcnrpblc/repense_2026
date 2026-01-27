@@ -4,6 +4,7 @@ import { verifyAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { transferStudent, EnrollmentError } from '@/lib/enrollment';
 import { logger } from '@/lib/logger';
+import { logAuditEvent } from '@/lib/audit';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -43,7 +44,7 @@ export async function POST(
   };
 
   try {
-    await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminToken(request);
 
     const body = await request.json();
     const { studentId, newClassId } = moveStudentSchema.parse(body);
@@ -111,6 +112,26 @@ export async function POST(
     fetch('http://127.0.0.1:7253/ingest/eba6cdf6-4f69-498e-91cd-4f6f86a2c2d6',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/admin/classes/[id]/move-student/route.ts:90',message:'Calling transferStudent',data:{enrollmentId:enrollment.id,newClassId},timestamp:Date.now(),sessionId:'debug-session',runId:'run10',hypothesisId:'H4'})}).catch(()=>{});
     // #endregion
     const result = await transferStudent(enrollment.id, newClassId);
+
+    // Log audit event
+    await logAuditEvent(
+      {
+        event_type: 'data_enrollment_update',
+        actor_id: tokenPayload.adminId,
+        actor_type: 'admin',
+        target_entity: 'Enrollment',
+        target_id: enrollment.id,
+        action: 'transfer',
+        metadata: {
+          student_id: studentId,
+          old_class_id: currentClassId,
+          new_class_id: newClassId,
+          old_grupo: currentClass.grupo_repense,
+          new_grupo: newClass.grupo_repense,
+        },
+      },
+      request
+    );
 
     return respond(
       {
