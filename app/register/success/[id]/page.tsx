@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { GrupoRepense, ModeloCurso } from '@prisma/client';
+import { GrupoRepense, ModeloCurso } from '@/types/client-enums';
 import { formatDayOfWeek, formatMonth, formatTime } from '@/lib/date-formatters';
 
 interface EnrollmentData {

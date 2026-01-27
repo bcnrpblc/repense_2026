@@ -11,7 +11,7 @@ import { formatPhone } from '@/lib/utils/phone';
 import { isoDateToBrazilian } from '@/lib/utils/date';
 import { formatCourseSchedule } from '@/lib/date-formatters';
 import AfternoonCourseWarning from '@/components/AfternoonCourseWarning';
-import { GrupoRepense, ModeloCurso } from '@prisma/client';
+import { GrupoRepense, ModeloCurso } from '@/types/client-enums';
 
 interface Course {
   id: string;

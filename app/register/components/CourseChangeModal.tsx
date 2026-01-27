@@ -1,7 +1,7 @@
 'use client';
 
 import { formatCourseSchedule } from '@/lib/date-formatters';
-import { GrupoRepense, ModeloCurso } from '@prisma/client';
+import { GrupoRepense, ModeloCurso } from '@/types/client-enums';
 
 interface CourseInfo {
   id: string;

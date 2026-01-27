@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { formatDayOfWeek, formatMonth, formatTime } from '@/lib/date-formatters';
-import { GrupoRepense, ModeloCurso } from '@prisma/client';
+import { GrupoRepense, ModeloCurso } from '@/types/client-enums';
 
 interface DashboardData {
   total_registrations: number;
