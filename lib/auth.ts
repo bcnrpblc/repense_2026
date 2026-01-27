@@ -2,43 +2,20 @@ import { NextRequest } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
 import { ForbiddenError } from '@/lib/errors';
+import type {
+  AdminTokenPayload,
+  TeacherTokenPayload,
+  AuthUser,
+  TokenPayload,
+} from './auth-types';
 
-// ============================================================================
-// TYPE DEFINITIONS
-// ============================================================================
-
-/**
- * Admin JWT token payload structure
- */
-export type AdminTokenPayload = {
-  adminId: string;
-  email: string;
-  role?: 'admin' | 'superadmin'; // Optional for backward compatibility
-};
-
-/**
- * Teacher JWT token payload structure
- */
-export type TeacherTokenPayload = {
-  teacherId: string;
-  email: string;
-  role: 'teacher';
-};
-
-/**
- * Unified auth user type for both admin and teacher
- * Used by components that need to work with either user type
- */
-export type AuthUser = {
-  id: string;
-  email: string;
-  role: 'admin' | 'teacher';
-};
-
-/**
- * Combined token payload type (can be either admin or teacher)
- */
-export type TokenPayload = AdminTokenPayload | TeacherTokenPayload;
+// Re-export types for backward compatibility with existing server code
+export type {
+  AdminTokenPayload,
+  TeacherTokenPayload,
+  AuthUser,
+  TokenPayload,
+} from './auth-types';
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -265,43 +242,4 @@ export async function verifyToken(request: NextRequest): Promise<AuthUser> {
   }
 
   throw new Error('Invalid token payload');
-}
-
-// ============================================================================
-// CLIENT-SIDE TOKEN UTILITIES
-// ============================================================================
-
-/**
- * Decode a JWT token without verification (client-side use only)
- * This is useful for reading token payload on the client
- * WARNING: Do not trust the output - always verify on the server
- * 
- * @param token - The JWT token string
- * @returns The decoded payload or null if invalid
- */
-export function decodeToken(token: string): TokenPayload | null {
-  try {
-    const decoded = jwt.decode(token);
-    return decoded as TokenPayload | null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Check if a token is expired (client-side check)
- * 
- * @param token - The JWT token string
- * @returns true if expired, false if valid
- */
-export function isTokenExpired(token: string): boolean {
-  try {
-    const decoded = jwt.decode(token) as { exp?: number } | null;
-    if (!decoded?.exp) return true;
-    
-    // exp is in seconds, Date.now() is in milliseconds
-    return decoded.exp * 1000 < Date.now();
-  } catch {
-    return true;
-  }
 }

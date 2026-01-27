@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { isTokenExpired, decodeToken, AuthUser } from '@/lib/auth';
+import { isTokenExpired, decodeToken } from '@/lib/auth-client';
+import type { AuthUser } from '@/lib/auth-types';
 
 // ============================================================================
 // TYPE DEFINITIONS
