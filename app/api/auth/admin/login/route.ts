@@ -66,9 +66,12 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Handle backward compatibility: role column may not exist yet
+    const adminRole = (admin as any).role || 'admin';
+    
     const expiresIn = rememberMe ? '90d' : '30d';
     const token = jwt.sign(
-      { adminId: admin.id, email: admin.email, role: admin.role },
+      { adminId: admin.id, email: admin.email, role: adminRole },
       process.env.JWT_SECRET!,
       { expiresIn }
     )
@@ -79,7 +82,7 @@ export async function POST(request: NextRequest) {
         actor_id: admin.id,
         actor_type: 'admin',
         action: 'login',
-        metadata: { email: admin.email, role: admin.role },
+        metadata: { email: admin.email, role: adminRole },
       },
       request
     )
@@ -87,6 +90,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ token })
   } catch (error) {
     console.error('Error logging in admin:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+    })
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

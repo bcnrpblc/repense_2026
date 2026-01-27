@@ -19,15 +19,17 @@ export async function GET(request: NextRequest) {
     // Verify token and get admin info
     const tokenPayload = await verifyAdminToken(request);
 
-    // Fetch admin from database (excluding password_hash)
-    const admin = await prisma.admin.findUnique({
-      where: { id: tokenPayload.adminId },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-      },
-    });
+    // Fetch admin from database using raw SQL to handle missing role column gracefully
+    const result = await prisma.$queryRaw<Array<{ id: string; email: string; role: string }>>`
+      SELECT 
+        id,
+        email,
+        COALESCE(role, 'admin') as role
+      FROM "admins"
+      WHERE id = ${tokenPayload.adminId}
+    `;
+
+    const admin = result[0];
 
     if (!admin) {
       return NextResponse.json<ErrorResponse>(
