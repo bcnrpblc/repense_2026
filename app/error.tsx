@@ -19,8 +19,31 @@ export default function RootError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service
+    // Log the error to console
     console.error('Application Error:', error);
+    
+    // Send error to server for file logging
+    fetch('/api/logs/error', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: 'Application Error Boundary',
+        error: {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+          digest: error.digest,
+        },
+        url: typeof window !== 'undefined' ? window.location.href : 'unknown',
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+        timestamp: new Date().toISOString(),
+      }),
+    }).catch((err) => {
+      // Silently fail if logging endpoint is unavailable
+      console.error('Failed to send error to server:', err);
+    });
   }, [error]);
 
   return (
