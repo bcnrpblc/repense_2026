@@ -79,7 +79,7 @@ export function StudentListAccordion({
         variant="secondary"
         size="sm"
         onClick={onToggle}
-        className="w-full"
+        className="w-full mt-4"
       >
         Participantes
       </Button>
