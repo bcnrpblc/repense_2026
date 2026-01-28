@@ -1,10 +1,16 @@
 import { z } from 'zod';
 import { validateCPF } from '../utils/cpf';
 import { validateBrazilianDate, brazilianDateToISO } from '../utils/date';
+import { hasFullName } from '../utils/names';
 
 export const registerSchema = z.object({
   // Step 1 - Personal Information
-  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  nome: z
+    .string()
+    .min(2, 'Nome deve ter pelo menos 2 caracteres')
+    .refine(hasFullName, {
+      message: 'Digite nome e sobrenome (nome completo)',
+    }),
   cpf: z.string().refine(
     (val) => {
       const cleaned = val.replace(/\D/g, '');

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cleanCPF, validateCPF } from '@/lib/utils/cpf';
 import { cleanPhone } from '@/lib/utils/phone';
-import { normalizeNameBR } from '@/lib/utils/names';
+import { normalizeNameBR, hasFullName } from '@/lib/utils/names';
 import { logger } from '@/lib/logger';
 
 // TypeScript types for request body
@@ -91,6 +91,8 @@ export async function POST(request: NextRequest) {
     
     if (!student.nome || student.nome.trim().length === 0) {
       validationErrors.nome = 'Nome completo é obrigatório';
+    } else if (!hasFullName(student.nome.trim())) {
+      validationErrors.nome = 'Digite nome e sobrenome (nome completo)';
     }
 
     if (!student.cpf || student.cpf.trim().length === 0) {

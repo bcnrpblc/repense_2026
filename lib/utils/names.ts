@@ -26,3 +26,12 @@ export function normalizeNameBR(value: string): string {
 
   return result.join(' ');
 }
+
+/**
+ * Returns true if the value has at least two space-separated words (nome e sobrenome).
+ * Used for full-name validation in registration and API.
+ */
+export function hasFullName(value: string): boolean {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  return words.length >= 2;
+}
