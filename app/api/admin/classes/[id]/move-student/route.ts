@@ -5,6 +5,10 @@ import { prisma } from '@/lib/prisma';
 import { transferStudent, EnrollmentError } from '@/lib/enrollment';
 import { logger } from '@/lib/logger';
 import { logAuditEvent } from '@/lib/audit';
+import {
+  sendTransferNotification,
+  buildClassSchedule,
+} from '@/lib/notifications/whatsapp';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -132,6 +136,93 @@ export async function POST(
       },
       request
     );
+
+    // Send WhatsApp transfer notification (non-blocking; never fail transfer)
+    try {
+      const [student, oldClassFull, newClassFull] = await Promise.all([
+        prisma.student.findUnique({
+          where: { id: studentId },
+          select: { nome: true, telefone: true },
+        }),
+        prisma.class.findUnique({
+          where: { id: currentClassId },
+          select: {
+            grupo_repense: true,
+            horario: true,
+            cidade: true,
+            data_inicio: true,
+            link_whatsapp: true,
+            Teacher: { select: { nome: true } },
+          },
+        }),
+        prisma.class.findUnique({
+          where: { id: newClassId },
+          select: {
+            grupo_repense: true,
+            horario: true,
+            cidade: true,
+            data_inicio: true,
+            link_whatsapp: true,
+            Teacher: { select: { nome: true } },
+          },
+        }),
+      ]);
+
+      if (student && oldClassFull && newClassFull) {
+        const oldTeacher = oldClassFull.Teacher?.nome ?? 'N/A';
+        const newTeacher = newClassFull.Teacher?.nome ?? 'N/A';
+        const oldCity = oldClassFull.cidade ?? 'Indaiatuba';
+        const newCity = newClassFull.cidade ?? 'Indaiatuba';
+        const newStartDate = newClassFull.data_inicio
+          ? newClassFull.data_inicio.toISOString().split('T')[0]
+          : null;
+
+        const notificationResult = await sendTransferNotification({
+          studentId,
+          studentName: student.nome,
+          studentPhone: student.telefone,
+          oldCourse: oldClassFull.grupo_repense,
+          oldClassSchedule: buildClassSchedule(
+            oldClassFull.data_inicio,
+            oldClassFull.horario
+          ),
+          oldClassCity: oldCity,
+          oldClassTeacher: oldTeacher,
+          newCourse: newClassFull.grupo_repense,
+          newClassSchedule: buildClassSchedule(
+            newClassFull.data_inicio,
+            newClassFull.horario
+          ),
+          newClassCity: newCity,
+          newClassTeacher: newTeacher,
+          newClassStartDate: newStartDate,
+          newClassWhatsAppLink: newClassFull.link_whatsapp ?? null,
+        });
+
+        logger.info('WhatsApp transfer notification', {
+          requestId,
+          studentId,
+          oldClassId: currentClassId,
+          newClassId,
+          success: notificationResult.success,
+          error: notificationResult.error,
+        });
+      } else {
+        logger.warn('WhatsApp transfer notification skipped: missing data', {
+          requestId,
+          studentId,
+          hasStudent: !!student,
+          hasOldClass: !!oldClassFull,
+          hasNewClass: !!newClassFull,
+        });
+      }
+    } catch (err) {
+      logger.error('WhatsApp transfer notification failed', {
+        requestId,
+        studentId,
+        err,
+      });
+    }
 
     return respond(
       {

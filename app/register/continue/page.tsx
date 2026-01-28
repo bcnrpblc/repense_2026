@@ -410,7 +410,7 @@ function ContinueForm() {
                 <p className="text-sm text-gray-600 mb-2">Dados que não podem ser alterados:</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-600">Nome:</span>
+                    <span className="text-gray-600">Nome Completo:</span>
                     <p className="font-medium text-gray-900">{student.nome}</p>
                   </div>
                   <div>

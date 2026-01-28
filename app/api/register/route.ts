@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     const validationErrors: Record<string, string> = {};
     
     if (!student.nome || student.nome.trim().length === 0) {
-      validationErrors.nome = 'Nome é obrigatório';
+      validationErrors.nome = 'Nome completo é obrigatório';
     }
 
     if (!student.cpf || student.cpf.trim().length === 0) {
