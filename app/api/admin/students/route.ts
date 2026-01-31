@@ -78,6 +78,8 @@ export async function GET(request: NextRequest) {
             Class: {
               select: {
                 grupo_repense: true,
+                modelo: true,
+                data_inicio: true,
               },
             },
           },
@@ -151,6 +153,13 @@ export async function GET(request: NextRequest) {
         completedEnrollmentsCount: completedEnrollments.length,
         totalEnrollmentsCount: student.enrollments.length,
         completedBadges: badges,
+        activeEnrollments: activeEnrollments.map((e) => ({
+          Class: {
+            grupo_repense: e.Class.grupo_repense,
+            modelo: e.Class.modelo,
+            data_inicio: e.Class.data_inicio,
+          },
+        })),
         // Observation data
         observationCount: observations.length,
         unreadObservationCount: unreadObservations.length,
@@ -201,13 +210,39 @@ export async function GET(request: NextRequest) {
     // Apply pagination after sorting
     const paginatedStudents = filteredStudents.slice(skip, skip + limit);
 
+    // Batch-fetch priority list class names for students with priority_list_course_id
+    const priorityListClassIds = [
+      ...new Set(
+        paginatedStudents
+          .filter((s) => s.priority_list_course_id)
+          .map((s) => s.priority_list_course_id!)
+      ),
+    ];
+    const priorityListClasses =
+      priorityListClassIds.length > 0
+        ? await prisma.class.findMany({
+            where: { id: { in: priorityListClassIds } },
+            select: { id: true, grupo_repense: true },
+          })
+        : [];
+    const classIdToName = Object.fromEntries(
+      priorityListClasses.map((c) => [c.id, c.grupo_repense])
+    );
+
+    const studentsWithPriorityCourse = paginatedStudents.map((s) => ({
+      ...s,
+      priorityListCourseName: s.priority_list_course_id
+        ? classIdToName[s.priority_list_course_id] ?? null
+        : null,
+    }));
+
     // Calculate pagination info based on filtered results
     const totalPages = Math.ceil(filteredTotalCount / limit);
     const hasNextPage = page < totalPages;
     const hasPreviousPage = page > 1;
 
     return NextResponse.json({
-      students: paginatedStudents,
+      students: studentsWithPriorityCourse,
       pagination: {
         page,
         limit,

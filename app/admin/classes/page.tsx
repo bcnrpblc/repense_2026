@@ -8,6 +8,7 @@ import { Button, Card } from '@/app/components/ui';
 import { ConfirmModal } from '@/app/components/Modal';
 import { CreateClassModal } from '@/app/components/CreateClassModal';
 import { getAuthToken } from '@/lib/hooks/useAuth';
+import { formatDayOfWeek, formatClassDisplay } from '@/lib/date-formatters';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -460,6 +461,9 @@ export default function ClassesPage() {
                     Modelo
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Dia da Semana
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Data
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
@@ -517,6 +521,9 @@ export default function ClassesPage() {
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getModeloBadgeColor(classItem.modelo)}`}>
                         {classItem.modelo}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {classItem.data_inicio ? formatDayOfWeek(classItem.data_inicio) : '—'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {formatDate(classItem.data_inicio)}
@@ -606,9 +613,6 @@ export default function ClassesPage() {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getGrupoBadgeColor(classItem.grupo_repense)}`}>
                       {classItem.grupo_repense}
                     </span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getModeloBadgeColor(classItem.modelo)}`}>
-                      {classItem.modelo}
-                    </span>
                     {isFutureClass(classItem.data_inicio) && (
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
                         Aguardando início
@@ -633,7 +637,7 @@ export default function ClassesPage() {
                 </div>
 
                 <p className="font-medium text-gray-900">
-                  {formatDate(classItem.data_inicio)}
+                  {formatClassDisplay(classItem.modelo, classItem.data_inicio)}
                 </p>
                 <p className="text-sm text-gray-500 mb-1">
                   {classItem.horario || 'Horário não definido'}

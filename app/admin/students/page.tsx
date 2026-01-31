@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { Card, Button } from '@/app/components/ui';
 import { Modal } from '@/app/components/Modal';
 import { getAuthToken } from '@/lib/hooks/useAuth';
+import { formatClassDisplay } from '@/lib/date-formatters';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -32,6 +33,12 @@ interface Observation {
   horario: string | null;
 }
 
+interface ActiveEnrollmentClass {
+  grupo_repense: string;
+  modelo: string;
+  data_inicio: string | null;
+}
+
 interface Student {
   id: string;
   nome: string;
@@ -45,7 +52,9 @@ interface Student {
   priority_list: boolean;
   priority_list_course_id: string | null;
   priority_list_added_at: string | null;
+  priorityListCourseName?: string | null;
   activeEnrollmentsCount: number;
+  activeEnrollments?: { Class: ActiveEnrollmentClass }[];
   completedEnrollmentsCount: number;
   totalEnrollmentsCount: number;
   completedBadges: CompletedBadges;
@@ -573,12 +582,36 @@ export default function StudentsPage() {
                         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
                           {student.nome.charAt(0).toUpperCase()}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <p className={`font-medium ${student.hasUnreadObservations ? 'text-red-600' : 'text-gray-900'}`}>
-                            {student.nome}
-                          </p>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div>
+                            <p className={`font-medium ${student.hasUnreadObservations ? 'text-red-600' : 'text-gray-900'}`}>
+                              {student.nome}
+                            </p>
+                            {student.activeEnrollmentsCount > 0 && student.activeEnrollments && student.activeEnrollments.length > 0 && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {student.activeEnrollments.map((e, i) => (
+                                  <span
+                                    key={i}
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs ${getBadgeColor(e.Class.grupo_repense)}`}
+                                  >
+                                    {e.Class.grupo_repense}: {formatClassDisplay(e.Class.modelo, e.Class.data_inicio)}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {student.priority_list && student.activeEnrollmentsCount === 0 && (
+                              <div className="mt-1 text-xs text-gray-600">
+                                Aguardando vaga em: {student.priorityListCourseName ?? 'Lista de Prioridade'}
+                                {student.priority_list_added_at && (
+                                  <span className="text-gray-500 ml-1">
+                                    (desde {formatDate(student.priority_list_added_at)})
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
                           {student.priority_list && student.activeEnrollmentsCount === 0 && (
-                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                               Lista de Prioridade
                             </span>
                           )}
@@ -654,7 +687,7 @@ export default function StudentsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className={`font-medium ${student.hasUnreadObservations ? 'text-red-600' : 'text-gray-900'}`}>
                             {student.nome}
                           </p>
@@ -688,6 +721,30 @@ export default function StudentsPage() {
                     ))}
                   </div>
                 </div>
+
+                {student.activeEnrollmentsCount > 0 && student.activeEnrollments && student.activeEnrollments.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-1">
+                    {student.activeEnrollments.map((e, i) => (
+                      <span
+                        key={i}
+                        className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${getBadgeColor(e.Class.grupo_repense)}`}
+                      >
+                        {e.Class.grupo_repense}: {formatClassDisplay(e.Class.modelo, e.Class.data_inicio)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {student.priority_list && student.activeEnrollmentsCount === 0 && (
+                  <div className="mb-3 px-3 py-2 rounded-lg bg-gray-50 text-gray-600 text-sm">
+                    Aguardando vaga em: {student.priorityListCourseName ?? 'Lista de Prioridade'}
+                    {student.priority_list_added_at && (
+                      <span className="block text-xs text-gray-500 mt-0.5">
+                        Desde: {formatDate(student.priority_list_added_at)}
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-2 text-sm mb-3">
                   <div>

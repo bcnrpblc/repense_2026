@@ -183,3 +183,60 @@ export function getDayName(date: Date | string): string {
 export function getMonthName(date: Date | string): string {
   return formatMonth(date);
 }
+
+/**
+ * Formats a date as DD/MM (day and month only)
+ * @param date - Date object or ISO date string
+ * @returns Formatted string (e.g., "24/02") or empty string if invalid
+ */
+export function formatDateDDMM(date: Date | string | null | undefined): string {
+  if (!date) return '';
+  try {
+    const dateObj = parseLocalDate(date);
+    if (isNaN(dateObj.getTime())) return '';
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}`;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Formats class display as "Modelo Weekday, DD/MM"
+ * Example: "Online Terça-feira, 24/02" or "Presencial" if no date
+ * @param modelo - Course model (online/presencial) - will be capitalized
+ * @param dataInicio - Course start date (Date or ISO string)
+ * @returns Formatted string
+ */
+export function formatClassDisplay(
+  modelo: string,
+  dataInicio: Date | string | null | undefined
+): string {
+  const modeloCapitalized =
+    modelo.charAt(0).toUpperCase() + modelo.slice(1).toLowerCase();
+
+  if (!dataInicio) return modeloCapitalized;
+
+  try {
+    const dateObj = parseLocalDate(dataInicio);
+    if (isNaN(dateObj.getTime())) return modeloCapitalized;
+
+    const dayOfWeek = formatDayOfWeek(dateObj);
+    const ddmm = formatDateDDMM(dateObj);
+    if (!dayOfWeek || !ddmm) return modeloCapitalized;
+
+    return `${modeloCapitalized} ${dayOfWeek}, ${ddmm}`;
+  } catch {
+    return modeloCapitalized;
+  }
+}
+
+/**
+ * Alias for formatDayOfWeek - returns Portuguese weekday name
+ * @param date - Date object or ISO date string
+ * @returns Portuguese day name (e.g., "Segunda-feira")
+ */
+export function getWeekdayName(date: Date | string): string {
+  return formatDayOfWeek(date);
+}
