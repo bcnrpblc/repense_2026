@@ -6,6 +6,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Card, Button } from '@/app/components/ui';
 import { Modal, ConfirmModal } from '@/app/components/Modal';
+import { ConversationModal } from '@/app/components/ConversationModal';
 import { TransferStudentModal } from '@/app/components/TransferStudentModal';
 import { getAuthToken } from '@/lib/hooks/useAuth';
 
@@ -334,6 +335,9 @@ export default function ClassStudentsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [observationStudent, setObservationStudent] = useState<Student | null>(null);
   const [totalUnreadObservations, setTotalUnreadObservations] = useState(0);
+  const [showConversationModal, setShowConversationModal] = useState(false);
+  const [conversationStudentId, setConversationStudentId] = useState<string | null>(null);
+  const [conversationStudentName, setConversationStudentName] = useState<string | null>(null);
 
   // Filter state
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -699,6 +703,19 @@ export default function ClassStudentsPage() {
                             >
                               Mover
                             </button>
+                            {classInfo?.Teacher && (
+                              <button
+                                onClick={() => {
+                                  setConversationStudentId(student.studentId);
+                                  setConversationStudentName(student.nome);
+                                  setShowConversationModal(true);
+                                }}
+                                className="px-3 py-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-lg hover:bg-indigo-50"
+                                title="Enviar mensagem sobre este participante"
+                              >
+                                Mensagem
+                              </button>
+                            )}
                           </div>
                         )}
                       </td>
@@ -774,6 +791,18 @@ export default function ClassStudentsPage() {
                       >
                         Mover
                       </button>
+                      {classInfo?.Teacher && (
+                        <button
+                          onClick={() => {
+                            setConversationStudentId(student.studentId);
+                            setConversationStudentName(student.nome);
+                            setShowConversationModal(true);
+                          }}
+                          className="flex-1 px-3 py-2 text-sm font-medium text-indigo-600 border border-indigo-200 rounded-lg hover:bg-indigo-50"
+                        >
+                          Mensagem
+                        </button>
+                      )}
                     </div>
                   )}
                 </Card>
@@ -822,6 +851,22 @@ export default function ClassStudentsPage() {
           confirmText={actionTarget.type === 'complete' ? 'Concluir' : 'Cancelar Inscrição'}
           variant={actionTarget.type === 'complete' ? 'info' : 'danger'}
           loading={actionLoading}
+        />
+      )}
+
+      {/* Conversation with facilitator (about class or about participant) */}
+      {classInfo && (
+        <ConversationModal
+          isOpen={showConversationModal}
+          onClose={() => {
+            setShowConversationModal(false);
+            setConversationStudentId(null);
+            setConversationStudentName(null);
+          }}
+          classId={classId}
+          studentId={conversationStudentId}
+          studentName={conversationStudentName}
+          classLabel={`${classInfo.grupo_repense} – ${classInfo.horario || 'Sem horário'}`}
         />
       )}
     </div>

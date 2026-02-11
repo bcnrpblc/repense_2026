@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getAuthToken } from '@/lib/hooks/useAuth';
+import { TeacherNotificationDropdown } from '@/app/components/TeacherNotificationDropdown';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -102,6 +103,22 @@ const PlayIcon = () => (
   </svg>
 );
 
+const MessagesIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+    />
+  </svg>
+);
+
+const BellIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+    />
+  </svg>
+);
+
 // ============================================================================
 // NAVIGATION ITEMS
 // ============================================================================
@@ -109,6 +126,7 @@ const PlayIcon = () => (
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/teacher/dashboard', icon: <DashboardIcon /> },
   { label: 'Meus Grupos', href: '/teacher/classes', icon: <ClassesIcon /> },
+  { label: 'Mensagens', href: '/teacher/messages', icon: <MessagesIcon /> },
   { label: 'Alterar Senha', href: '/teacher/change-password', icon: <SettingsIcon /> },
 ];
 
@@ -130,6 +148,8 @@ export function TeacherNav({ userName, userEmail, onLogout }: TeacherNavProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
 
   // Check for active session
   useEffect(() => {
@@ -155,6 +175,21 @@ export function TeacherNav({ userName, userEmail, onLogout }: TeacherNavProps) {
 
     // Poll for active session every 30 seconds
     const interval = setInterval(checkActiveSession, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchNotificationCount = () => {
+    const token = getAuthToken();
+    if (!token) return;
+    fetch('/api/teacher/notifications/count', { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : { total: 0 }))
+      .then((data) => setNotificationCount(data.total ?? 0))
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchNotificationCount();
+    const interval = setInterval(fetchNotificationCount, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -287,6 +322,40 @@ export function TeacherNav({ userName, userEmail, onLogout }: TeacherNavProps) {
 
           {/* User Section */}
           <div className="border-t border-gray-200 p-4">
+            {/* Notification Bell */}
+            <div className="relative mb-2">
+              <button
+                type="button"
+                onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
+                className="w-full flex items-center px-4 py-2 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <div className="relative">
+                  <BellIcon />
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {notificationCount > 9 ? '9+' : notificationCount}
+                    </span>
+                  )}
+                </div>
+                <span className="ml-3 text-sm font-medium text-foreground">
+                  Notificações
+                  {notificationCount > 0 && (
+                    <span className="ml-1 text-primary">({notificationCount})</span>
+                  )}
+                </span>
+              </button>
+              {notificationDropdownOpen && (
+                <div className="absolute bottom-full left-0 mb-2 z-[60]">
+                  <TeacherNotificationDropdown
+                    isOpen={notificationDropdownOpen}
+                    onClose={() => setNotificationDropdownOpen(false)}
+                    count={notificationCount}
+                    onMarkRead={fetchNotificationCount}
+                  />
+                </div>
+              )}
+            </div>
+
             {/* User Info */}
             <div className="flex items-center px-4 py-2 mb-2">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">

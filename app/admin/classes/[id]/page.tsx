@@ -6,6 +6,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { Card, Button } from '@/app/components/ui';
 import { ConfirmModal } from '@/app/components/Modal';
+import { ConversationModal } from '@/app/components/ConversationModal';
 import { getAuthToken } from '@/lib/hooks/useAuth';
 
 // ============================================================================
@@ -96,6 +97,9 @@ export default function ClassDetailPage() {
   const [archiving, setArchiving] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showConversationModal, setShowConversationModal] = useState(false);
+  const [conversationStudentId, setConversationStudentId] = useState<string | null | undefined>(undefined);
+  const [conversationStudentName, setConversationStudentName] = useState<string | null>(null);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
@@ -386,9 +390,20 @@ export default function ClassDetailPage() {
                   <p className="text-gray-500">{classData.Teacher.email}</p>
                 </div>
               </div>
-              <div className="pt-4 border-t border-gray-100">
+              <div className="pt-4 border-t border-gray-100 space-y-2">
                 <p className="text-sm text-gray-500">Telefone</p>
                 <p className="font-medium text-gray-900">{classData.Teacher.telefone}</p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setConversationStudentId(null);
+                    setConversationStudentName(null);
+                    setShowConversationModal(true);
+                  }}
+                >
+                  Falar com facilitador
+                </Button>
               </div>
             </div>
           ) : (
@@ -422,6 +437,18 @@ export default function ClassDetailPage() {
               Ver Participantes ({classData._count.enrollments})
             </Button>
           </Link>
+          {classData.Teacher && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setConversationStudentId(null);
+                setConversationStudentName(null);
+                setShowConversationModal(true);
+              }}
+            >
+              Falar com facilitador
+            </Button>
+          )}
           <Link href={`/admin/classes/${classId}/edit`}>
             <Button variant="secondary">
               Editar Grupo
@@ -571,6 +598,16 @@ export default function ClassDetailPage() {
         confirmText="Arquivar"
         variant="warning"
         loading={archiving}
+      />
+
+      {/* Conversation with facilitator */}
+      <ConversationModal
+        isOpen={showConversationModal}
+        onClose={() => setShowConversationModal(false)}
+        classId={classId}
+        studentId={conversationStudentId}
+        studentName={conversationStudentName}
+        classLabel={`${classData.grupo_repense} – ${classData.horario || 'Sem horário'}`}
       />
     </div>
   );

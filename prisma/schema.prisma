@@ -24,6 +24,7 @@ model Student {
   cidade_preferencia    String?
   Attendance            Attendance[]
   enrollments           Enrollment[]
+  Conversation          Conversation[]
 
   @@index([cpf])
   @@index([telefone])
@@ -59,6 +60,7 @@ model Admin {
   criado_em        DateTime           @default(now())
   NotificationRead NotificationRead[]
   AuditLog         AuditLog[]         @relation("Actor")
+  Message          Message[]          @relation("AdminMessages")
 
   @@map("admins")
 }
@@ -105,6 +107,7 @@ model Class {
   Teacher          Teacher?     @relation(fields: [teacher_id], references: [id])
   Session          Session[]
   enrollments      Enrollment[]
+  Conversation     Conversation[]
 
   @@index([teacher_id])
   @@index([eh_ativo])
@@ -129,16 +132,65 @@ model Session {
 }
 
 model Teacher {
-  id            String   @id
-  nome          String
-  email         String   @unique
-  password_hash String
-  telefone      String
-  eh_ativo      Boolean  @default(true)
-  criado_em     DateTime @default(now())
-  Class         Class[]
+  id                     String                   @id
+  nome                   String
+  email                  String                   @unique
+  password_hash          String
+  telefone               String
+  eh_ativo               Boolean                  @default(true)
+  criado_em              DateTime                 @default(now())
+  Class                  Class[]
+  Message                Message[]                @relation("TeacherMessages")
+  TeacherNotificationRead TeacherNotificationRead[]
 
   @@index([eh_ativo])
+}
+
+model TeacherNotificationRead {
+  id               String   @id @default(uuid())
+  teacher_id       String
+  notification_type String  // 'leader_message'
+  reference_id     String   // conversation id
+  read_at         DateTime?
+  criado_em        DateTime @default(now())
+  Teacher         Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@unique([teacher_id, notification_type, reference_id])
+  @@index([teacher_id, notification_type])
+  @@index([teacher_id, read_at])
+  @@map("teacher_notification_reads")
+}
+
+model Conversation {
+  id         String    @id @default(uuid())
+  class_id   String
+  student_id String?
+  criado_em  DateTime  @default(now())
+  Class      Class     @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  Student    Student?  @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  Message    Message[]
+
+  @@unique([class_id, student_id], map: "conversations_class_id_student_id_key")
+  @@index([class_id])
+  @@index([class_id, student_id])
+  @@map("conversations")
+}
+
+model Message {
+  id               String       @id @default(uuid())
+  conversation_id  String
+  body             String
+  sender_type      String       // 'admin' | 'teacher'
+  sender_admin_id  String?
+  sender_teacher_id String?
+  criado_em        DateTime     @default(now())
+  Conversation     Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  Admin            Admin?       @relation("AdminMessages", fields: [sender_admin_id], references: [id], onDelete: SetNull)
+  Teacher          Teacher?    @relation("TeacherMessages", fields: [sender_teacher_id], references: [id], onDelete: SetNull)
+
+  @@index([conversation_id])
+  @@index([conversation_id, criado_em])
+  @@map("messages")
 }
 
 model AuditLog {

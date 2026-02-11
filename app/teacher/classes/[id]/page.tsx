@@ -459,6 +459,11 @@ export default function TeacherClassDetailPage() {
                 </Button>
               </Link>
             )}
+            <Link href="/teacher/messages">
+              <Button variant="secondary" size="sm">
+                Mensagens
+              </Button>
+            </Link>
           </div>
         </div>
       </Card>
