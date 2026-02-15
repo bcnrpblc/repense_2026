@@ -28,6 +28,8 @@ interface TeacherClass {
   numero_sessoes: number;
   cidade: string;
   enrollmentCount: number;
+  capacityPercentage: number;
+  capacityStatus: 'ok' | 'warning_70' | 'warning_80' | 'warning_90' | 'full';
   nextSession: {
     id: string;
     numero_sessao: number;
@@ -94,6 +96,36 @@ function getGrupoBadgeColor(grupo: string): string {
       return 'bg-amber-100 text-amber-800';
     default:
       return 'bg-muted text-muted-foreground';
+  }
+}
+
+function getCapacityBadgeClass(status: TeacherClass['capacityStatus']): string {
+  switch (status) {
+    case 'full':
+      return 'bg-red-100 text-red-800';
+    case 'warning_90':
+      return 'bg-red-50 text-red-700';
+    case 'warning_80':
+      return 'bg-orange-100 text-orange-800';
+    case 'warning_70':
+      return 'bg-amber-100 text-amber-800';
+    default:
+      return 'bg-green-100 text-green-800';
+  }
+}
+
+function getCapacityBadgeLabel(status: TeacherClass['capacityStatus'], percentage: number): string {
+  switch (status) {
+    case 'full':
+      return 'Lotado';
+    case 'warning_90':
+      return `${percentage}%`;
+    case 'warning_80':
+      return `${percentage}%`;
+    case 'warning_70':
+      return `${percentage}%`;
+    default:
+      return `${percentage}%`;
   }
 }
 
@@ -268,9 +300,21 @@ function ClassCard({
           <LocationIcon />
           <span>{classData.cidade}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <UsersIcon />
           <span>{classData.enrollmentCount}/{classData.capacidade} participantes</span>
+          {classData.capacityStatus !== 'ok' && (
+            <span
+              className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium ${getCapacityBadgeClass(classData.capacityStatus)}`}
+              title={
+                classData.capacityStatus === 'full'
+                  ? 'Turma lotada'
+                  : `Capacidade em ${classData.capacityPercentage}%`
+              }
+            >
+              {getCapacityBadgeLabel(classData.capacityStatus, classData.capacityPercentage)}
+            </span>
+          )}
         </div>
         {classData.lastSession && (
           <div className="flex items-center gap-2 col-span-2 text-gray-400">
@@ -480,7 +524,14 @@ export default function TeacherDashboardPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="mt-1 text-gray-600">
-          Bem-vindo(a), <span className="font-medium">{teacherInfo?.nome || user?.email}</span>
+          Bem-vindo(a),{" "}
+          <span className="font-medium">
+            {
+              teacherInfo?.nome
+                ? teacherInfo.nome.split(' ').slice(0, 2).join(' ')
+                : user?.email
+            }
+          </span>
         </p>
       </div>
 

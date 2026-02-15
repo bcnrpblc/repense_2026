@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyTeacherToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { AT_RISK_ABSENCE_THRESHOLD } from '@/lib/constants';
 
 // ============================================================================
 // GET /api/teacher/at-risk-students
 // ============================================================================
 
 /**
- * Get students with >2 absences across teacher's classes
+ * Get students with >= AT_RISK_ABSENCE_THRESHOLD absences across teacher's classes
  * 
  * Returns students enrolled in teacher's active classes who have
- * more than 2 absences (faltas > 2)
+ * 3 or more absences (faltas >= 3)
  * 
  * Sorted by absence count (descending)
  */
@@ -120,9 +121,9 @@ export async function GET(request: NextRequest) {
       absenceCounts.set(key, existing);
     });
 
-    // Filter to only students with >2 absences
+    // Filter to only students with >= threshold absences
     const atRiskStudents = Array.from(absenceCounts.values())
-      .filter((item) => item.faltas > 2)
+      .filter((item) => item.faltas >= AT_RISK_ABSENCE_THRESHOLD)
       .map((item) => ({
         id: item.student.id,
         nome: item.student.nome,

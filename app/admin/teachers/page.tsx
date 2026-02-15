@@ -17,6 +17,8 @@ interface Teacher {
   nome: string;
   email: string;
   telefone: string;
+  funcao: string | null;
+  eh_admin: boolean;
   eh_ativo: boolean;
   criado_em: string;
   classCount: number;
@@ -34,18 +36,30 @@ export default function TeachersPage() {
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
   const [toggleTarget, setToggleTarget] = useState<Teacher | null>(null);
   const [toggling, setToggling] = useState(false);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [togglingAdminId, setTogglingAdminId] = useState<string | null>(null);
 
-  // Fetch teachers
+  // Fetch teachers and check if user is superadmin
   const fetchTeachers = async () => {
     try {
       const token = getAuthToken();
-      const response = await fetch('/api/admin/teachers', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const [teachersRes, meRes] = await Promise.all([
+        fetch('/api/admin/teachers', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch('/api/auth/admin/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
-      if (response.ok) {
-        const data = await response.json();
+      if (teachersRes.ok) {
+        const data = await teachersRes.json();
         setTeachers(data.teachers);
+      }
+
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        setIsSuperadmin(meData.admin?.role === 'superadmin');
       }
     } catch (error) {
       console.error('Error fetching teachers:', error);
@@ -58,6 +72,38 @@ export default function TeachersPage() {
   useEffect(() => {
     fetchTeachers();
   }, []);
+
+  // Handle toggle admin access (superadmin only)
+  const handleToggleAdmin = async (teacher: Teacher) => {
+    if (!isSuperadmin) return;
+
+    setTogglingAdminId(teacher.id);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(`/api/admin/teachers/${teacher.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ eh_admin: !teacher.eh_admin }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao atualizar acesso admin');
+      }
+
+      toast.success(result.message);
+      fetchTeachers();
+    } catch (error) {
+      console.error('Error toggling admin access:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar acesso admin');
+    } finally {
+      setTogglingAdminId(null);
+    }
+  };
 
   // Handle toggle teacher status
   const handleToggleStatus = async () => {
@@ -179,14 +225,19 @@ export default function TeachersPage() {
                     Telefone
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    Função
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Grupos
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Atribuição
-                  </th>
+                  {isSuperadmin && (
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                      Acesso Admin
+                    </th>
+                  )}
                   <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
                     Ações
                   </th>
@@ -204,6 +255,19 @@ export default function TeachersPage() {
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {teacher.telefone}
                     </td>
+                    <td className="px-4 py-3">
+                      {teacher.funcao ? (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          teacher.funcao === 'Líder'
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-indigo-100 text-indigo-800'
+                        }`}>
+                          {teacher.funcao}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {teacher.classCount}
                     </td>
@@ -216,17 +280,29 @@ export default function TeachersPage() {
                         {teacher.eh_ativo ? 'Ativo' : 'Inativo'}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      {teacher.hasActiveClasses ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {teacher.classCount} grupo{teacher.classCount !== 1 ? 's' : ''}
-                        </span>
-                      ) : (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          Sem grupo
-                        </span>
-                      )}
-                    </td>
+                    {isSuperadmin && (
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleToggleAdmin(teacher)}
+                          disabled={togglingAdminId === teacher.id}
+                          className={`
+                            relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
+                            transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                            ${togglingAdminId === teacher.id ? 'opacity-50 cursor-wait' : ''}
+                            ${teacher.eh_admin ? 'bg-blue-600' : 'bg-gray-200'}
+                          `}
+                          title={teacher.eh_admin ? 'Remover acesso admin' : 'Conceder acesso admin'}
+                        >
+                          <span
+                            className={`
+                              pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 
+                              transition duration-200 ease-in-out
+                              ${teacher.eh_admin ? 'translate-x-5' : 'translate-x-0'}
+                            `}
+                          />
+                        </button>
+                      </td>
+                    )}
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <WhatsAppButton telefone={teacher.telefone} size="sm" />
@@ -256,6 +332,15 @@ export default function TeachersPage() {
                   <div>
                     <p className="font-medium text-gray-900">{teacher.nome}</p>
                     <p className="text-sm text-gray-500">{teacher.email}</p>
+                    {teacher.funcao && (
+                      <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                        teacher.funcao === 'Líder'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-indigo-100 text-indigo-800'
+                      }`}>
+                        {teacher.funcao}
+                      </span>
+                    )}
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     teacher.eh_ativo
@@ -290,6 +375,29 @@ export default function TeachersPage() {
                   >
                     {teacher.eh_ativo ? 'Desativar Facilitador' : 'Ativar Facilitador'}
                   </button>
+                  {isSuperadmin && (
+                    <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
+                      <span className="text-sm text-gray-700">Acesso Admin</span>
+                      <button
+                        onClick={() => handleToggleAdmin(teacher)}
+                        disabled={togglingAdminId === teacher.id}
+                        className={`
+                          relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent 
+                          transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                          ${togglingAdminId === teacher.id ? 'opacity-50 cursor-wait' : ''}
+                          ${teacher.eh_admin ? 'bg-blue-600' : 'bg-gray-200'}
+                        `}
+                      >
+                        <span
+                          className={`
+                            pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 
+                            transition duration-200 ease-in-out
+                            ${teacher.eh_admin ? 'translate-x-5' : 'translate-x-0'}
+                          `}
+                        />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}

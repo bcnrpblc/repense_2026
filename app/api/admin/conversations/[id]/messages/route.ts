@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 const sendMessageSchema = z.object({
@@ -17,7 +17,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    await verifyAdminToken(request);
+    await verifyAdminOrTeacherAdminToken(request);
     const conversationId = params.id;
 
     const conversation = await prisma.conversation.findUnique({
@@ -73,7 +73,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
     const adminId = tokenPayload.adminId;
     const conversationId = params.id;
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 const createConversationSchema = z.object({
@@ -15,7 +15,7 @@ const createConversationSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    await verifyAdminToken(request);
+    await verifyAdminOrTeacherAdminToken(request);
 
     const conversations = await prisma.conversation.findMany({
       include: {
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await verifyAdminToken(request);
+    await verifyAdminOrTeacherAdminToken(request);
 
     const body = await request.json();
     const parsed = createConversationSchema.safeParse(body);

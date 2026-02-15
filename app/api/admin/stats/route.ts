@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 // ============================================================================
@@ -36,8 +36,8 @@ import { prisma } from '@/lib/prisma';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify admin token - throws if invalid
-    await verifyAdminToken(request);
+    // Verify admin or teacher-admin token - throws if invalid
+    await verifyAdminOrTeacherAdminToken(request);
 
     // Get students with priority list and no active enrollments
     const studentsWithPriority = await prisma.student.findMany({

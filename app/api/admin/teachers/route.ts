@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { normalizeNameBR } from '@/lib/utils/names';
 import { randomUUID } from 'crypto';
+import { FUNCAO_OPCOES } from '@/lib/constants';
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -15,6 +16,7 @@ const createTeacherSchema = z.object({
   email: z.string().email('Email inválido'),
   telefone: z.string().min(10, 'Telefone inválido'),
   password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres'),
+  funcao: z.enum(FUNCAO_OPCOES).optional(),
 });
 
 // ============================================================================
@@ -29,7 +31,7 @@ const createTeacherSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
-    await verifyAdminToken(request);
+    await verifyAdminOrTeacherAdminToken(request);
 
     const { searchParams } = new URL(request.url);
     const inactiveOnly = searchParams.get('inactive_only') === 'true';
@@ -46,6 +48,8 @@ export async function GET(request: NextRequest) {
         nome: true,
         email: true,
         telefone: true,
+        funcao: true,
+        eh_admin: true,
         eh_ativo: true,
         criado_em: true,
         Class: {
@@ -73,6 +77,8 @@ export async function GET(request: NextRequest) {
       nome: t.nome,
       email: t.email,
       telefone: t.telefone,
+      funcao: t.funcao,
+      eh_admin: t.eh_admin,
       eh_ativo: t.eh_ativo,
       criado_em: t.criado_em,
       classCount: t._count.Class,
@@ -104,7 +110,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    await verifyAdminToken(request);
+    await verifyAdminOrTeacherAdminToken(request);
 
     const body = await request.json();
     const data = createTeacherSchema.parse(body);
@@ -131,14 +137,18 @@ export async function POST(request: NextRequest) {
         nome: normalizeNameBR(data.nome.trim()),
         email: data.email,
         telefone: data.telefone,
+        funcao: data.funcao || null,
         password_hash: passwordHash,
         eh_ativo: true,
+        eh_admin: false,
       },
       select: {
         id: true,
         nome: true,
         email: true,
         telefone: true,
+        funcao: true,
+        eh_admin: true,
         eh_ativo: true,
         criado_em: true,
       },

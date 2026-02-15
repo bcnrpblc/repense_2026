@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { normalizeNameBR } from '@/lib/utils/names';
 import { logAuditEvent, getChangedFields, maskPhone } from '@/lib/audit';
@@ -18,7 +18,7 @@ export async function GET(
 ) {
   try {
     // Verify admin authentication
-    await verifyAdminToken(request);
+    await verifyAdminOrTeacherAdminToken(request);
 
     const studentId = params.id;
 
@@ -237,7 +237,7 @@ export async function PUT(
 ) {
   try {
     // Verify admin authentication
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
 
     const studentId = params.id;
     const body = await request.json();

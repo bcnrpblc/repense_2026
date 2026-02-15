@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { enrollStudent, EnrollmentError, EnrollmentErrorCodes } from '@/lib/enrollment';
 
@@ -25,7 +25,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    await verifyAdminToken(request);
+    await verifyAdminOrTeacherAdminToken(request);
 
     const body = await request.json();
     const { newCourseId } = transferPrioritySchema.parse(body);

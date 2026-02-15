@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { completeEnrollment, EnrollmentError } from '@/lib/enrollment';
 import { prisma } from '@/lib/prisma';
 import { logAuditEvent } from '@/lib/audit';
@@ -18,7 +18,7 @@ export async function POST(
 ) {
   try {
     // Verify admin authentication
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
 
     const enrollmentId = params.id;
 

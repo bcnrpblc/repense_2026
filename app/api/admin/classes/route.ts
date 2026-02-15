@@ -1,10 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { randomUUID } from 'crypto';
 import { isValidCity } from '@/lib/constants';
 import { logAuditEvent } from '@/lib/audit';
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Get capacity status for visual indicators at 70%, 80%, 90%, 100% thresholds
+ */
+function getCapacityStatus(
+  enrollmentCount: number,
+  capacidade: number
+): 'ok' | 'warning_70' | 'warning_80' | 'warning_90' | 'full' {
+  if (capacidade <= 0) return 'ok';
+  const percentage = (enrollmentCount / capacidade) * 100;
+  if (percentage >= 100) return 'full';
+  if (percentage >= 90) return 'warning_90';
+  if (percentage >= 80) return 'warning_80';
+  if (percentage >= 70) return 'warning_70';
+  return 'ok';
+}
 
 // ============================================================================
 // VALIDATION SCHEMAS
@@ -35,7 +55,7 @@ const createClassSchema = z.object({
   link_whatsapp: z.string().url().optional().nullable(),
   data_inicio: z.string().optional().nullable(), // ISO date string
   horario: z.string().optional().nullable(),
-  numero_sessoes: z.number().int().min(1).max(20).default(8),
+  numero_sessoes: z.number().int().min(1).max(20).default(9),
   eh_ativo: z.boolean().default(true),
 });
 
@@ -55,7 +75,7 @@ const createClassSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
-    await verifyAdminToken(request);
+    await verifyAdminOrTeacherAdminToken(request);
 
     const { searchParams } = new URL(request.url);
     const ehAtivoParam = searchParams.get('eh_ativo');
@@ -121,27 +141,49 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Transform response
-    const response = classes.map((c) => ({
-      id: c.id,
-      notion_id: c.notion_id,
-      grupo_repense: c.grupo_repense,
-      modelo: c.modelo,
-      capacidade: c.capacidade,
-      numero_inscritos: c.numero_inscritos,
-      eh_ativo: c.eh_ativo,
-      eh_16h: c.eh_16h,
-      eh_mulheres: c.eh_mulheres,
-      cidade: c.cidade,
-      link_whatsapp: c.link_whatsapp,
-      data_inicio: c.data_inicio,
-      horario: c.horario,
-      numero_sessoes: c.numero_sessoes,
-      atualizado_em: c.atualizado_em,
-      arquivada: c.arquivada,
-      teacher: c.Teacher,
-      activeEnrollments: c._count.enrollments,
-    }));
+    // Transform response - use numero_inscritos for capacity % so badge matches displayed "X/Y" (numero_inscritos/capacidade)
+    const response = classes.map((c) => {
+      const displayCount = c.numero_inscritos;
+      const capacityPercentage =
+        c.capacidade > 0 ? Math.round((displayCount / c.capacidade) * 100) : 0;
+      const capacityStatus = getCapacityStatus(displayCount, c.capacidade);
+
+      // #region agent log
+      if (displayCount === 4 && c.capacidade === 6) {
+        fetch('http://127.0.0.1:7258/ingest/a7e15d48-f0da-46e3-882a-74f339ac256e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/admin/classes/route.ts:transform',message:'Admin classes capacity 4/6 case',data:{classId:c.id,capacidade:c.capacidade,numero_inscritos:c.numero_inscritos,_countEnrollments:c._count.enrollments,displayCount,capacityPercentage,capacityStatus,threshold70:capacityStatus!=='ok'},timestamp:Date.now(),hypothesisId:'post-fix'})}).catch(()=>{});
+      }
+      // #endregion
+
+      return {
+        id: c.id,
+        notion_id: c.notion_id,
+        grupo_repense: c.grupo_repense,
+        modelo: c.modelo,
+        capacidade: c.capacidade,
+        numero_inscritos: c.numero_inscritos,
+        eh_ativo: c.eh_ativo,
+        eh_16h: c.eh_16h,
+        eh_mulheres: c.eh_mulheres,
+        cidade: c.cidade,
+        link_whatsapp: c.link_whatsapp,
+        data_inicio: c.data_inicio,
+        horario: c.horario,
+        numero_sessoes: c.numero_sessoes,
+        atualizado_em: c.atualizado_em,
+        arquivada: c.arquivada,
+        teacher: c.Teacher,
+        activeEnrollments: c._count.enrollments,
+        capacityPercentage,
+        capacityStatus,
+      };
+    });
+
+    // #region agent log
+    if (response.length > 0) {
+      const first = response[0];
+      fetch('http://127.0.0.1:7258/ingest/a7e15d48-f0da-46e3-882a-74f339ac256e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/admin/classes/route.ts:response',message:'Admin classes first class capacity',data:{classId:first.id,capacidade:first.capacidade,activeEnrollments:first.activeEnrollments,capacityPercentage:first.capacityPercentage,capacityStatus:first.capacityStatus,hasCapacityStatus:'capacityStatus' in first},timestamp:Date.now(),hypothesisId:'H3'})}).catch(()=>{});
+    }
+    // #endregion
 
     return NextResponse.json({ classes: response });
 
@@ -168,7 +210,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
 
     const body = await request.json();
     const data = createClassSchema.parse(body);
@@ -248,7 +290,7 @@ export async function POST(request: NextRequest) {
         link_whatsapp: data.link_whatsapp || null,
         data_inicio: data.data_inicio ? new Date(data.data_inicio) : null,
         horario: data.horario || null,
-        numero_sessoes: data.numero_sessoes,
+        numero_sessoes: data.numero_sessoes ?? 9,
         teacher_id: data.teacher_id || null,
       },
       include: {

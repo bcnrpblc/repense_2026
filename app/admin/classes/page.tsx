@@ -20,6 +20,8 @@ interface Teacher {
   email: string;
 }
 
+type CapacityStatus = 'ok' | 'warning_70' | 'warning_80' | 'warning_90' | 'full';
+
 interface ClassItem {
   id: string;
   grupo_repense: string;
@@ -36,6 +38,8 @@ interface ClassItem {
   final_report: string | null;
   final_report_em: string | null;
   teacher: Teacher | null;
+  capacityPercentage?: number;
+  capacityStatus?: CapacityStatus;
 }
 
 // ============================================================================
@@ -69,6 +73,25 @@ function formatDate(dateString: string | null): string {
 function isFutureClass(dataInicio: string | null): boolean {
   if (!dataInicio) return false;
   return new Date(dataInicio) > new Date();
+}
+
+function getCapacityBadgeClass(status: CapacityStatus): string {
+  switch (status) {
+    case 'full':
+      return 'bg-red-100 text-red-800';
+    case 'warning_90':
+      return 'bg-red-50 text-red-700';
+    case 'warning_80':
+      return 'bg-orange-100 text-orange-800';
+    case 'warning_70':
+      return 'bg-amber-100 text-amber-800';
+    default:
+      return 'bg-green-100 text-green-800';
+  }
+}
+
+function getCapacityBadgeLabel(status: CapacityStatus, percentage: number): string {
+  return status === 'full' ? 'Lotado' : `${percentage}%`;
 }
 
 // ============================================================================
@@ -535,7 +558,24 @@ export default function ClassesPage() {
                       {classItem.cidade || 'Indaiatuba'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {classItem.numero_inscritos}/{classItem.capacidade}
+                      <span className="inline-flex items-center gap-1.5 flex-wrap">
+                        <span>{classItem.numero_inscritos}/{classItem.capacidade}</span>
+                        {(() => {
+                          const showBadge = !!(classItem.capacityStatus && classItem.capacityStatus !== 'ok' && classItem.capacityPercentage != null);
+                          if (classItem.numero_inscritos === 4 && classItem.capacidade === 6) {
+                            fetch('http://127.0.0.1:7258/ingest/a7e15d48-f0da-46e3-882a-74f339ac256e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/admin/classes/page.tsx:capacity-cell',message:'Admin 4/6 class capacity render',data:{classId:classItem.id,numero_inscritos:classItem.numero_inscritos,capacidade:classItem.capacidade,capacityStatus:classItem.capacityStatus,capacityPercentage:classItem.capacityPercentage,showBadge},timestamp:Date.now(),hypothesisId:'H3-H4'})}).catch(()=>{});
+                          }
+                          return null;
+                        })()}
+                        {classItem.capacityStatus && classItem.capacityStatus !== 'ok' && classItem.capacityPercentage != null && (
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${getCapacityBadgeClass(classItem.capacityStatus)}`}
+                            title={classItem.capacityStatus === 'full' ? 'Turma lotada' : `Capacidade em ${classItem.capacityPercentage}%`}
+                          >
+                            {getCapacityBadgeLabel(classItem.capacityStatus, classItem.capacityPercentage)}
+                          </span>
+                        )}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       {classItem.arquivada ? (
@@ -647,8 +687,16 @@ export default function ClassesPage() {
                     <span className="italic">Esperando em Deus</span>
                   )} • {classItem.cidade || 'Indaiatuba'}
                 </p>
-                <p className="text-sm text-gray-500 mb-4">
-                  {classItem.numero_inscritos}/{classItem.capacidade} vagas ocupadas
+                <p className="text-sm text-gray-500 mb-4 flex items-center gap-2 flex-wrap">
+                  <span>{classItem.numero_inscritos}/{classItem.capacidade} vagas ocupadas</span>
+                  {classItem.capacityStatus && classItem.capacityStatus !== 'ok' && classItem.capacityPercentage != null && (
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${getCapacityBadgeClass(classItem.capacityStatus)}`}
+                      title={classItem.capacityStatus === 'full' ? 'Turma lotada' : `Capacidade em ${classItem.capacityPercentage}%`}
+                    >
+                      {getCapacityBadgeLabel(classItem.capacityStatus, classItem.capacityPercentage)}
+                    </span>
+                  )}
                 </p>
 
                 <div className="flex gap-6 mt-4" onClick={(e) => e.stopPropagation()}>

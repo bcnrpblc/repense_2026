@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
         email: true,
         telefone: true,
         eh_ativo: true,
+        eh_admin: true,
         criado_em: true,
         // Include assigned classes count
         Class: {

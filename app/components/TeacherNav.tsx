@@ -24,6 +24,8 @@ interface TeacherNavProps {
   userEmail: string;
   /** Logout handler function */
   onLogout: () => void;
+  /** Whether teacher has admin access */
+  ehAdmin?: boolean;
 }
 
 interface ActiveSession {
@@ -119,6 +121,14 @@ const BellIcon = () => (
   </svg>
 );
 
+const AdminPanelIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+    />
+  </svg>
+);
+
 // ============================================================================
 // NAVIGATION ITEMS
 // ============================================================================
@@ -144,7 +154,7 @@ const navItems: NavItem[] = [
  * - User name/email display
  * - Logout button
  */
-export function TeacherNav({ userName, userEmail, onLogout }: TeacherNavProps) {
+export function TeacherNav({ userName, userEmail, onLogout, ehAdmin }: TeacherNavProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null);
@@ -319,6 +329,20 @@ export function TeacherNav({ userName, userEmail, onLogout }: TeacherNavProps) {
           <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
             {navItems.map(renderNavLink)}
           </nav>
+
+          {/* Admin Panel Link (only for teacher-admins) */}
+          {ehAdmin && (
+            <div className="px-4 pb-4">
+              <Link
+                href="/admin/dashboard"
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <AdminPanelIcon />
+                <span className="font-medium">Painel Admin</span>
+              </Link>
+            </div>
+          )}
 
           {/* User Section */}
           <div className="border-t border-gray-200 p-4">

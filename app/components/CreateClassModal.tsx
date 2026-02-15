@@ -26,7 +26,7 @@ const createClassSchema = z.object({
   capacidade: z.number().int().min(1, 'Mínimo 1').max(100, 'Máximo 100'),
   data_inicio: z.string().optional(),
   horario: z.string().optional(),
-  numero_sessoes: z.number().int().min(1).max(20).default(8),
+  numero_sessoes: z.number().int().min(1).max(20).default(9),
   eh_16h: z.boolean().default(false),
   eh_mulheres: z.boolean().default(false),
   cidade: z.enum(['Indaiatuba', 'Itu'], {
@@ -76,7 +76,7 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
     resolver: zodResolver(createClassSchema) as Resolver<CreateClassForm>,
     defaultValues: {
       data_inicio: '',
-      numero_sessoes: 8,
+      numero_sessoes: 9,
       capacidade: 15,
       eh_16h: false,
       eh_mulheres: false,

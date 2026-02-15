@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 // ============================================================================
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     // #region agent log
     fetch('http://127.0.0.1:7252/ingest/aa8eef57-c6f3-4787-9153-8fc4c14a5451',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/admin/notifications/route.ts:17',message:'Function entry - checking prisma client',data:{hasPrisma:!!prisma,prismaKeys:Object.keys(prisma).slice(0,10),hasNotificationRead:'notificationRead' in prisma},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
     const adminId = tokenPayload.adminId;
 
     const { searchParams } = new URL(request.url);

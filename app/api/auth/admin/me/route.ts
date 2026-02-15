@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 
 type MeResponse = {
   admin: {
     id: string;
     email: string;
     role: string;
+    isTeacherAdmin?: boolean;
   };
 };
 
@@ -16,10 +17,25 @@ type ErrorResponse = {
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify token and get admin info
-    const tokenPayload = await verifyAdminToken(request);
+    // Verify token - supports both admin and teacher-admin tokens
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
 
-    // Fetch admin from database using raw SQL to handle missing role column gracefully
+    // If it's a teacher-admin, return teacher info in admin-compatible format
+    if (tokenPayload.isTeacherAdmin) {
+      return NextResponse.json<MeResponse>(
+        {
+          admin: {
+            id: tokenPayload.adminId,
+            email: tokenPayload.email,
+            role: 'teacher_admin', // Special role for teacher-admins (not superadmin)
+            isTeacherAdmin: true,
+          },
+        },
+        { status: 200 }
+      );
+    }
+
+    // For regular admins, fetch from database
     const result = await prisma.$queryRaw<Array<{ id: string; email: string; role: string }>>`
       SELECT 
         id,
@@ -40,7 +56,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json<MeResponse>(
       {
-        admin,
+        admin: {
+          ...admin,
+          isTeacherAdmin: false,
+        },
       },
       { status: 200 }
     );
@@ -53,7 +72,9 @@ export async function GET(request: NextRequest) {
       error.message === 'Missing token' ||
       error.message === 'Invalid token' ||
       error.message === 'Token expired' ||
-      error.message === 'Token verification failed'
+      error.message === 'Token verification failed' ||
+      error.message === 'Invalid admin token' ||
+      error.message === 'Teacher does not have admin access'
     ) {
       return NextResponse.json<ErrorResponse>(
         { error: 'Unauthorized' },

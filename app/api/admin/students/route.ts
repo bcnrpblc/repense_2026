@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
@@ -18,8 +18,8 @@ import { Prisma } from '@prisma/client';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify admin authentication
-    await verifyAdminToken(request);
+    // Verify admin or teacher-admin authentication
+    await verifyAdminOrTeacherAdminToken(request);
 
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search') || '';

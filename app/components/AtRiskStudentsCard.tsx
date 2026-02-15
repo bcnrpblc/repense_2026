@@ -74,7 +74,7 @@ export function AtRiskStudentsCard({}: AtRiskStudentsCardProps) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">
-              Alunos com Mais de 2 Faltas
+              Alunos com 3 ou Mais Faltas
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               {students.length} participante{students.length !== 1 ? 's' : ''} precisando de atenção

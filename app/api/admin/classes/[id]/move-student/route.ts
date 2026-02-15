@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { transferStudent, EnrollmentError } from '@/lib/enrollment';
 import { logger } from '@/lib/logger';
@@ -48,7 +48,7 @@ export async function POST(
   };
 
   try {
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
 
     const body = await request.json();
     const { studentId, newClassId } = moveStudentSchema.parse(body);

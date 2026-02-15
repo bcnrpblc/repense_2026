@@ -7,6 +7,22 @@ import { prisma } from '@/lib/prisma';
 // ============================================================================
 
 /**
+ * Get capacity status for visual indicators at 70%, 80%, 90%, 100% thresholds
+ */
+function getCapacityStatus(
+  enrollmentCount: number,
+  capacidade: number
+): 'ok' | 'warning_70' | 'warning_80' | 'warning_90' | 'full' {
+  if (capacidade <= 0) return 'ok';
+  const percentage = (enrollmentCount / capacidade) * 100;
+  if (percentage >= 100) return 'full';
+  if (percentage >= 90) return 'warning_90';
+  if (percentage >= 80) return 'warning_80';
+  if (percentage >= 70) return 'warning_70';
+  return 'ok';
+}
+
+/**
  * Get day of week order for sorting
  * Starts with Monday (1) through Sunday (7)
  */
@@ -156,10 +172,19 @@ export async function GET(request: NextRequest) {
       // Remove raw data and add computed fields
       const { enrollments, Session: _, ...classData } = classItem;
 
+      const enrollmentCount = enrollments.length;
+      const capacityPercentage =
+        classItem.capacidade > 0
+          ? Math.round((enrollmentCount / classItem.capacidade) * 100)
+          : 0;
+      const capacityStatus = getCapacityStatus(enrollmentCount, classItem.capacidade);
+
       return {
         ...classData,
         cidade: classItem.cidade || 'Indaiatuba',
-        enrollmentCount: enrollments.length,
+        enrollmentCount,
+        capacityPercentage,
+        capacityStatus,
         nextSession: nextSession
           ? {
               id: nextSession.id,

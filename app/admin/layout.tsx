@@ -25,8 +25,9 @@ function LoadingSpinner() {
 // ============================================================================
 
 function ProtectedAdminContent({ children }: { children: React.ReactNode }) {
+  // Use requiredAdminAccess to allow both admins and teachers with eh_admin
   const { user, loading, logout } = useAuth({
-    requiredRole: 'admin',
+    requiredAdminAccess: true,
     redirectOnFail: true,
     loginPath: '/admin/login',
   });

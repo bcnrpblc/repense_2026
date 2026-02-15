@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logAuditEvent, getChangedFields } from '@/lib/audit';
 
@@ -31,7 +31,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    await verifyAdminToken(request);
+    await verifyAdminOrTeacherAdminToken(request);
 
     const classData = await prisma.class.findUnique({
       where: { id: params.id },
@@ -96,7 +96,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
 
     const body = await request.json();
     const data = updateClassSchema.parse(body);
@@ -312,7 +312,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
 
     // Check if class exists
     const currentClass = await prisma.class.findUnique({

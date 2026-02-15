@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { Modal } from './Modal';
 import { Button } from './ui';
 import { getAuthToken } from '@/lib/hooks/useAuth';
+import { FUNCAO_OPCOES } from '@/lib/constants';
 
 // ============================================================================
 // VALIDATION SCHEMA
@@ -17,6 +18,7 @@ const createTeacherSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   telefone: z.string().min(10, 'Telefone deve ter pelo menos 10 dígitos'),
+  funcao: z.enum(FUNCAO_OPCOES).optional(),
   password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -68,6 +70,7 @@ export function CreateTeacherModal({ isOpen, onClose, onSuccess }: CreateTeacher
           nome: data.nome,
           email: data.email,
           telefone: data.telefone,
+          funcao: data.funcao || null,
           password: data.password,
         }),
       });
@@ -144,6 +147,27 @@ export function CreateTeacherModal({ isOpen, onClose, onSuccess }: CreateTeacher
           />
           {errors.telefone && (
             <p className="mt-1 text-sm text-red-600">{errors.telefone.message}</p>
+          )}
+        </div>
+
+        {/* Função */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Função
+          </label>
+          <select
+            {...register('funcao')}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Selecione uma função (opcional)</option>
+            {FUNCAO_OPCOES.map((funcao) => (
+              <option key={funcao} value={funcao}>
+                {funcao}
+              </option>
+            ))}
+          </select>
+          {errors.funcao && (
+            <p className="mt-1 text-sm text-red-600">{errors.funcao.message}</p>
           )}
         </div>
 

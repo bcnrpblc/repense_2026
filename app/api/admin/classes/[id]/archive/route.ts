@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logAuditEvent } from '@/lib/audit';
 
@@ -16,7 +16,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
 
     // Check if class exists
     const currentClass = await prisma.class.findUnique({
@@ -130,7 +130,7 @@ export async function PUT(
  */
 export async function POST(request: NextRequest) {
   try {
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
 
     const body = await request.json();
     const { classIds } = body;

@@ -37,3 +37,15 @@ next-env.d.ts
 
 # prisma
 /prisma/migrations
+
+# Cursor / IDE
+.cursorindexingignore
+
+# SpecStory / tooling
+.specstory/
+
+# Windows Zone.Identifier (download markers)
+*Zone.Identifier
+
+# Local reports / data files
+*.xlsx

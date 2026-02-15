@@ -152,6 +152,65 @@ export async function requireSuperadmin(
   };
 }
 
+/**
+ * Verify either admin token OR teacher token with eh_admin access.
+ * Use this for admin API routes that teacher-admins should also access.
+ * 
+ * For teacher tokens, verifies eh_admin from database (not JWT) for security.
+ * 
+ * @param request - The Next.js request object
+ * @returns Promise<{ adminId: string; email: string; isTeacherAdmin: boolean }>
+ * @throws Error if not authenticated or teacher doesn't have admin access
+ */
+export async function verifyAdminOrTeacherAdminToken(
+  request: NextRequest
+): Promise<{
+  adminId: string;
+  email: string;
+  isTeacherAdmin: boolean;
+}> {
+  const token = extractToken(request);
+  const secret = getJwtSecret();
+  const decoded = verifyAndDecode<TokenPayload>(token, secret);
+
+  // If admin token, use standard admin flow
+  if ('adminId' in decoded && decoded.adminId) {
+    return {
+      adminId: decoded.adminId,
+      email: decoded.email,
+      isTeacherAdmin: false,
+    };
+  }
+
+  // If teacher token, verify eh_admin from database
+  if ('teacherId' in decoded && decoded.teacherId) {
+    const teacher = await prisma.teacher.findUnique({
+      where: { id: decoded.teacherId },
+      select: { id: true, email: true, eh_admin: true, eh_ativo: true },
+    });
+
+    if (!teacher) {
+      throw new Error('Teacher not found');
+    }
+
+    if (!teacher.eh_ativo) {
+      throw new Error('Teacher account is inactive');
+    }
+
+    if (!teacher.eh_admin) {
+      throw new ForbiddenError('Teacher does not have admin access');
+    }
+
+    return {
+      adminId: teacher.id, // Use teacher ID as adminId for consistency
+      email: teacher.email,
+      isTeacherAdmin: true,
+    };
+  }
+
+  throw new Error('Invalid token payload');
+}
+
 // ============================================================================
 // TEACHER AUTHENTICATION
 // ============================================================================

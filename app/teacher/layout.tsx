@@ -32,9 +32,10 @@ function ProtectedTeacherContent({ children }: { children: React.ReactNode }) {
   });
 
   const [teacherName, setTeacherName] = useState<string>('Facilitador');
+  const [ehAdmin, setEhAdmin] = useState<boolean>(false);
 
   useEffect(() => {
-    async function fetchTeacherName() {
+    async function fetchTeacherInfo() {
       if (!token) return;
       try {
         const response = await fetch('/api/auth/teacher/me', {
@@ -45,13 +46,23 @@ function ProtectedTeacherContent({ children }: { children: React.ReactNode }) {
           if (data.teacher?.nome) {
             setTeacherName(data.teacher.nome);
           }
+          if (data.teacher?.eh_admin) {
+            setEhAdmin(data.teacher.eh_admin);
+          }
         }
       } catch (error) {
-        console.error('Error fetching teacher name:', error);
+        console.error('Error fetching teacher info:', error);
       }
     }
-    fetchTeacherName();
+    fetchTeacherInfo();
   }, [token]);
+
+  // Also get eh_admin from the user object (decoded from JWT)
+  useEffect(() => {
+    if (user?.hasAdminAccess) {
+      setEhAdmin(true);
+    }
+  }, [user]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -63,7 +74,7 @@ function ProtectedTeacherContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <TeacherNav userName={teacherName} userEmail={user.email} onLogout={logout} />
+      <TeacherNav userName={teacherName} userEmail={user.email} onLogout={logout} ehAdmin={ehAdmin} />
       <main className="lg:ml-64 min-h-screen">
         <div className="lg:hidden h-16" />
         <div className="p-4 lg:p-8">{children}</div>

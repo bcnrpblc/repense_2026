@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
         email: true,
         password_hash: true,
         eh_ativo: true,
+        eh_admin: true,
         telefone: true,
       },
     });
@@ -110,6 +111,7 @@ export async function POST(request: NextRequest) {
         teacherId: teacher.id,
         email: teacher.email,
         role: 'teacher' as const,
+        eh_admin: teacher.eh_admin, // Include admin access flag
       },
       process.env.JWT_SECRET!,
       { expiresIn }
@@ -122,6 +124,7 @@ export async function POST(request: NextRequest) {
         id: teacher.id,
         nome: teacher.nome,
         email: teacher.email,
+        eh_admin: teacher.eh_admin,
       },
     });
 

@@ -8,6 +8,19 @@ export const AVAILABLE_CITIES = [
   { value: 'Itu', label: 'Itu' },
 ] as const;
 
+/**
+ * Minimum number of absences (faltas) for a student to be flagged as "at-risk" on the teacher dashboard.
+ * Students with this many or more absences will appear in the "Alunos com X ou Mais Faltas" card.
+ */
+export const AT_RISK_ABSENCE_THRESHOLD = 3;
+
+/**
+ * Available roles (função) for teachers/facilitators
+ * "Líder" = Leader, "Co-líder" = Co-leader
+ */
+export const FUNCAO_OPCOES = ['Líder', 'Co-líder'] as const;
+export type Funcao = typeof FUNCAO_OPCOES[number];
+
 export type City = typeof AVAILABLE_CITIES[number]['value'];
 
 /**

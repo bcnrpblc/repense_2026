@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAdminToken } from '@/lib/auth';
+import { verifyAdminOrTeacherAdminToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
   };
 
   try {
-    const tokenPayload = await verifyAdminToken(request);
+    const tokenPayload = await verifyAdminOrTeacherAdminToken(request);
     const adminId = tokenPayload.adminId;
     // Get all unread notifications for this admin
     const unreadNotifications = await prisma.notificationRead.findMany({

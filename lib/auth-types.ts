@@ -21,6 +21,7 @@ export type TeacherTokenPayload = {
   teacherId: string;
   email: string;
   role: 'teacher';
+  eh_admin?: boolean; // Teacher with admin dashboard access
 };
 
 /**
@@ -31,6 +32,7 @@ export type AuthUser = {
   id: string;
   email: string;
   role: 'admin' | 'teacher';
+  hasAdminAccess?: boolean; // True if admin or teacher with eh_admin
 };
 
 /**

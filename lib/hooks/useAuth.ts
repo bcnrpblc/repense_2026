@@ -33,6 +33,11 @@ export type UseAuthReturn = {
 export type UseAuthOptions = {
   /** The required role ('admin' | 'teacher'). If set, redirects if role doesn't match */
   requiredRole?: 'admin' | 'teacher';
+  /** 
+   * If true, allows access for admins OR teachers with eh_admin flag.
+   * Use this for admin routes that teacher-admins should access.
+   */
+  requiredAdminAccess?: boolean;
   /** Whether to redirect to login if not authenticated. Default: true */
   redirectOnFail?: boolean;
   /** Custom login path to redirect to. Default: based on role */
@@ -114,6 +119,7 @@ function removeStoredToken(): void {
 export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
   const {
     requiredRole,
+    requiredAdminAccess,
     redirectOnFail = true,
     loginPath,
   } = options;
@@ -180,12 +186,14 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
           id: data.teacher.id,
           email: data.teacher.email,
           role: 'teacher',
+          hasAdminAccess: data.teacher.eh_admin || false,
         });
       } else if (data.admin) {
         setUser({
           id: data.admin.id,
           email: data.admin.email,
           role: 'admin',
+          hasAdminAccess: true, // Admins always have admin access
         });
       }
     } catch (err) {
@@ -244,12 +252,16 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
             id: decoded.adminId,
             email: decoded.email,
             role: 'admin',
+            hasAdminAccess: true, // Admins always have admin access
           };
         } else if ('teacherId' in decoded && decoded.teacherId) {
+          // Check if teacher has admin access from JWT
+          const ehAdmin = 'eh_admin' in decoded ? !!decoded.eh_admin : false;
           currentUser = {
             id: decoded.teacherId,
             email: decoded.email,
             role: 'teacher',
+            hasAdminAccess: ehAdmin, // Teacher has admin access if eh_admin is true
           };
         } else {
           removeStoredToken();
@@ -261,7 +273,17 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
           return;
         }
 
-        // Check role requirement
+        // Check requiredAdminAccess: allows admin OR teacher with eh_admin
+        if (requiredAdminAccess && !currentUser.hasAdminAccess) {
+          setError('Acesso não autorizado');
+          if (redirectOnFail) {
+            router.push(getLoginPath());
+          }
+          setLoading(false);
+          return;
+        }
+
+        // Check role requirement (stricter than requiredAdminAccess)
         if (requiredRole && currentUser.role !== requiredRole) {
           setError('Acesso não autorizado');
           if (redirectOnFail) {

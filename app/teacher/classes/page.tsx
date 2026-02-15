@@ -24,6 +24,8 @@ interface TeacherClass {
   numero_sessoes: number;
   cidade: string;
   enrollmentCount: number;
+  capacityPercentage?: number;
+  capacityStatus?: 'ok' | 'warning_70' | 'warning_80' | 'warning_90' | 'full';
   lastSession: {
     id: string;
     numero_sessao: number;
@@ -55,6 +57,25 @@ function getGrupoBadgeColor(grupo: string): string {
     default:
       return 'bg-gray-100 text-gray-800';
   }
+}
+
+function getCapacityBadgeClass(status: NonNullable<TeacherClass['capacityStatus']>): string {
+  switch (status) {
+    case 'full':
+      return 'bg-red-100 text-red-800';
+    case 'warning_90':
+      return 'bg-red-50 text-red-700';
+    case 'warning_80':
+      return 'bg-orange-100 text-orange-800';
+    case 'warning_70':
+      return 'bg-amber-100 text-amber-800';
+    default:
+      return 'bg-green-100 text-green-800';
+  }
+}
+
+function getCapacityBadgeLabel(status: NonNullable<TeacherClass['capacityStatus']>, percentage: number): string {
+  return status === 'full' ? 'Lotado' : `${percentage}%`;
 }
 
 function getModelBadgeColor(modelo: string): string {
@@ -271,9 +292,17 @@ export default function TeacherClassesPage() {
                         <LocationIcon />
                         <span>{classItem.cidade}</span>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-wrap">
                         <UsersIcon />
                         <span>{classItem.enrollmentCount}/{classItem.capacidade} participantes</span>
+                        {classItem.capacityStatus && classItem.capacityStatus !== 'ok' && classItem.capacityPercentage != null && (
+                          <span
+                            className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium ${getCapacityBadgeClass(classItem.capacityStatus)}`}
+                            title={classItem.capacityStatus === 'full' ? 'Turma lotada' : `Capacidade em ${classItem.capacityPercentage}%`}
+                          >
+                            {getCapacityBadgeLabel(classItem.capacityStatus, classItem.capacityPercentage)}
+                          </span>
+                        )}
                       </div>
                       {classItem.lastSession && (
                         <div className="flex items-center gap-1">
