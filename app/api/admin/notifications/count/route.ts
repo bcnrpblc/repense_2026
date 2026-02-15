@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
       studentObservations: 0,
       sessionReports: 0,
       finalReports: 0,
+      teacherMessages: 0,
     };
 
     unreadNotifications.forEach((notification) => {
@@ -61,17 +62,27 @@ export async function GET(request: NextRequest) {
         counts.sessionReports++;
       } else if (notification.notification_type === 'final_report') {
         counts.finalReports++;
+      } else if (notification.notification_type === 'teacher_message') {
+        counts.teacherMessages++;
       }
     });
 
-    const total = counts.studentObservations + counts.sessionReports + counts.finalReports;
+    const total =
+      counts.studentObservations +
+      counts.sessionReports +
+      counts.finalReports +
+      counts.teacherMessages;
 
-    return respond({
-      studentObservations: counts.studentObservations,
-      sessionReports: counts.sessionReports,
-      finalReports: counts.finalReports,
-      total,
-    }, 200);
+    return respond(
+      {
+        studentObservations: counts.studentObservations,
+        sessionReports: counts.sessionReports,
+        finalReports: counts.finalReports,
+        teacherMessages: counts.teacherMessages,
+        total,
+      },
+      200
+    );
   } catch (error) {
     console.error('Error fetching notification counts:', error);
     logger.error('request error', {

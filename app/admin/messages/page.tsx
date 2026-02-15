@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { Card, Button } from '@/app/components/ui';
 import { ConversationModal } from '@/app/components/ConversationModal';
@@ -28,11 +29,13 @@ interface ConversationItem {
 }
 
 export default function AdminMessagesPage() {
+  const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [selectedClassLabel, setSelectedClassLabel] = useState('');
   const [selectedStudentName, setSelectedStudentName] = useState<string | null>(null);
+  const hasHandledConversationParam = useRef(false);
 
   const fetchConversations = async () => {
     try {
@@ -57,6 +60,26 @@ export default function AdminMessagesPage() {
   useEffect(() => {
     fetchConversations();
   }, []);
+
+  // When opened from notification (e.g. ?conversation=id), open that conversation modal once list is loaded
+  useEffect(() => {
+    const conversationId = searchParams.get('conversation');
+    if (!conversationId || loading || hasHandledConversationParam.current) return;
+    hasHandledConversationParam.current = true;
+    const c = conversations.find((conv) => conv.id === conversationId);
+    if (c) {
+      const classLabel = `${c.class.grupo_repense} – ${c.class.horario || 'Sem horário'}`;
+      setSelectedClassLabel(classLabel);
+      setSelectedStudentName(c.student?.nome ?? null);
+      setSelectedConversationId(c.id);
+    } else {
+      // Conversation not in list (e.g. just created); still open modal so admin can reply
+      setSelectedClassLabel('Conversa');
+      setSelectedStudentName(null);
+      setSelectedConversationId(conversationId);
+    }
+    window.history.replaceState({}, '', '/admin/messages');
+  }, [searchParams, loading, conversations]);
 
   const openConversation = (c: ConversationItem) => {
     const classLabel = `${c.class.grupo_repense} – ${c.class.horario || 'Sem horário'}`;

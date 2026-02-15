@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyTeacherToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { notifyAdminsOfTeacherMessage } from '@/lib/notifications';
 
 const sendMessageSchema = z.object({
   body: z.string().min(1, 'Mensagem não pode ser vazia').max(5000),
@@ -130,6 +131,8 @@ export async function POST(
         },
       },
     });
+
+    await notifyAdminsOfTeacherMessage(conversationId);
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {

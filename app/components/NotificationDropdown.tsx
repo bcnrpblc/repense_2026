@@ -14,12 +14,13 @@ interface NotificationCounts {
   studentObservations: number;
   sessionReports: number;
   finalReports: number;
+  teacherMessages?: number;
   total: number;
 }
 
 interface Notification {
   id: string;
-  type: 'student_observation' | 'session_report' | 'final_report';
+  type: 'student_observation' | 'session_report' | 'final_report' | 'teacher_message';
   referenceId: string;
   createdAt: string;
   preview: string;
@@ -110,6 +111,12 @@ function formatDate(dateString: string): string {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 }
 
+const MessageIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+  </svg>
+);
+
 function getTypeLabel(type: string): string {
   switch (type) {
     case 'student_observation':
@@ -118,6 +125,8 @@ function getTypeLabel(type: string): string {
       return 'Relatório de Encontro';
     case 'final_report':
       return 'Relatório de Grupo';
+    case 'teacher_message':
+      return 'Mensagem do Facilitador';
     default:
       return type;
   }
@@ -131,6 +140,8 @@ function getTypeIcon(type: string) {
       return <SessionIcon />;
     case 'final_report':
       return <ClassIcon />;
+    case 'teacher_message':
+      return <MessageIcon />;
     default:
       return null;
   }
@@ -144,6 +155,8 @@ function getTypeBadgeColor(type: string): string {
       return 'bg-green-100 text-green-800';
     case 'final_report':
       return 'bg-purple-100 text-purple-800';
+    case 'teacher_message':
+      return 'bg-amber-100 text-amber-800';
     default:
       return 'bg-gray-100 text-gray-800';
   }
@@ -235,6 +248,9 @@ export function NotificationDropdown({ isOpen, onClose, counts }: NotificationDr
       router.push(`/admin/classes/${notification.class.id}`);
     } else if (notification.type === 'final_report') {
       router.push(`/admin/classes/${notification.class.id}`);
+    } else if (notification.type === 'teacher_message') {
+      // Open messages page with this conversation so the modal opens and admin can reply
+      router.push(`/admin/messages?conversation=${notification.referenceId}`);
     }
     onClose();
   };

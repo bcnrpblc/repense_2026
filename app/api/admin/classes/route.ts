@@ -171,6 +171,7 @@ export async function GET(request: NextRequest) {
         numero_sessoes: c.numero_sessoes,
         atualizado_em: c.atualizado_em,
         arquivada: c.arquivada,
+        status: c.status,
         teacher: c.Teacher,
         activeEnrollments: c._count.enrollments,
         capacityPercentage,

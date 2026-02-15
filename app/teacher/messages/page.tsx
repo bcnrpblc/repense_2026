@@ -3,12 +3,20 @@
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Card, Button } from '@/app/components/ui';
+import { Modal } from '@/app/components/Modal';
 import { TeacherConversationModal } from '@/app/components/TeacherConversationModal';
 import { getAuthToken } from '@/lib/hooks/useAuth';
 
 // ============================================================================
 // TYPES
 // ============================================================================
+
+interface ClassOption {
+  id: string;
+  grupo_repense: string;
+  horario: string | null;
+  eh_ativo: boolean;
+}
 
 interface ConversationItem {
   id: string;
@@ -38,6 +46,12 @@ export default function TeacherMessagesPage() {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedTitle, setSelectedTitle] = useState('');
+  const [newMessageOpen, setNewMessageOpen] = useState(false);
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [classesLoading, setClassesLoading] = useState(false);
+  const [newClassId, setNewClassId] = useState('');
+  const [newMessageBody, setNewMessageBody] = useState('');
+  const [sending, setSending] = useState(false);
 
   const fetchConversations = async () => {
     try {
@@ -69,12 +83,68 @@ export default function TeacherMessagesPage() {
     setSelectedTitle(c.student ? `${classLabel} – ${c.student.nome}` : `Mensagens: ${classLabel}`);
   };
 
+  useEffect(() => {
+    if (!newMessageOpen) return;
+    setClassesLoading(true);
+    const token = getAuthToken();
+    fetch('/api/teacher/classes', { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Falha ao carregar turmas'))))
+      .then((data) => {
+        const list = (data.classes || []).filter((c: ClassOption) => c.eh_ativo);
+        setClasses(list);
+        setNewClassId(list[0]?.id ?? '');
+      })
+      .catch(() => toast.error('Erro ao carregar turmas'))
+      .finally(() => setClassesLoading(false));
+  }, [newMessageOpen]);
+
+  const handleSendNewMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const body = newMessageBody.trim();
+    if (!body || !newClassId || sending) return;
+    setSending(true);
+    try {
+      const token = getAuthToken();
+      const res = await fetch('/api/teacher/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ class_id: newClassId, message: body }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao enviar mensagem');
+      setNewMessageOpen(false);
+      setNewMessageBody('');
+      setNewClassId(classes[0]?.id ?? '');
+      await fetchConversations();
+      if (data.conversation_id) {
+        setSelectedId(data.conversation_id);
+        const cls = classes.find((c) => c.id === newClassId);
+        setSelectedTitle(cls ? `${cls.grupo_repense} – ${cls.horario || 'Sem horário'}` : 'Mensagens');
+      }
+      toast.success('Mensagem enviada.');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao enviar');
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Mensagens</h1>
-      <p className="text-gray-600 mb-6">
-        Conversas com o líder sobre seus grupos ou participantes.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Mensagens</h1>
+          <p className="text-gray-600">
+            Conversas com o líder sobre seus grupos ou participantes.
+          </p>
+        </div>
+        <Button variant="primary" onClick={() => setNewMessageOpen(true)}>
+          Nova Mensagem
+        </Button>
+      </div>
 
       {loading ? (
         <div className="py-12 text-center">
@@ -99,7 +169,7 @@ export default function TeacherMessagesPage() {
             </svg>
             <p className="mt-2">Nenhuma conversa ainda</p>
             <p className="text-sm mt-1">
-              Quando o líder enviar uma mensagem sobre um de seus grupos, ela aparecerá aqui.
+              Quando o líder enviar uma mensagem sobre um de seus grupos, ela aparecerá aqui. Você também pode iniciar uma conversa sobre uma turma ativa.
             </p>
           </div>
         </Card>
@@ -142,6 +212,76 @@ export default function TeacherMessagesPage() {
           ))}
         </div>
       )}
+
+      <Modal
+        isOpen={newMessageOpen}
+        onClose={() => {
+          if (!sending) setNewMessageOpen(false);
+        }}
+        title="Nova Mensagem"
+        size="md"
+      >
+        <form onSubmit={handleSendNewMessage} className="space-y-4">
+          <div>
+            <label htmlFor="new-msg-class" className="block text-sm font-medium text-gray-700 mb-1">
+              Turma (conversa com o líder sobre esta turma)
+            </label>
+            <select
+              id="new-msg-class"
+              value={newClassId}
+              onChange={(e) => setNewClassId(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary"
+              disabled={classesLoading}
+            >
+              {classesLoading ? (
+                <option>Carregando...</option>
+              ) : classes.length === 0 ? (
+                <option value="">Nenhuma turma ativa</option>
+              ) : (
+                classes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.grupo_repense} – {c.horario || 'Sem horário'}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="new-msg-body" className="block text-sm font-medium text-gray-700 mb-1">
+              Mensagem
+            </label>
+            <textarea
+              id="new-msg-body"
+              value={newMessageBody}
+              onChange={(e) => setNewMessageBody(e.target.value)}
+              placeholder="Digite sua mensagem..."
+              rows={4}
+              maxLength={1000}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+              disabled={sending}
+            />
+            <p className="text-xs text-gray-500 mt-1">{newMessageBody.length}/1000</p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setNewMessageOpen(false)}
+              disabled={sending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={sending}
+              disabled={!newMessageBody.trim() || !newClassId || classesLoading || classes.length === 0}
+            >
+              Enviar
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       <TeacherConversationModal
         isOpen={!!selectedId}

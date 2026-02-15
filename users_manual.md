@@ -381,6 +381,9 @@ R: Sim, na página de participantes de um grupo, você pode transferir participa
 **P: O que significa "Lista de Prioridade"?**
 R: Participantes na lista de prioridade têm preferência quando há vagas disponíveis em novos grupos.
 
+**P: Quais grupos aparecem para o público na inscrição?**
+R: Só aparecem grupos ativos, não arquivados, que ainda não começaram (data de início hoje ou no futuro) e que tenham vagas. Grupos já iniciados ou lotados não são exibidos.
+
 **P: Como vejo observações não lidas?**
 R: Procure pelo ícone de sino vermelho (🔔) ao lado do nome do participante.
 

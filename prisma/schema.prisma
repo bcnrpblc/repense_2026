@@ -59,8 +59,8 @@ model Admin {
   role             String             @default("admin")
   criado_em        DateTime           @default(now())
   NotificationRead NotificationRead[]
-  AuditLog         AuditLog[]         @relation("Actor")
-  Message          Message[]          @relation("AdminMessages")
+  AuditLog         AuditLog[]        @relation("Actor")
+  Message          Message[]         @relation("AdminMessages")
 
   @@map("admins")
 }
@@ -102,6 +102,7 @@ model Class {
   numero_sessoes   Int          @default(9)
   atualizado_em    DateTime     @default(now())
   arquivada        Boolean      @default(false)
+  status           ClassStatus  @default(GRUPO_NOVO)
   final_report     String?
   final_report_em  DateTime?
   Teacher          Teacher?     @relation(fields: [teacher_id], references: [id])
@@ -245,4 +246,11 @@ enum GrupoRepense {
 enum ModeloCurso {
   online
   presencial
+}
+
+enum ClassStatus {
+  GRUPO_NOVO        // No teacher assigned yet
+  NAO_INICIADO      // Has teacher, spots available
+  GRUPO_LOTADO      // At capacity
+  GRUPO_ARQUIVADO   // Course ended
 }

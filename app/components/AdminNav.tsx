@@ -174,6 +174,7 @@ export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
     studentObservations: 0,
     sessionReports: 0,
     finalReports: 0,
+    teacherMessages: 0,
     total: 0,
   });
   const [isSuperadmin, setIsSuperadmin] = useState(false);

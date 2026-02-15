@@ -4,6 +4,17 @@ import { GrupoRepense, ModeloCurso } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
 
+// ============================================================================
+// PUBLIC VISIBILITY RULES (no conflicts)
+// ============================================================================
+// A class is shown to the public (registration) only when ALL of the following hold:
+// 1. eh_ativo = true (active)
+// 2. arquivada = false (not archived; aligns with ClassStatus GRUPO_ARQUIVADO)
+// 3. Class has not started: data_inicio is null OR data_inicio > start of today
+// 4. Has vacancies: numero_inscritos < capacidade (aligns with ClassStatus GRUPO_LOTADO)
+// 5. City/gender/exclude-enrolled applied on top
+// ============================================================================
+
 // TypeScript types for the response
 type CourseWithVacancies = {
   id: string;
@@ -38,9 +49,17 @@ export async function GET(request: NextRequest) {
     const genero = searchParams.get('genero');
     const cidade = searchParams.get('cidade');
 
-    // Build where clause for courses
+    // Build where clause for courses (public visibility rules)
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
     const whereClause: any = {
       eh_ativo: true,
+      arquivada: { not: true },
+      OR: [
+        { data_inicio: null },
+        { data_inicio: { gt: startOfToday } },
+      ],
     };
 
     // Filter by city if provided
@@ -84,7 +103,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fetch active courses
+    // Fetch courses matching visibility rules
     const courses = await prisma.class.findMany({
       where: whereClause,
       orderBy: [
@@ -93,9 +112,10 @@ export async function GET(request: NextRequest) {
       ],
     });
 
-    // Calculate vagas_disponiveis and map to CourseWithVacancies
-    const coursesWithVacancies: CourseWithVacancies[] = courses.map(
-      (course) => ({
+    // Has vacancies: only show classes with at least one spot (can't do column vs column in Prisma where)
+    const coursesWithVacancies: CourseWithVacancies[] = courses
+      .filter((course) => course.numero_inscritos < course.capacidade)
+      .map((course) => ({
         id: course.id,
         notion_id: course.notion_id,
         grupo_repense: course.grupo_repense,
@@ -110,8 +130,7 @@ export async function GET(request: NextRequest) {
         data_inicio: course.data_inicio ? course.data_inicio.toISOString() : null,
         horario: course.horario,
         vagas_disponiveis: course.capacidade - course.numero_inscritos,
-      })
-    );
+      }));
 
     // Group courses by city, then by grupo_repense
     const groupedCourses: GroupedCoursesResponse = {

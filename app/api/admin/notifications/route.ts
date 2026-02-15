@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       read_at: null,
     };
 
-    if (type && ['student_observation', 'session_report', 'final_report'].includes(type)) {
+    if (type && ['student_observation', 'session_report', 'final_report', 'teacher_message'].includes(type)) {
       where.notification_type = type;
     }
 
@@ -172,6 +172,41 @@ export async function GET(request: NextRequest) {
             } : null,
             preview: classData.final_report.substring(0, 100) + (classData.final_report.length > 100 ? '...' : ''),
             fullText: classData.final_report,
+          };
+        } else if (nr.notification_type === 'teacher_message') {
+          const conversation = await prisma.conversation.findUnique({
+            where: { id: nr.reference_id },
+            include: {
+              Class: {
+                select: {
+                  id: true,
+                  grupo_repense: true,
+                  horario: true,
+                },
+              },
+              Message: {
+                orderBy: { criado_em: 'desc' },
+                take: 1,
+                select: { body: true },
+              },
+            },
+          });
+          if (!conversation?.Class) return null;
+          const preview =
+            conversation.Message[0]?.body?.substring(0, 100) +
+            (conversation.Message[0]?.body && conversation.Message[0].body.length > 100 ? '...' : '') ||
+            'Nova mensagem do facilitador';
+          return {
+            id: nr.id,
+            type: 'teacher_message',
+            referenceId: nr.reference_id,
+            createdAt: nr.criado_em,
+            class: {
+              id: conversation.Class.id,
+              grupo_repense: conversation.Class.grupo_repense,
+              horario: conversation.Class.horario,
+            },
+            preview,
           };
         }
 

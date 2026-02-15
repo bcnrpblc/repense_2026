@@ -22,6 +22,9 @@ interface Teacher {
 
 type CapacityStatus = 'ok' | 'warning_70' | 'warning_80' | 'warning_90' | 'full';
 
+/** ClassStatus enum from Prisma - status of the group */
+type ClassStatus = 'GRUPO_NOVO' | 'NAO_INICIADO' | 'GRUPO_LOTADO' | 'GRUPO_ARQUIVADO';
+
 interface ClassItem {
   id: string;
   grupo_repense: string;
@@ -35,6 +38,7 @@ interface ClassItem {
   horario: string | null;
   data_inicio: string | null;
   arquivada: boolean;
+  status?: ClassStatus;
   final_report: string | null;
   final_report_em: string | null;
   teacher: Teacher | null;
@@ -92,6 +96,36 @@ function getCapacityBadgeClass(status: CapacityStatus): string {
 
 function getCapacityBadgeLabel(status: CapacityStatus, percentage: number): string {
   return status === 'full' ? 'Lotado' : `${percentage}%`;
+}
+
+function getClassStatusLabel(status: ClassStatus): string {
+  switch (status) {
+    case 'GRUPO_NOVO':
+      return 'Grupo novo';
+    case 'NAO_INICIADO':
+      return 'Não iniciado';
+    case 'GRUPO_LOTADO':
+      return 'Lotado';
+    case 'GRUPO_ARQUIVADO':
+      return 'Arquivado';
+    default:
+      return status;
+  }
+}
+
+function getClassStatusBadgeClass(status: ClassStatus): string {
+  switch (status) {
+    case 'GRUPO_NOVO':
+      return 'bg-slate-100 text-slate-800';
+    case 'NAO_INICIADO':
+      return 'bg-blue-100 text-blue-800';
+    case 'GRUPO_LOTADO':
+      return 'bg-amber-100 text-amber-800';
+    case 'GRUPO_ARQUIVADO':
+      return 'bg-gray-200 text-gray-600';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
 }
 
 // ============================================================================
@@ -499,7 +533,7 @@ export default function ClassesPage() {
                     Vagas
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Status
+                    Status do grupo
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
                     Ações
@@ -524,16 +558,9 @@ export default function ClassesPage() {
                       </td>
                     )}
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getGrupoBadgeColor(classItem.grupo_repense)}`}>
-                          {classItem.grupo_repense}
-                        </span>
-                        {isFutureClass(classItem.data_inicio) && (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
-                            Aguardando início
-                          </span>
-                        )}
-                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getGrupoBadgeColor(classItem.grupo_repense)}`}>
+                        {classItem.grupo_repense}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {classItem.teacher?.nome || (
@@ -578,17 +605,13 @@ export default function ClassesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {classItem.arquivada ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
-                          Arquivada
+                      {classItem.status ? (
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getClassStatusBadgeClass(classItem.status)}`}>
+                          {getClassStatusLabel(classItem.status)}
                         </span>
                       ) : (
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          classItem.eh_ativo
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {classItem.eh_ativo ? 'Ativa' : 'Inativa'}
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                          —
                         </span>
                       )}
                     </td>
@@ -653,12 +676,12 @@ export default function ClassesPage() {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getGrupoBadgeColor(classItem.grupo_repense)}`}>
                       {classItem.grupo_repense}
                     </span>
-                    {isFutureClass(classItem.data_inicio) && (
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
-                        Aguardando início
+                    {classItem.status && (
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getClassStatusBadgeClass(classItem.status)}`}>
+                        {getClassStatusLabel(classItem.status)}
                       </span>
                     )}
-                    {classItem.arquivada && (
+                    {classItem.arquivada && !classItem.status && (
                       <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-600">
                         Arquivada
                       </span>

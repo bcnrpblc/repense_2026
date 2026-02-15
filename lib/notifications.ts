@@ -58,3 +58,45 @@ export async function createNotificationsForAllAdmins(
     // Don't throw - notification creation failure shouldn't break report creation
   }
 }
+
+// ============================================================================
+// ADMIN NOTIFICATIONS: TEACHER MESSAGE
+// ============================================================================
+
+/**
+ * Create or reset unread notification for all admins when a teacher sends a message
+ * in a conversation. Uses type 'teacher_message' and reference_id = conversationId.
+ * If an admin already has a notification for this conversation, sets read_at to null.
+ */
+export async function notifyAdminsOfTeacherMessage(conversationId: string): Promise<void> {
+  try {
+    const admins = await prisma.admin.findMany({
+      select: { id: true },
+    });
+    if (admins.length === 0) return;
+
+    const type = 'teacher_message' as const;
+    for (const admin of admins) {
+      await prisma.notificationRead.upsert({
+        where: {
+          admin_id_notification_type_reference_id: {
+            admin_id: admin.id,
+            notification_type: type,
+            reference_id: conversationId,
+          },
+        },
+        create: {
+          admin_id: admin.id,
+          notification_type: type,
+          reference_id: conversationId,
+          read_at: null,
+        },
+        update: {
+          read_at: null,
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Error notifying admins of teacher message:', error);
+  }
+}

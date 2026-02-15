@@ -586,9 +586,10 @@ export async function cancelEnrollment(enrollmentId: string): Promise<void> {
 }
 
 /**
- * Get available classes for a student
- * Filters out classes from grupos_repense where student is already enrolled/completed
- * Also filters by gender if provided
+ * Get available classes for a student.
+ * Uses same public visibility rules as GET /api/courses:
+ * eh_ativo, not arquivada, not started (data_inicio null or > today), has vacancies (numero_inscritos < capacidade).
+ * Also excludes grupos where student is already enrolled/completed and filters by gender if provided.
  */
 export async function getAvailableClasses(
   studentId: string,
@@ -616,9 +617,17 @@ export async function getAvailableClasses(
     studentEnrollments.map((e) => e.Class.grupo_repense)
   );
 
-  // Build where clause
+  // Public visibility: not archived, not started (data_inicio null or > start of today)
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
   const whereClause: Prisma.ClassWhereInput = {
     eh_ativo: true,
+    arquivada: { not: true },
+    OR: [
+      { data_inicio: null },
+      { data_inicio: { gt: startOfToday } },
+    ],
   };
 
   // Exclude grupos where student is already enrolled/completed
@@ -633,7 +642,6 @@ export async function getAvailableClasses(
     whereClause.eh_mulheres = false;
   }
 
-  // Fetch available classes
   const classes = await prisma.class.findMany({
     where: whereClause,
     orderBy: [
@@ -643,10 +651,14 @@ export async function getAvailableClasses(
     ],
   });
 
-  // Calculate vagas_disponiveis and group by grupo_repense and city
+  // Has vacancies: only show classes with at least one spot
+  const withVacancies = classes.filter(
+    (c) => c.numero_inscritos < c.capacidade
+  );
+
   const grouped: AvailableClassesGrouped = {};
 
-  for (const classItem of classes) {
+  for (const classItem of withVacancies) {
     const grupo = classItem.grupo_repense;
     const city = classItem.cidade === 'Itu' ? 'ITU' : (classItem.cidade || 'Other');
 
