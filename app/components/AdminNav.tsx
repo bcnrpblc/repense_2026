@@ -144,6 +144,17 @@ const ActivityIcon = () => (
   </svg>
 );
 
+const TeacherPanelIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+    />
+  </svg>
+);
+
 // ============================================================================
 // ADMIN NAVIGATION COMPONENT
 // ============================================================================
@@ -178,6 +189,7 @@ export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
     total: 0,
   });
   const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [isTeacherAdmin, setIsTeacherAdmin] = useState(false);
 
   // Fetch notification counts and admin role
   useEffect(() => {
@@ -204,6 +216,9 @@ export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
           const data = await meRes.json();
           if (data.admin?.role === 'superadmin') {
             setIsSuperadmin(true);
+          }
+          if (data.admin?.isTeacherAdmin) {
+            setIsTeacherAdmin(true);
           }
         }
       } catch (error) {
@@ -373,6 +388,18 @@ export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
                 </div>
               )}
             </div>
+
+            {/* Teacher Panel Link (only for teacher-admins) */}
+            {isTeacherAdmin && (
+              <Link
+                href="/teacher/dashboard"
+                className="flex items-center space-x-3 px-4 py-3 mb-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <TeacherPanelIcon />
+                <span className="font-medium">Painel Facilitador</span>
+              </Link>
+            )}
 
             {/* Logout Button */}
             <button

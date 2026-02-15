@@ -1,4 +1,5 @@
 import { LoginForm } from '@/app/components/LoginForm';
+import { RedirectIfAdminAuth } from '@/app/admin/login/RedirectIfAdminAuth';
 import { Metadata } from 'next';
 
 // ============================================================================
@@ -16,19 +17,21 @@ export const metadata: Metadata = {
 
 /**
  * Admin login page component
- * 
- * Simple login page for administrators to access the admin dashboard.
- * Uses the shared LoginForm component with admin-specific configuration.
- * 
+ *
+ * If the user already has admin access (admin or teacher with eh_admin),
+ * redirects to /admin/dashboard. Otherwise shows the login form.
+ *
  * Route: /admin/login
  */
 export default function AdminLoginPage() {
   return (
-    <LoginForm
-      title="Admin Login"
-      role="admin"
-      subtitle="Acesse o painel administrativo"
-      redirectPath="/admin/dashboard"
-    />
+    <RedirectIfAdminAuth>
+      <LoginForm
+        title="Admin Login"
+        role="admin"
+        subtitle="Acesse o painel administrativo"
+        redirectPath="/admin/dashboard"
+      />
+    </RedirectIfAdminAuth>
   );
 }

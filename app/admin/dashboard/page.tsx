@@ -109,7 +109,12 @@ const EnrollmentsIcon = () => (
 // ============================================================================
 
 export default function AdminDashboardPage() {
-  const { user, token } = useAuth({ requiredRole: 'admin' });
+  // Use requiredAdminAccess so teacher-admins are allowed (layout already enforced this; avoid redirect loop)
+  const { user, token } = useAuth({
+    requiredAdminAccess: true,
+    redirectOnFail: true,
+    loginPath: '/admin/login',
+  });
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);

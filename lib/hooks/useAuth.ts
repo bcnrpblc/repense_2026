@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { isTokenExpired, decodeToken } from '@/lib/auth-client';
 import type { AuthUser } from '@/lib/auth-types';
@@ -140,6 +140,16 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
     return '/admin/login'; // Default
   }, [loginPath, requiredRole]);
 
+  // Refs so the auth effect can run once (empty deps) and still use current options when redirecting.
+  // Prevents effect from re-running when router/getLoginPath references change and causing remount storms.
+  const optsRef = useRef({
+    redirectOnFail,
+    requiredRole,
+    requiredAdminAccess,
+    getLoginPath,
+  });
+  optsRef.current = { redirectOnFail, requiredRole, requiredAdminAccess, getLoginPath };
+
   /**
    * Logout function - clears token and redirects to login
    */
@@ -203,10 +213,12 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
   }, []);
 
   /**
-   * Check authentication on mount
+   * Check authentication on mount only. Uses optsRef for redirect path so effect
+   * does not re-run when router/getLoginPath references change (avoids remount storm).
    */
   useEffect(() => {
     async function checkAuth() {
+      const opts = optsRef.current;
       setLoading(true);
       setError(null);
 
@@ -215,8 +227,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
 
         // No token found
         if (!storedToken) {
-          if (redirectOnFail) {
-            router.push(getLoginPath());
+          if (opts.redirectOnFail) {
+            router.push(opts.getLoginPath());
           }
           setLoading(false);
           return;
@@ -226,8 +238,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
         if (isTokenExpired(storedToken)) {
           removeStoredToken();
           setError('Sessão expirada');
-          if (redirectOnFail) {
-            router.push(getLoginPath());
+          if (opts.redirectOnFail) {
+            router.push(opts.getLoginPath());
           }
           setLoading(false);
           return;
@@ -238,8 +250,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
         if (!decoded) {
           removeStoredToken();
           setError('Token inválido');
-          if (redirectOnFail) {
-            router.push(getLoginPath());
+          if (opts.redirectOnFail) {
+            router.push(opts.getLoginPath());
           }
           setLoading(false);
           return;
@@ -255,40 +267,53 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
             hasAdminAccess: true, // Admins always have admin access
           };
         } else if ('teacherId' in decoded && decoded.teacherId) {
-          // Check if teacher has admin access from JWT
-          const ehAdmin = 'eh_admin' in decoded ? !!decoded.eh_admin : false;
+          // Check if teacher has admin access from JWT (or verify via API if missing)
+          let ehAdmin = 'eh_admin' in decoded ? !!decoded.eh_admin : false;
+          if (!ehAdmin && opts.requiredAdminAccess) {
+            // JWT may lack eh_admin (e.g. old token); verify with server
+            try {
+              const meRes = await fetch('/api/auth/admin/me', {
+                headers: { Authorization: `Bearer ${storedToken}` },
+              });
+              if (meRes.ok) {
+                const data = await meRes.json();
+                ehAdmin = !!data.admin?.isTeacherAdmin;
+              }
+            } catch {
+              // Network error: keep ehAdmin false
+            }
+          }
           currentUser = {
             id: decoded.teacherId,
             email: decoded.email,
             role: 'teacher',
-            hasAdminAccess: ehAdmin, // Teacher has admin access if eh_admin is true
+            hasAdminAccess: ehAdmin,
           };
         } else {
           removeStoredToken();
           setError('Token inválido');
-          if (redirectOnFail) {
-            router.push(getLoginPath());
+          if (opts.redirectOnFail) {
+            router.push(opts.getLoginPath());
           }
           setLoading(false);
           return;
         }
 
         // Check requiredAdminAccess: allows admin OR teacher with eh_admin
-        if (requiredAdminAccess && !currentUser.hasAdminAccess) {
+        if (opts.requiredAdminAccess && !currentUser.hasAdminAccess) {
           setError('Acesso não autorizado');
-          if (redirectOnFail) {
-            router.push(getLoginPath());
+          if (opts.redirectOnFail) {
+            router.push(opts.getLoginPath());
           }
           setLoading(false);
           return;
         }
 
         // Check role requirement (stricter than requiredAdminAccess)
-        if (requiredRole && currentUser.role !== requiredRole) {
+        if (opts.requiredRole && currentUser.role !== opts.requiredRole) {
           setError('Acesso não autorizado');
-          if (redirectOnFail) {
-            // Redirect to the correct login page for the required role
-            router.push(getLoginPath());
+          if (opts.redirectOnFail) {
+            router.push(opts.getLoginPath());
           }
           setLoading(false);
           return;
@@ -301,8 +326,8 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
       } catch (err) {
         console.error('Auth check error:', err);
         setError('Erro ao verificar autenticação');
-        if (redirectOnFail) {
-          router.push(getLoginPath());
+        if (optsRef.current.redirectOnFail) {
+          router.push(optsRef.current.getLoginPath());
         }
       } finally {
         setLoading(false);
@@ -310,7 +335,7 @@ export function useAuth(options: UseAuthOptions = {}): UseAuthReturn {
     }
 
     checkAuth();
-  }, [redirectOnFail, requiredRole, router, getLoginPath]);
+  }, []); // Intentionally empty: run once on mount; use optsRef for current redirect options
 
   return {
     user,
