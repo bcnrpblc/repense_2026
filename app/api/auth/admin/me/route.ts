@@ -8,6 +8,8 @@ type MeResponse = {
     email: string;
     role: string;
     isTeacherAdmin?: boolean;
+    /** True when admin has a Teacher account with same email (can switch to teacher view) */
+    hasTeacherAccount?: boolean;
   };
 };
 
@@ -54,11 +56,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Check if admin has a Teacher account with same email (can switch to teacher view)
+    const teacherWithSameEmail = await prisma.teacher.findFirst({
+      where: { email: admin.email, eh_ativo: true },
+      select: { id: true },
+    });
+    const hasTeacherAccount = !!teacherWithSameEmail;
+
     return NextResponse.json<MeResponse>(
       {
         admin: {
           ...admin,
           isTeacherAdmin: false,
+          hasTeacherAccount,
         },
       },
       { status: 200 }

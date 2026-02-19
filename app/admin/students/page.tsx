@@ -74,6 +74,15 @@ interface Pagination {
   hasPreviousPage: boolean;
 }
 
+type HasUnreadFilter = 'any' | 'with' | 'without';
+type EnrollmentStatusFilter = 'any' | 'active' | 'completed_only';
+type HasEnrollmentFilter = 'any' | 'with' | 'without';
+type GrupoFilter = '' | 'Igreja' | 'Espiritualidade' | 'Evangelho';
+type ModeloFilter = '' | 'online' | 'presencial';
+type WomenOnlyFilter = 'any' | 'only' | 'exclude';
+type Is16hFilter = 'any' | 'only' | 'exclude';
+type AgeRangeFilter = '' | '18-25' | '26-35' | '36-50' | '50+';
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -354,7 +363,20 @@ export default function StudentsPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filter, setFilter] = useState<string>('all');
+  const [birthFrom, setBirthFrom] = useState<string>('');
+  const [birthTo, setBirthTo] = useState<string>('');
+  const [ageRange, setAgeRange] = useState<AgeRangeFilter>('');
+  const [enrollmentStatus, setEnrollmentStatus] = useState<EnrollmentStatusFilter>('any');
+  const [hasEnrollment, setHasEnrollment] = useState<HasEnrollmentFilter>('any');
+  const [grupo, setGrupo] = useState<GrupoFilter>('');
+  const [modelo, setModelo] = useState<ModeloFilter>('');
+  const [classCity, setClassCity] = useState<string>('');
+  const [womenOnly, setWomenOnly] = useState<WomenOnlyFilter>('any');
+  const [is16h, setIs16h] = useState<Is16hFilter>('any');
+  const [hasUnreadFilter, setHasUnreadFilter] = useState<HasUnreadFilter>('any');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [observationStudent, setObservationStudent] = useState<Student | null>(null);
+  const [showAdditionalFilters, setShowAdditionalFilters] = useState<boolean>(false);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     limit: 50,
@@ -390,6 +412,47 @@ export default function StudentsPage() {
         params.set('filter', filter);
       }
 
+      // Demographic filters
+      if (birthFrom) {
+        params.set('birthFrom', birthFrom);
+      }
+      if (birthTo) {
+        params.set('birthTo', birthTo);
+      }
+      if (ageRange) {
+        params.set('ageRange', ageRange);
+      }
+
+      // Enrollment-based filters
+      if (enrollmentStatus !== 'any') {
+        params.set('enrollmentStatus', enrollmentStatus);
+      }
+      if (hasEnrollment !== 'any') {
+        params.set('hasEnrollment', hasEnrollment);
+      }
+      if (grupo) {
+        params.set('grupo', grupo);
+      }
+      if (modelo) {
+        params.set('modelo', modelo);
+      }
+      if (classCity) {
+        params.set('classCity', classCity);
+      }
+      if (womenOnly !== 'any') {
+        params.set('womenOnly', womenOnly);
+      }
+      if (is16h !== 'any') {
+        params.set('is16h', is16h);
+      }
+
+      // Observation filter
+      if (hasUnreadFilter === 'with') {
+        params.set('hasUnreadObservations', 'true');
+      } else if (hasUnreadFilter === 'without') {
+        params.set('hasUnreadObservations', 'false');
+      }
+
       const response = await fetch(`/api/admin/students?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -407,7 +470,21 @@ export default function StudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, filter]);
+  }, [
+    debouncedSearch,
+    filter,
+    birthFrom,
+    birthTo,
+    ageRange,
+    enrollmentStatus,
+    hasEnrollment,
+    grupo,
+    modelo,
+    classCity,
+    womenOnly,
+    is16h,
+    hasUnreadFilter,
+  ]);
 
   // Fetch on mount and when search or filter changes
   useEffect(() => {
@@ -417,6 +494,54 @@ export default function StudentsPage() {
   // Handle page change
   const handlePageChange = (newPage: number) => {
     fetchStudents(newPage);
+  };
+
+  const toggleSelectAllOnPage = () => {
+    const currentPageIds = students.map((s) => s.id);
+    const allSelected = currentPageIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !currentPageIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...currentPageIds])));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleExportSelected = async () => {
+    if (selectedIds.length === 0) return;
+    try {
+      const token = getAuthToken();
+      const response = await fetch('/api/admin/students/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ studentIds: selectedIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export students');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'participantes_selecionados.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting students:', error);
+      toast.error('Erro ao exportar participantes');
+    }
   };
 
   // Navigate to student profile
@@ -462,61 +587,283 @@ export default function StudentsPage() {
             Gerencie os participantes do sistema
           </p>
         </div>
+        <div className="flex items-center gap-3">
+          <Button
+            disabled={selectedIds.length === 0}
+            onClick={handleExportSelected}
+            className="bg-[#107c41] hover:bg-[#0d5e32] text-white disabled:bg-gray-300 disabled:text-gray-600"
+          >
+            Exportar selecionados (XLS)
+          </Button>
+          {selectedIds.length > 0 && (
+            <p className="text-xs text-gray-500">
+              {selectedIds.length} participante{selectedIds.length !== 1 ? 's' : ''} selecionado
+              {selectedIds.length !== 1 ? 's' : ''}
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* Search and Filter */}
+      {/* Search and Filters */}
       <Card className="mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Buscar Participante
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar por nome, CPF ou email..."
-                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-              />
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Buscar Participante
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar por nome, CPF ou email..."
+                  className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
-              </svg>
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Filtro geral
+              </label>
+              <select
+                value={filter}
+                onChange={(e) => {
+                  setFilter(e.target.value);
+                  setPagination({ ...pagination, page: 1 });
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
+              >
+                <option value="all">Todos</option>
+                <option value="enrolled">Matriculados</option>
+                <option value="priority">Lista de Prioridade</option>
+              </select>
+            </div>
+            {pagination.totalCount > 0 && (
+              <div className="flex items-end">
+                <p className="text-sm text-gray-500">
+                  {pagination.totalCount} participante{pagination.totalCount !== 1 ? 's' : ''} encontrado
+                  {pagination.totalCount !== 1 ? 's' : ''}
+                </p>
+              </div>
+            )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Filtro
-            </label>
-            <select
-              value={filter}
-              onChange={(e) => {
-                setFilter(e.target.value);
-                setPagination({ ...pagination, page: 1 });
-              }}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary"
+
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500">
+              Use os filtros adicionais para refinar a lista de participantes.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowAdditionalFilters((prev) => !prev)}
+              className="text-xs font-medium text-primary hover:text-primary/80 underline-offset-2 hover:underline"
             >
-              <option value="all">Todos</option>
-              <option value="enrolled">Matriculados</option>
-              <option value="priority">Lista de Prioridade</option>
-            </select>
+              {showAdditionalFilters ? 'Ocultar Filtros Adicionais' : 'Mostrar Filtros Adicionais'}
+            </button>
           </div>
-          {pagination.totalCount > 0 && (
-            <div className="flex items-end">
-              <p className="text-sm text-gray-500">
-                {pagination.totalCount} participante{pagination.totalCount !== 1 ? 's' : ''} encontrado{pagination.totalCount !== 1 ? 's' : ''}
-              </p>
+
+          {showAdditionalFilters && (
+          <div className="grid gap-4 md:grid-cols-3">
+            {/* Demographic filters */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Filtros Adicionais
+                </p>
+                <span className="text-[10px] text-gray-400 uppercase tracking-wide">
+                  Dados demográficos
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Nascimento de
+                  </label>
+                  <input
+                    type="date"
+                    value={birthFrom}
+                    onChange={(e) => setBirthFrom(e.target.value)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Nascimento até
+                  </label>
+                  <input
+                    type="date"
+                    value={birthTo}
+                    onChange={(e) => setBirthTo(e.target.value)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Faixa etária
+                </label>
+                <select
+                  value={ageRange}
+                  onChange={(e) => setAgeRange(e.target.value as AgeRangeFilter)}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">Qualquer</option>
+                  <option value="18-25">18–25 anos</option>
+                  <option value="26-35">26–35 anos</option>
+                  <option value="36-50">36–50 anos</option>
+                  <option value="50+">50+ anos</option>
+                </select>
+              </div>
             </div>
+
+            {/* Enrollment filters */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Inscrições
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Status de inscrição
+                  </label>
+                  <select
+                    value={enrollmentStatus}
+                    onChange={(e) =>
+                      setEnrollmentStatus(e.target.value as EnrollmentStatusFilter)
+                    }
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="any">Qualquer</option>
+                    <option value="active">Com inscrição ativa</option>
+                    <option value="completed_only">Somente concluídas/canceladas</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Possui inscrições
+                  </label>
+                  <select
+                    value={hasEnrollment}
+                    onChange={(e) =>
+                      setHasEnrollment(e.target.value as HasEnrollmentFilter)
+                    }
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="any">Qualquer</option>
+                    <option value="with">Com inscrições</option>
+                    <option value="without">Sem inscrições</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Grupo Repense atual
+                  </label>
+                  <select
+                    value={grupo}
+                    onChange={(e) => setGrupo(e.target.value as GrupoFilter)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Todos</option>
+                    <option value="Igreja">Igreja</option>
+                    <option value="Espiritualidade">Espiritualidade</option>
+                    <option value="Evangelho">Evangelho</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Formato
+                  </label>
+                  <select
+                    value={modelo}
+                    onChange={(e) => setModelo(e.target.value as ModeloFilter)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Todos</option>
+                    <option value="online">Online</option>
+                    <option value="presencial">Presencial</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Cidade do grupo
+                  </label>
+                  <input
+                    type="text"
+                    value={classCity}
+                    onChange={(e) => setClassCity(e.target.value)}
+                    placeholder="Itu, Indaiatuba..."
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Turmas de mulheres
+                  </label>
+                  <select
+                    value={womenOnly}
+                    onChange={(e) => setWomenOnly(e.target.value as WomenOnlyFilter)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="any">Qualquer</option>
+                    <option value="only">Somente grupos de mulheres</option>
+                    <option value="exclude">Somente grupos mistos</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Horário 16h
+                  </label>
+                  <select
+                    value={is16h}
+                    onChange={(e) => setIs16h(e.target.value as Is16hFilter)}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="any">Qualquer</option>
+                    <option value="only">Somente grupos 16h</option>
+                    <option value="exclude">Somente outros horários</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Observations */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Observações
+              </p>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Filtro de observações
+                </label>
+                <select
+                  value={hasUnreadFilter}
+                  onChange={(e) => setHasUnreadFilter(e.target.value as HasUnreadFilter)}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary"
+                >
+                  <option value="any">Qualquer</option>
+                  <option value="with">Somente com observações não lidas</option>
+                  <option value="without">Somente sem observações não lidas</option>
+                </select>
+              </div>
+            </div>
+          </div>
           )}
         </div>
       </Card>
@@ -551,6 +898,19 @@ export default function StudentsPage() {
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                    <input
+                      type="checkbox"
+                      checked={
+                        students.length > 0 &&
+                        students.every((s) => selectedIds.includes(s.id))
+                      }
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        toggleSelectAllOnPage();
+                      }}
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Nome
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
@@ -577,6 +937,13 @@ export default function StudentsPage() {
                     className={`hover:bg-gray-50 cursor-pointer ${student.hasUnreadObservations ? 'bg-red-50/50' : ''}`}
                     onClick={() => handleRowClick(student.id)}
                   >
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(student.id)}
+                        onChange={() => toggleSelectOne(student.id)}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
@@ -682,6 +1049,19 @@ export default function StudentsPage() {
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
+                    <div
+                      className="mt-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelectOne(student.id);
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(student.id)}
+                        readOnly
+                      />
+                    </div>
                     <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
                       {student.nome.charAt(0).toUpperCase()}
                     </div>

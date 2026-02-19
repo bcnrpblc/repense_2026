@@ -190,6 +190,7 @@ export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
   });
   const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [isTeacherAdmin, setIsTeacherAdmin] = useState(false);
+  const [hasTeacherAccount, setHasTeacherAccount] = useState(false);
 
   // Fetch notification counts and admin role
   useEffect(() => {
@@ -219,6 +220,9 @@ export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
           }
           if (data.admin?.isTeacherAdmin) {
             setIsTeacherAdmin(true);
+          }
+          if (data.admin?.hasTeacherAccount) {
+            setHasTeacherAccount(true);
           }
         }
       } catch (error) {
@@ -389,8 +393,8 @@ export function AdminNav({ userEmail, onLogout }: AdminNavProps) {
               )}
             </div>
 
-            {/* Teacher Panel Link (only for teacher-admins) */}
-            {isTeacherAdmin && (
+            {/* Teacher Panel Link (teacher-admins or admins with Teacher account) */}
+            {(isTeacherAdmin || hasTeacherAccount) && (
               <Link
                 href="/teacher/dashboard"
                 className="flex items-center space-x-3 px-4 py-3 mb-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"

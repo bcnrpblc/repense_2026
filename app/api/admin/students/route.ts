@@ -28,6 +28,23 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
     const skip = (page - 1) * limit;
 
+    // Demographic filters
+    const birthFromParam = searchParams.get('birthFrom');
+    const birthToParam = searchParams.get('birthTo');
+    const ageRangeParam = searchParams.get('ageRange'); // e.g. '18-25', '26-35', '36-50', '50+'
+
+    // Enrollment-based filters
+    const enrollmentStatus = searchParams.get('enrollmentStatus'); // 'any' | 'active' | 'completed_only'
+    const hasEnrollment = searchParams.get('hasEnrollment'); // 'any' | 'with' | 'without'
+    const grupoFilter = searchParams.get('grupo'); // 'Igreja' | 'Espiritualidade' | 'Evangelho'
+    const modeloFilter = searchParams.get('modelo'); // 'online' | 'presencial'
+    const classCityFilter = searchParams.get('classCity'); // e.g. 'Itu', 'Indaiatuba'
+    const womenOnlyFilter = searchParams.get('womenOnly'); // 'any' | 'only' | 'exclude'
+    const is16hFilter = searchParams.get('is16h'); // 'any' | 'only' | 'exclude'
+
+    // Observation filters
+    const hasUnreadObservationsParam = searchParams.get('hasUnreadObservations'); // 'true' | 'false'
+
     // Build where clause for search
     const whereClause: Prisma.StudentWhereInput = {};
 
@@ -50,9 +67,6 @@ export async function GET(request: NextRequest) {
       // Students with active enrollments (will filter in memory after fetching)
       // We'll handle this after fetching since we need to check enrollments
     }
-
-    // Get total count (will be recalculated after filtering if needed)
-    const totalCount = await prisma.student.count({ where: whereClause });
 
     // Fetch ALL students matching the search (we'll sort and paginate in memory)
     // This ensures students with unread observations appear first across all pages
@@ -80,6 +94,9 @@ export async function GET(request: NextRequest) {
                 grupo_repense: true,
                 modelo: true,
                 data_inicio: true,
+                cidade: true,
+                eh_mulheres: true,
+                eh_16h: true,
               },
             },
           },
@@ -118,6 +135,50 @@ export async function GET(request: NextRequest) {
         },
       },
     });
+
+    // Compute birth date range from explicit params and/or age range
+    let birthFrom: Date | null = null;
+    let birthTo: Date | null = null;
+
+    const today = new Date();
+
+    if (ageRangeParam) {
+      const [minStr, maxStr] = ageRangeParam.split('-');
+      const minAge = parseInt(minStr, 10);
+      const maxAge = maxStr === '+' ? Number.POSITIVE_INFINITY : parseInt(maxStr, 10);
+
+      if (!Number.isNaN(minAge)) {
+        // Birth date upper bound: youngest in range (minAge)
+        const upper = new Date(today);
+        upper.setFullYear(upper.getFullYear() - minAge);
+
+        // Birth date lower bound: oldest in range (maxAge)
+        let lower: Date | null = null;
+        if (Number.isFinite(maxAge)) {
+          lower = new Date(today);
+          lower.setFullYear(lower.getFullYear() - maxAge);
+        }
+
+        birthTo = upper;
+        if (lower) {
+          birthFrom = lower;
+        }
+      }
+    }
+
+    if (birthFromParam) {
+      const parsed = new Date(birthFromParam);
+      if (!Number.isNaN(parsed.getTime())) {
+        birthFrom = parsed;
+      }
+    }
+
+    if (birthToParam) {
+      const parsed = new Date(birthToParam);
+      if (!Number.isNaN(parsed.getTime())) {
+        birthTo = parsed;
+      }
+    }
 
     // Transform data to include enrollment counts, badges, and observation data
     const transformedStudents = allStudents.map((student) => {
@@ -158,6 +219,9 @@ export async function GET(request: NextRequest) {
             grupo_repense: e.Class.grupo_repense,
             modelo: e.Class.modelo,
             data_inicio: e.Class.data_inicio,
+            cidade: e.Class.cidade,
+            eh_mulheres: e.Class.eh_mulheres,
+            eh_16h: e.Class.eh_16h,
           },
         })),
         // Observation data
@@ -180,13 +244,103 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Apply enrolled filter if needed (filter priority list students with active enrollments)
+    // Apply high-level filter if needed (priority vs enrolled)
     let filteredStudents = transformedStudents;
     if (filter === 'enrolled') {
-      filteredStudents = transformedStudents.filter((s) => s.activeEnrollmentsCount > 0);
+      filteredStudents = filteredStudents.filter((s) => s.activeEnrollmentsCount > 0);
     } else if (filter === 'priority') {
       // Already filtered by priority_list = true, but ensure no active enrollments
-      filteredStudents = transformedStudents.filter((s) => s.priority_list && s.activeEnrollmentsCount === 0);
+      filteredStudents = filteredStudents.filter((s) => s.priority_list && s.activeEnrollmentsCount === 0);
+    }
+
+    // Apply demographic filters (birth date / age)
+    if (birthFrom || birthTo) {
+      filteredStudents = filteredStudents.filter((s) => {
+        if (!s.nascimento) return false;
+        const birthDate = new Date(s.nascimento);
+        if (birthFrom && birthDate < birthFrom) return false;
+        if (birthTo && birthDate > birthTo) return false;
+        return true;
+      });
+    }
+
+    // Apply enrollment-based filters
+    if (enrollmentStatus && enrollmentStatus !== 'any') {
+      filteredStudents = filteredStudents.filter((s) => {
+        const hasActive = s.activeEnrollmentsCount > 0;
+        const hasNonActive = s.totalEnrollmentsCount > s.activeEnrollmentsCount;
+
+        if (enrollmentStatus === 'active') {
+          return hasActive;
+        }
+        if (enrollmentStatus === 'completed_only') {
+          return !hasActive && hasNonActive;
+        }
+        return true;
+      });
+    }
+
+    if (hasEnrollment && hasEnrollment !== 'any') {
+      filteredStudents = filteredStudents.filter((s) => {
+        if (hasEnrollment === 'with') {
+          return s.totalEnrollmentsCount > 0;
+        }
+        if (hasEnrollment === 'without') {
+          return s.totalEnrollmentsCount === 0;
+        }
+        return true;
+      });
+    }
+
+    if (grupoFilter) {
+      filteredStudents = filteredStudents.filter((s) =>
+        s.activeEnrollments?.some((e) => e.Class.grupo_repense === grupoFilter)
+      );
+    }
+
+    if (modeloFilter) {
+      filteredStudents = filteredStudents.filter((s) =>
+        s.activeEnrollments?.some((e) => e.Class.modelo === modeloFilter)
+      );
+    }
+
+    if (classCityFilter) {
+      filteredStudents = filteredStudents.filter((s) =>
+        s.activeEnrollments?.some((e) => e.Class.cidade === classCityFilter)
+      );
+    }
+
+    if (womenOnlyFilter && womenOnlyFilter !== 'any') {
+      filteredStudents = filteredStudents.filter((s) => {
+        const hasWomenOnly = s.activeEnrollments?.some((e) => e.Class.eh_mulheres) ?? false;
+        if (womenOnlyFilter === 'only') {
+          return hasWomenOnly;
+        }
+        if (womenOnlyFilter === 'exclude') {
+          return !hasWomenOnly;
+        }
+        return true;
+      });
+    }
+
+    if (is16hFilter && is16hFilter !== 'any') {
+      filteredStudents = filteredStudents.filter((s) => {
+        const has16h = s.activeEnrollments?.some((e) => e.Class.eh_16h) ?? false;
+        if (is16hFilter === 'only') {
+          return has16h;
+        }
+        if (is16hFilter === 'exclude') {
+          return !has16h;
+        }
+        return true;
+      });
+    }
+
+    // Apply observation filters
+    if (hasUnreadObservationsParam === 'true') {
+      filteredStudents = filteredStudents.filter((s) => s.hasUnreadObservations);
+    } else if (hasUnreadObservationsParam === 'false') {
+      filteredStudents = filteredStudents.filter((s) => !s.hasUnreadObservations);
     }
 
     // Sort: unread observations first, then by name
