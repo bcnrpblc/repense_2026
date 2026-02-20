@@ -46,6 +46,13 @@ const createClassSchema = z.object({
       z.null()
     ]).optional()
   ),
+  co_lider_id: z.preprocess(
+    (val) => {
+      if (val === '' || val === null || val === undefined) return null;
+      return val;
+    },
+    z.union([z.string().min(1), z.null()]).optional()
+  ),
   grupo_repense: z.enum(['Igreja', 'Espiritualidade', 'Evangelho']),
   modelo: z.enum(['online', 'presencial']),
   capacidade: z.number().int().min(1).max(100),
@@ -128,6 +135,14 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
+        CoLeaders: {
+          take: 1,
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+          },
+        },
         _count: {
           select: {
             enrollments: {
@@ -173,6 +188,7 @@ export async function GET(request: NextRequest) {
         arquivada: c.arquivada,
         status: c.status,
         teacher: c.Teacher,
+        coLider: c.CoLeaders?.[0] ?? null,
         activeEnrollments: c._count.enrollments,
         capacityPercentage,
         capacityStatus,
@@ -255,6 +271,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate co_lider_id if provided (optional; store on Teacher.co_lider_class_id after create)
+    if (data.co_lider_id) {
+      if (data.teacher_id && data.co_lider_id === data.teacher_id) {
+        return NextResponse.json(
+          { error: 'Co-líder deve ser diferente do facilitador' },
+          { status: 400 }
+        );
+      }
+      const coLiderTeacher = await prisma.teacher.findUnique({
+        where: { id: data.co_lider_id },
+        select: { id: true, eh_ativo: true },
+      });
+      if (!coLiderTeacher) {
+        return NextResponse.json(
+          { error: 'Co-líder não encontrado' },
+          { status: 400 }
+        );
+      }
+      if (!coLiderTeacher.eh_ativo) {
+        return NextResponse.json(
+          { error: 'Co-líder está inativo' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Validate link_whatsapp uniqueness if provided
     if (data.link_whatsapp) {
       const existingLink = await prisma.class.findFirst({
@@ -305,6 +347,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Assign co-leader: set Teacher.co_lider_class_id to this class (one class per co-leader)
+    let coLider: { id: string; nome: string; email: string } | null = null;
+    if (data.co_lider_id) {
+      await prisma.teacher.update({
+        where: { id: data.co_lider_id },
+        data: { co_lider_class_id: newClass.id },
+      });
+      coLider = await prisma.teacher.findUnique({
+        where: { id: data.co_lider_id },
+        select: { id: true, nome: true, email: true },
+      }) ?? null;
+    }
+
     // Log audit event
     await logAuditEvent(
       {
@@ -320,12 +375,16 @@ export async function POST(request: NextRequest) {
           cidade: newClass.cidade,
           capacidade: newClass.capacidade,
           teacher_id: newClass.teacher_id,
+          co_lider_id: data.co_lider_id ?? undefined,
         },
       },
       request
     );
 
-    return NextResponse.json({ class: newClass }, { status: 201 });
+    return NextResponse.json(
+      { class: { ...newClass, coLider } },
+      { status: 201 }
+    );
 
   } catch (error) {
     console.error('Error creating class:', error);

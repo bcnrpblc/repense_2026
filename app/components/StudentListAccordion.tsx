@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { getAuthToken } from '@/lib/hooks/useAuth';
 import { WhatsAppButton } from './WhatsAppButton';
 import { TeacherEditStudentModal } from './TeacherEditStudentModal';
@@ -116,12 +115,9 @@ export function StudentListAccordion({
               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="flex-1 min-w-0">
-                <Link
-                  href={`/admin/students/${student.id}`}
-                  className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
-                >
+                <span className="font-medium text-gray-900">
                   {student.nome}
-                </Link>
+                </span>
                 <p className="text-xs text-gray-500 mt-1">
                   {student.faltas > 0 ? `${student.faltas} faltas` : 'Sem faltas'}
                   {student.totalSessoes > 0 && ` • ${student.totalSessoes} sessões`}

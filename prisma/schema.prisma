@@ -106,6 +106,7 @@ model Class {
   final_report     String?
   final_report_em  DateTime?
   Teacher          Teacher?     @relation(fields: [teacher_id], references: [id])
+  CoLeaders        Teacher[]    @relation("CoLiderClass")
   Session          Session[]
   enrollments      Enrollment[]
   Conversation     Conversation[]
@@ -142,12 +143,15 @@ model Teacher {
   eh_admin               Boolean                  @default(false)  // Admin dashboard access
   eh_ativo               Boolean                  @default(true)
   criado_em              DateTime                 @default(now())
+  co_lider_class_id      String?
   Class                  Class[]
+  CoLiderClass           Class?                   @relation("CoLiderClass", fields: [co_lider_class_id], references: [id])
   Message                Message[]                @relation("TeacherMessages")
   TeacherNotificationRead TeacherNotificationRead[]
 
   @@index([eh_ativo])
   @@index([eh_admin])
+  @@index([co_lider_class_id])
 }
 
 model TeacherNotificationRead {

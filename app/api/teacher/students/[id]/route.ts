@@ -53,13 +53,22 @@ export async function PUT(
       );
     }
 
-    // Verify teacher owns a class where this student is enrolled
+    // Verify teacher owns or co-leads a class where this student is enrolled
+    const teacherRow = await prisma.teacher.findUnique({
+      where: { id: teacherId },
+      select: { co_lider_class_id: true },
+    });
+    const coLiderClassId = teacherRow?.co_lider_class_id ?? null;
+
     const enrollment = await prisma.enrollment.findFirst({
       where: {
         student_id: studentId,
         status: 'ativo',
         Class: {
-          teacher_id: teacherId,
+          OR: [
+            { teacher_id: teacherId },
+            ...(coLiderClassId ? [{ id: coLiderClassId }] : []),
+          ],
         },
       },
       select: {

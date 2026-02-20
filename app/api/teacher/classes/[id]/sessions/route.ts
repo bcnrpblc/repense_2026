@@ -28,12 +28,16 @@ export async function GET(
     const teacherId = tokenPayload.teacherId;
     const classId = params.id;
 
-    // Get class with sessions and attendance
+    // Get class with sessions and attendance; check teacher or co-leader access
     const classData = await prisma.class.findUnique({
       where: { id: classId },
       select: {
         id: true,
         teacher_id: true,
+        CoLeaders: {
+          where: { id: teacherId },
+          select: { id: true },
+        },
         Session: {
           orderBy: { numero_sessao: 'desc' },
           include: {
@@ -55,8 +59,9 @@ export async function GET(
       );
     }
 
-    // Verify teacher owns this class
-    if (classData.teacher_id !== teacherId) {
+    const isTeacher = classData.teacher_id === teacherId;
+    const isCoLeader = classData.CoLeaders?.length > 0;
+    if (!isTeacher && !isCoLeader) {
       return NextResponse.json(
         { error: 'Você não tem permissão para visualizar sessões deste grupo' },
         { status: 403 }

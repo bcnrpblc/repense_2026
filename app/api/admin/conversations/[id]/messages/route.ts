@@ -88,7 +88,7 @@ export async function POST(
 
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
-      select: { id: true, Class: { select: { teacher_id: true } } },
+      select: { id: true, Class: { select: { id: true, teacher_id: true } } },
     });
     if (!conversation) {
       return NextResponse.json(
@@ -116,8 +116,21 @@ export async function POST(
       },
     });
 
-    const teacherId = conversation.Class?.teacher_id;
-    if (teacherId) {
+    // Notify main teacher and co-leader (teacher with co_lider_class_id = this class)
+    const mainTeacherId = conversation.Class?.teacher_id ?? null;
+    const coLeader = conversation.Class?.id
+      ? await prisma.teacher.findFirst({
+          where: { co_lider_class_id: conversation.Class.id },
+          select: { id: true },
+        })
+      : null;
+    const coLeaderId = coLeader?.id ?? null;
+    const teacherIdsToNotify = [mainTeacherId, coLeaderId].filter(
+      (id): id is string => !!id && id.length > 0
+    );
+    const uniqueIds = [...new Set(teacherIdsToNotify)];
+
+    for (const teacherId of uniqueIds) {
       const existing = await prisma.teacherNotificationRead.findFirst({
         where: {
           teacher_id: teacherId,

@@ -23,11 +23,20 @@ export async function GET(request: NextRequest) {
     const tokenPayload = await verifyTeacherToken(request);
     const teacherId = tokenPayload.teacherId;
 
-    // Find active session (relatorio = null)
+    // Find active session (relatorio = null) in classes teacher leads or co-leads
+    const teacher = await prisma.teacher.findUnique({
+      where: { id: teacherId },
+      select: { co_lider_class_id: true },
+    });
+    const coLiderClassId = teacher?.co_lider_class_id ?? null;
+
     const activeSession = await prisma.session.findFirst({
       where: {
         Class: {
-          teacher_id: teacherId,
+          OR: [
+            { teacher_id: teacherId },
+            ...(coLiderClassId ? [{ id: coLiderClassId }] : []),
+          ],
         },
         relatorio: null,
       },

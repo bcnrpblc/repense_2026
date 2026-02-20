@@ -12,6 +12,7 @@ const updateClassSchema = z.object({
   capacidade: z.number().int().min(1).max(100).optional(),
   eh_ativo: z.boolean().optional(),
   teacher_id: z.union([z.string().min(1), z.null()]).optional(),
+  co_lider_id: z.union([z.string().min(1), z.null()]).optional(),
   link_whatsapp: z.union([z.string().url(), z.string().length(0), z.null()]).optional(),
   horario: z.string().optional().nullable(),
   data_inicio: z.string().optional().nullable(),
@@ -44,6 +45,14 @@ export async function GET(
             telefone: true,
           },
         },
+        CoLeaders: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            telefone: true,
+          },
+        },
         _count: {
           select: {
             enrollments: true,
@@ -60,11 +69,12 @@ export async function GET(
       );
     }
 
-    // Include final_report fields
+    // Include final_report and coLider (single co-leader for this class)
     const response = {
       ...classData,
       final_report: classData.final_report,
       final_report_em: classData.final_report_em,
+      coLider: classData.CoLeaders?.[0] ?? null,
     };
 
     return NextResponse.json({ class: response });
@@ -199,6 +209,33 @@ export async function PUT(
       }
     }
 
+    // Validate co_lider_id if provided (stored on Teacher.co_lider_class_id)
+    const nextTeacherId = data.teacher_id !== undefined ? data.teacher_id : currentClass.teacher_id;
+    if (data.co_lider_id !== undefined && data.co_lider_id !== null) {
+      if (nextTeacherId && data.co_lider_id === nextTeacherId) {
+        return NextResponse.json(
+          { error: 'Co-líder deve ser diferente do facilitador' },
+          { status: 400 }
+        );
+      }
+      const coLiderTeacher = await prisma.teacher.findUnique({
+        where: { id: data.co_lider_id },
+        select: { id: true, eh_ativo: true },
+      });
+      if (!coLiderTeacher) {
+        return NextResponse.json(
+          { error: 'Co-líder não encontrado' },
+          { status: 400 }
+        );
+      }
+      if (!coLiderTeacher.eh_ativo) {
+        return NextResponse.json(
+          { error: 'Co-líder está inativo' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Build update data
     const updateData: Record<string, unknown> = {
       atualizado_em: new Date(),
@@ -248,8 +285,46 @@ export async function PUT(
             email: true,
           },
         },
+        CoLeaders: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+          },
+        },
       },
     });
+
+    // Update co-leader: stored on Teacher.co_lider_class_id (not on Class)
+    const currentCoLeaders = await prisma.teacher.findMany({
+      where: { co_lider_class_id: params.id },
+      select: { id: true },
+    });
+    for (const t of currentCoLeaders) {
+      await prisma.teacher.update({
+        where: { id: t.id },
+        data: { co_lider_class_id: null },
+      });
+    }
+    const previousCoLiderId = currentCoLeaders[0]?.id ?? null;
+    if (data.co_lider_id !== undefined && data.co_lider_id !== null) {
+      await prisma.teacher.update({
+        where: { id: data.co_lider_id },
+        data: { co_lider_class_id: params.id },
+      });
+    }
+
+    // Refetch class with CoLeaders for response (in case we just set a new co-leader)
+    const classWithCoLider = await prisma.class.findUnique({
+      where: { id: params.id },
+      include: {
+        Teacher: { select: { id: true, nome: true, email: true } },
+        CoLeaders: { select: { id: true, nome: true, email: true } },
+      },
+    });
+    const responseClass = classWithCoLider
+      ? { ...classWithCoLider, coLider: classWithCoLider.CoLeaders?.[0] ?? null }
+      : { ...updatedClass, coLider: updatedClass.CoLeaders?.[0] ?? null };
 
     // Log audit event
     await logAuditEvent(
@@ -266,18 +341,20 @@ export async function PUT(
             capacidade: currentClass.capacidade,
             eh_ativo: currentClass.eh_ativo,
             teacher_id: currentClass.teacher_id,
+            co_lider_id: previousCoLiderId,
           },
           new_values: {
             capacidade: updatedClass.capacidade,
             eh_ativo: updatedClass.eh_ativo,
             teacher_id: updatedClass.teacher_id,
+            co_lider_id: data.co_lider_id !== undefined ? (data.co_lider_id || null) : previousCoLiderId,
           },
         },
       },
       request
     );
 
-    return NextResponse.json({ class: updatedClass });
+    return NextResponse.json({ class: responseClass });
 
   } catch (error) {
     console.error('Error updating class:', error);

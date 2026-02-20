@@ -25,16 +25,24 @@ export async function GET(
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
       include: {
-        Class: { select: { teacher_id: true } },
+        Class: {
+          select: {
+            teacher_id: true,
+            CoLeaders: { where: { id: teacherId }, select: { id: true } },
+          },
+        },
       },
     });
-    if (!conversation) {
+    if (!conversation?.Class) {
       return NextResponse.json(
         { error: 'Conversa não encontrada' },
         { status: 404 }
       );
     }
-    if (conversation.Class.teacher_id !== teacherId) {
+    const classData = conversation.Class!;
+    const isTeacher = classData.teacher_id === teacherId;
+    const isCoLeader = ((classData as { CoLeaders?: { id: string }[] }).CoLeaders?.length ?? 0) > 0;
+    if (!isTeacher && !isCoLeader) {
       return NextResponse.json(
         { error: 'Você não tem acesso a esta conversa' },
         { status: 403 }
@@ -98,15 +106,25 @@ export async function POST(
 
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
-      include: { Class: { select: { teacher_id: true } } },
+      include: {
+        Class: {
+          select: {
+            teacher_id: true,
+            CoLeaders: { where: { id: teacherId }, select: { id: true } },
+          },
+        },
+      },
     });
-    if (!conversation) {
+    if (!conversation?.Class) {
       return NextResponse.json(
         { error: 'Conversa não encontrada' },
         { status: 404 }
       );
     }
-    if (conversation.Class.teacher_id !== teacherId) {
+    const classData = conversation.Class!;
+    const isTeacher = classData.teacher_id === teacherId;
+    const isCoLeader = ((classData as { CoLeaders?: { id: string }[] }).CoLeaders?.length ?? 0) > 0;
+    if (!isTeacher && !isCoLeader) {
       return NextResponse.json(
         { error: 'Você não tem acesso a esta conversa' },
         { status: 403 }

@@ -48,6 +48,7 @@ export async function GET(
           select: {
             id: true,
             teacher_id: true,
+            CoLeaders: { where: { id: teacherId }, select: { id: true } },
             grupo_repense: true,
             modelo: true,
             horario: true,
@@ -76,8 +77,9 @@ export async function GET(
       );
     }
 
-    // Verify teacher owns this class
-    if (session.Class.teacher_id !== teacherId) {
+    const isTeacher = session.Class.teacher_id === teacherId;
+    const isCoLeader = session.Class.CoLeaders?.length > 0;
+    if (!isTeacher && !isCoLeader) {
       return NextResponse.json(
         { error: 'Você não tem permissão para visualizar esse encontro' },
         { status: 403 }
@@ -175,13 +177,14 @@ export async function PUT(
     console.log('[DEBUG] PUT /api/teacher/sessions/[id] - Parsed relatorio:', JSON.stringify({ relatorio, relatorioType: typeof relatorio, isNull: relatorio === null, isUndefined: relatorio === undefined }));
     // #endregion
 
-    // Find session and verify ownership
+    // Find session and verify ownership (teacher or co-leader)
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
       include: {
         Class: {
           select: {
             teacher_id: true,
+            CoLeaders: { where: { id: teacherId }, select: { id: true } },
             enrollments: {
               where: { status: 'ativo' },
               select: { student_id: true },
@@ -201,7 +204,9 @@ export async function PUT(
       );
     }
 
-    if (session.Class.teacher_id !== teacherId) {
+    const isTeacherPut = session.Class.teacher_id === teacherId;
+    const isCoLeaderPut = session.Class.CoLeaders?.length > 0;
+    if (!isTeacherPut && !isCoLeaderPut) {
       return NextResponse.json(
         { error: 'Você não tem permissão para atualizar esse encontro' },
         { status: 403 }

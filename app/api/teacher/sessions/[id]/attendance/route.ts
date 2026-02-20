@@ -56,7 +56,7 @@ export async function POST(
     const body = await request.json();
     const { attendanceRecords } = saveAttendanceSchema.parse(body);
 
-    // Find session and verify ownership
+    // Find session and verify ownership (teacher or co-leader)
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
       include: {
@@ -64,6 +64,7 @@ export async function POST(
           select: {
             id: true,
             teacher_id: true,
+            CoLeaders: { where: { id: teacherId }, select: { id: true } },
             enrollments: {
               where: { status: 'ativo' },
               select: { student_id: true },
@@ -75,12 +76,14 @@ export async function POST(
 
     if (!session) {
       return NextResponse.json(
-        { error: ' não encontrada' },
+        { error: 'Sessão não encontrada' },
         { status: 404 }
       );
     }
 
-    if (session.Class.teacher_id !== teacherId) {
+    const isTeacher = session.Class.teacher_id === teacherId;
+    const isCoLeader = session.Class.CoLeaders?.length > 0;
+    if (!isTeacher && !isCoLeader) {
       return NextResponse.json(
         { error: 'Você não tem permissão para registrar presenças nesse encontro' },
         { status: 403 }
@@ -229,13 +232,14 @@ export async function GET(
     const teacherId = tokenPayload.teacherId;
     const sessionId = params.id;
 
-    // Find session and verify ownership
+    // Find session and verify ownership (teacher or co-leader)
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
       include: {
         Class: {
           select: {
             teacher_id: true,
+            CoLeaders: { where: { id: teacherId }, select: { id: true } },
             enrollments: {
               where: { status: 'ativo' },
               include: {
@@ -262,7 +266,9 @@ export async function GET(
       );
     }
 
-    if (session.Class.teacher_id !== teacherId) {
+    const isTeacherGet = session.Class.teacher_id === teacherId;
+    const isCoLeaderGet = session.Class.CoLeaders?.length > 0;
+    if (!isTeacherGet && !isCoLeaderGet) {
       return NextResponse.json(
         { error: 'Você não tem permissão para visualizar esse encontro' },
         { status: 403 }

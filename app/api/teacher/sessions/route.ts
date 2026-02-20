@@ -45,11 +45,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { classId } = createSessionSchema.parse(body);
 
-    // Verify teacher owns this class
+    // Verify teacher owns this class or is co-leader
     const classData = await prisma.class.findUnique({
       where: { id: classId },
       include: {
         Teacher: true,
+        CoLeaders: { where: { id: teacherId }, select: { id: true } },
         enrollments: {
           where: { status: 'ativo' },
           include: {
@@ -73,18 +74,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (classData.teacher_id !== teacherId) {
+    const isTeacher = classData.teacher_id === teacherId;
+    const isCoLeader = classData.CoLeaders?.length > 0;
+    if (!isTeacher && !isCoLeader) {
       return NextResponse.json(
         { error: 'Você não tem permissão para criar sessões nesse grupo' },
         { status: 403 }
       );
     }
 
-    // Check if teacher has any active session (in ANY class)
+    // Check if teacher has any active session (in ANY class they lead or co-lead)
+    const teacherRow = await prisma.teacher.findUnique({
+      where: { id: teacherId },
+      select: { co_lider_class_id: true },
+    });
+    const coLiderClassId = teacherRow?.co_lider_class_id ?? null;
     const activeSession = await prisma.session.findFirst({
       where: {
         Class: {
-          teacher_id: teacherId,
+          OR: [
+            { teacher_id: teacherId },
+            ...(coLiderClassId ? [{ id: coLiderClassId }] : []),
+          ],
         },
         relatorio: null, // null means session is still active
       },

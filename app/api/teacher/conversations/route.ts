@@ -22,9 +22,20 @@ export async function GET(request: NextRequest) {
     const tokenPayload = await verifyTeacherToken(request);
     const teacherId = tokenPayload.teacherId;
 
+    const teacher = await prisma.teacher.findUnique({
+      where: { id: teacherId },
+      select: { co_lider_class_id: true },
+    });
+    const coLiderClassId = teacher?.co_lider_class_id ?? null;
+
     const conversations = await prisma.conversation.findMany({
       where: {
-        Class: { teacher_id: teacherId },
+        Class: {
+          OR: [
+            { teacher_id: teacherId },
+            ...(coLiderClassId ? [{ id: coLiderClassId }] : []),
+          ],
+        },
       },
       include: {
         Student: {
@@ -99,7 +110,12 @@ export async function POST(request: NextRequest) {
 
     const classRecord = await prisma.class.findUnique({
       where: { id: class_id },
-      select: { id: true, teacher_id: true, eh_ativo: true },
+      select: {
+        id: true,
+        teacher_id: true,
+        eh_ativo: true,
+        CoLeaders: { where: { id: teacherId }, select: { id: true } },
+      },
     });
     if (!classRecord) {
       return NextResponse.json(
@@ -107,9 +123,11 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-    if (classRecord.teacher_id !== teacherId) {
+    const isTeacher = classRecord.teacher_id === teacherId;
+    const isCoLeader = classRecord.CoLeaders?.length > 0;
+    if (!isTeacher && !isCoLeader) {
       return NextResponse.json(
-        { error: 'Você não é o facilitador desta turma' },
+        { error: 'Você não é o facilitador ou co-líder desta turma' },
         { status: 403 }
       );
     }

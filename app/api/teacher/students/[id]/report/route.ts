@@ -39,12 +39,13 @@ export async function POST(
     const body = await request.json();
     const { classId, reportText } = reportSchema.parse(body);
 
-    // Verify teacher owns this class
+    // Verify teacher owns this class or is co-leader
     const classData = await prisma.class.findUnique({
       where: { id: classId },
       select: {
         teacher_id: true,
         id: true,
+        CoLeaders: { where: { id: teacherId }, select: { id: true } },
       },
     });
 
@@ -55,7 +56,9 @@ export async function POST(
       );
     }
 
-    if (classData.teacher_id !== teacherId) {
+    const isTeacher = classData.teacher_id === teacherId;
+    const isCoLeader = classData.CoLeaders?.length > 0;
+    if (!isTeacher && !isCoLeader) {
       return NextResponse.json(
         { error: 'Você não tem permissão para criar relatório neste grupo' },
         { status: 403 }

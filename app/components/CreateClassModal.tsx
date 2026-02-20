@@ -17,6 +17,7 @@ import { AVAILABLE_CITIES } from '@/lib/constants';
 
 const createClassSchema = z.object({
   teacher_id: z.string().optional(),
+  co_lider_id: z.string().optional(),
   grupo_repense: z.enum(['Igreja', 'Espiritualidade', 'Evangelho'], {
     message: 'Selecione um grupo',
   }),
@@ -119,6 +120,7 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
       const payload = {
         ...data,
         teacher_id: data.teacher_id || null,
+        co_lider_id: data.co_lider_id || null,
         link_whatsapp: data.link_whatsapp || null,
         data_inicio: data.data_inicio?.trim() || null,
         horario: data.horario || null,
@@ -187,6 +189,25 @@ export function CreateClassModal({ isOpen, onClose, onSuccess }: CreateClassModa
             disabled={loadingTeachers}
           >
             <option value="">Selecione um facilitador (opcional)</option>
+            {teachers.map((teacher) => (
+              <option key={teacher.id} value={teacher.id}>
+                {teacher.nome} ({teacher.email})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Co-líder (opcional) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Co-líder (opcional)
+          </label>
+          <select
+            {...register('co_lider_id')}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            disabled={loadingTeachers}
+          >
+            <option value="">Nenhum</option>
             {teachers.map((teacher) => (
               <option key={teacher.id} value={teacher.id}>
                 {teacher.nome} ({teacher.email})

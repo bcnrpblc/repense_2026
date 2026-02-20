@@ -113,10 +113,19 @@ export async function GET(request: NextRequest) {
 
     const now = new Date();
 
-    // Fetch all classes assigned to this teacher
+    // Teacher can see classes where they are main teacher OR co-leader (co_lider_class_id on Teacher)
+    const teacher = await prisma.teacher.findUnique({
+      where: { id: teacherId },
+      select: { co_lider_class_id: true },
+    });
+    const coLiderClassId = teacher?.co_lider_class_id ?? null;
+
     const classes = await prisma.class.findMany({
       where: {
-        teacher_id: teacherId,
+        OR: [
+          { teacher_id: teacherId },
+          ...(coLiderClassId ? [{ id: coLiderClassId }] : []),
+        ],
       },
       select: {
         id: true,

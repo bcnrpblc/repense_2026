@@ -47,12 +47,16 @@ export async function PUT(
     const body = await request.json();
     const { final_report } = finalReportSchema.parse(body);
 
-    // Find class and verify ownership
+    // Find class and verify ownership (teacher or co-leader)
     const classData = await prisma.class.findUnique({
       where: { id: classId },
       select: {
         id: true,
         teacher_id: true,
+        CoLeaders: {
+          where: { id: teacherId },
+          select: { id: true },
+        },
         grupo_repense: true,
         horario: true,
         numero_sessoes: true,
@@ -69,7 +73,9 @@ export async function PUT(
       );
     }
 
-    if (classData.teacher_id !== teacherId) {
+    const isTeacher = classData.teacher_id === teacherId;
+    const isCoLeader = classData.CoLeaders?.length > 0;
+    if (!isTeacher && !isCoLeader) {
       return NextResponse.json(
         { error: 'Você não tem permissão para submeter relatório final nesse grupo' },
         { status: 403 }
@@ -163,6 +169,10 @@ export async function GET(
       select: {
         id: true,
         teacher_id: true,
+        CoLeaders: {
+          where: { id: teacherId },
+          select: { id: true },
+        },
         final_report: true,
         final_report_em: true,
       },
@@ -175,7 +185,9 @@ export async function GET(
       );
     }
 
-    if (classData.teacher_id !== teacherId) {
+    const isTeacher = classData.teacher_id === teacherId;
+    const isCoLeader = classData.CoLeaders?.length > 0;
+    if (!isTeacher && !isCoLeader) {
       return NextResponse.json(
         { error: 'Você não tem permissão para visualizar relatório final deste grupo' },
         { status: 403 }

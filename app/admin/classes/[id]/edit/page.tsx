@@ -43,6 +43,11 @@ interface ClassData {
     nome: string;
     email: string;
   } | null;
+  coLider?: {
+    id: string;
+    nome: string;
+    email: string;
+  } | null;
 }
 
 // ============================================================================
@@ -53,6 +58,7 @@ const editClassSchema = z.object({
   capacidade: z.number().int().min(1).max(100),
   eh_ativo: z.boolean(),
   teacher_id: z.string().optional().nullable(),
+  co_lider_id: z.string().optional().nullable(),
   link_whatsapp: z.string().url().optional().or(z.literal('')).nullable(),
   horario: z.string().optional().nullable(),
   data_inicio: z.string().optional().nullable(),
@@ -129,6 +135,7 @@ export default function EditClassPage() {
           capacidade: classResult.class.capacidade,
           eh_ativo: classResult.class.eh_ativo,
           teacher_id: classResult.class.Teacher?.id || '',
+          co_lider_id: classResult.class.coLider?.id || '',
           link_whatsapp: classResult.class.link_whatsapp || '',
           horario: classResult.class.horario || '',
           data_inicio: dataInicio,
@@ -155,6 +162,7 @@ export default function EditClassPage() {
         capacidade: data.capacidade,
         eh_ativo: data.eh_ativo,
         teacher_id: data.teacher_id || null,
+        co_lider_id: data.co_lider_id || null,
         link_whatsapp: data.link_whatsapp || null,
         horario: data.horario || null,
         data_inicio: data.data_inicio?.trim() || null,
@@ -284,6 +292,24 @@ export default function EditClassPage() {
             <p className="mt-1 text-xs text-gray-500">
               Selecione &quot;Esperando em Deus&quot; se ainda não há facilitador definido
             </p>
+          </div>
+
+          {/* Co-líder (opcional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Co-líder (opcional)
+            </label>
+            <select
+              {...register('co_lider_id')}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Nenhum</option>
+              {activeTeachers.map((teacher) => (
+                <option key={teacher.id} value={teacher.id}>
+                  {teacher.nome}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Capacidade */}
