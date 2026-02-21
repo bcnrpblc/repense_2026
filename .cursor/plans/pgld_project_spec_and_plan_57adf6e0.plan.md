@@ -38,7 +38,7 @@ todos:
 isProject: false
 ---
 
-# PGLD Project - Tech Lead Task Brief
+# PG Longa Duração Project - Tech Lead Task Brief
 
 ## Task Assignment
 
@@ -198,7 +198,7 @@ flowchart TB
 
 - **Check-in:** Teacher opens session → creates/continues active session → marks attendance (presente, observacao) per participant → saves → finalizes with optional relatório.
 - **Communication:** Conversation scoped by group + optional participant; Admin and Teacher exchange messages; both have notification dropdowns.
-- **Auth:** JWT with adminId/teacherId; routes under `/admin/*` and `/teacher/*`.
+- **Auth:** JWT with adminId/teacherId; routes under `/admin/`* and `/teacher/`*.
 
 ---
 
@@ -403,8 +403,8 @@ Copy these files from the **repense_2026** repo into the new PGLD project. Adapt
 
 ### Skip (repense-specific)
 
-- `app/register/*` – registration flow
-- `app/dashboard/*` – public dashboard
+- `app/register/`* – registration flow
+- `app/dashboard/`* – public dashboard
 - `app/superadmin/*` – if not needed for PGLD
 - `app/api/register/*`, `app/api/courses/*`, `app/api/enrollment/*`, `app/api/students/*` (public)
 - `app/api/sync/*`, `app/api/dashboard/*`

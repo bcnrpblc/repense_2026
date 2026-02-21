@@ -118,6 +118,11 @@ export function StudentListAccordion({
                 <span className="font-medium text-gray-900">
                   {student.nome}
                 </span>
+                {student.telefone && (
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {student.telefone}
+                  </p>
+                )}
                 <p className="text-xs text-gray-500 mt-1">
                   {student.faltas > 0 ? `${student.faltas} faltas` : 'Sem faltas'}
                   {student.totalSessoes > 0 && ` • ${student.totalSessoes} sessões`}
