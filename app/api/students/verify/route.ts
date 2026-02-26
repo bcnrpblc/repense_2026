@@ -1,31 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { cleanCPF } from '@/lib/utils/cpf';
-import { cleanPhone } from '@/lib/utils/phone';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const { telefone, cpf } = body;
+    const { cpf } = body;
 
     // Validate required fields
-    if (!telefone || !cpf) {
+    if (!cpf) {
       return NextResponse.json(
-        { error: 'Telefone e CPF são obrigatórios' },
+        { error: 'CPF é obrigatório' },
         { status: 400 }
       );
     }
 
-    // Clean CPF and phone
+    // Clean CPF
     const cleanedCPF = cleanCPF(cpf);
-    const cleanedPhone = cleanPhone(telefone);
 
-    // Find student by CPF and phone
+    // Find student by CPF only
     const student = await prisma.student.findFirst({
       where: {
         cpf: cleanedCPF,
-        telefone: cleanedPhone,
       },
       select: {
         id: true,

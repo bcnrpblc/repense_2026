@@ -69,13 +69,6 @@ export const registerSchema = z.object({
 export type RegisterFormData = z.input<typeof registerSchema>;
 
 export const verifySchema = z.object({
-  telefone: z.string().refine(
-    (val) => {
-      const cleaned = val.replace(/\D/g, '');
-      return cleaned.length === 11;
-    },
-    { message: 'Telefone deve ter 11 dígitos' }
-  ),
   cpf: z.string().refine(
     (val) => {
       const cleaned = val.replace(/\D/g, '');

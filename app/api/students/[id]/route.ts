@@ -30,6 +30,7 @@ export async function GET(
         priority_list: true,
         priority_list_course_id: true,
         priority_list_added_at: true,
+        cidade_preferencia: true,
       },
     });
 
@@ -40,7 +41,38 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(student);
+    // Get completed courses for this student
+    const completedEnrollments = await prisma.enrollment.findMany({
+      where: {
+        student_id: studentId,
+        status: 'ativo',
+        concluido_em: {
+          not: null,
+        },
+      },
+      select: {
+        Class: {
+          select: {
+            id: true,
+            grupo_repense: true,
+            modelo: true,
+          },
+        },
+      },
+    });
+
+    const completed_courses = completedEnrollments
+      .filter((e) => e.Class)
+      .map((e) => ({
+        id: e.Class.id,
+        grupo_repense: e.Class.grupo_repense,
+        modelo: e.Class.modelo,
+      }));
+
+    return NextResponse.json({
+      ...student,
+      completed_courses,
+    });
   } catch (error) {
     console.error('Error fetching student:', error);
     return NextResponse.json(

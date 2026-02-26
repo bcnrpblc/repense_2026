@@ -17,7 +17,9 @@ const priorityListSchema = z.object({
   genero: z.string().optional(),
   estado_civil: z.string().optional(),
   nascimento: z.string().optional(),
-  course_id: z.string().min(1, 'course_id é obrigatório'),
+  grupo_repense: z.enum(['Igreja', 'Espiritualidade', 'Evangelho'], {
+    message: 'Grupo Repense inválido',
+  }),
   cidade_preferencia: z.string().optional(),
 });
 
@@ -31,12 +33,12 @@ const priorityListSchema = z.object({
  * Business Rules:
  * - Creates or updates student record
  * - Sets priority_list = true
- * - Links to course_id
+ * - Links to desired Repense group (stored in priority_list_course_id)
  * - Does NOT create enrollment
  * - Mutually exclusive with active enrollment
  * 
  * Request Body:
- * { nome, cpf, telefone, email?, genero?, estado_civil?, nascimento?, course_id }
+ * { nome, cpf, telefone, email?, genero?, estado_civil?, nascimento?, grupo_repense }
  * 
  * Response:
  * - 201: Student added to priority list
@@ -61,19 +63,6 @@ export async function POST(request: NextRequest) {
 
     // Validate phone
     const cleanedPhone = cleanPhone(data.telefone);
-
-    // Check if course exists
-    const course = await prisma.class.findUnique({
-      where: { id: data.course_id },
-      select: { id: true, grupo_repense: true, horario: true },
-    });
-
-    if (!course) {
-      return NextResponse.json(
-        { error: 'Curso não encontrado' },
-        { status: 404 }
-      );
-    }
 
     // Check for existing student by CPF
     const existingStudent = await prisma.student.findUnique({
@@ -113,7 +102,7 @@ export async function POST(request: NextRequest) {
               : existingStudent.nascimento,
             cidade_preferencia: data.cidade_preferencia?.trim() || existingStudent.cidade_preferencia,
             priority_list: true,
-            priority_list_course_id: data.course_id,
+            priority_list_course_id: data.grupo_repense,
             priority_list_added_at: new Date(),
           },
         });
@@ -136,7 +125,7 @@ export async function POST(request: NextRequest) {
             })(),
             cidade_preferencia: data.cidade_preferencia?.trim() || null,
             priority_list: true,
-            priority_list_course_id: data.course_id,
+            priority_list_course_id: data.grupo_repense,
             priority_list_added_at: new Date(),
           },
         });
@@ -144,7 +133,7 @@ export async function POST(request: NextRequest) {
 
       return {
         student_id: student.id,
-        course_id: data.course_id,
+        grupo_repense: data.grupo_repense,
       };
     });
 
@@ -152,7 +141,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Você foi adicionado à lista de prioridade',
       student_id: result.student_id,
-      course_id: result.course_id,
+      grupo_repense: result.grupo_repense,
     }, { status: 201 });
 
   } catch (error) {

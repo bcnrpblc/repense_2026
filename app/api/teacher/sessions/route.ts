@@ -125,6 +125,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Enforce at most one session per class per day.
+    // Uses server local timezone: sessions on the same calendar day are blocked.
+    const now = new Date();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existingSessionToday = await prisma.session.findFirst({
+      where: {
+        class_id: classId,
+        data_sessao: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      select: {
+        id: true,
+        numero_sessao: true,
+        data_sessao: true,
+      },
+    });
+
+    if (existingSessionToday) {
+      return NextResponse.json(
+        {
+          error:
+            'Já existe um encontro registrado para este grupo hoje. Não é possível iniciar outro no mesmo dia.',
+          code: 'SESSION_ALREADY_TODAY',
+          existingSession: {
+            id: existingSessionToday.id,
+            numero_sessao: existingSessionToday.numero_sessao,
+            data_sessao: existingSessionToday.data_sessao,
+          },
+        },
+        { status: 400 }
+      );
+    }
+
     // Get the last session number for this class
     const lastSession = await prisma.session.findFirst({
       where: { class_id: classId },

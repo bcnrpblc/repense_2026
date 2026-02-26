@@ -38,7 +38,6 @@ export default function VerifyPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          telefone: data.telefone,
           cpf: data.cpf,
         }),
       });
@@ -82,44 +81,15 @@ export default function VerifyPage() {
       <main className="container mx-auto px-4 py-8 max-w-2xl">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Já fez algum PG Repense antes?</h1>
-          <p className="text-gray-600">Informe seus dados para continuar o cadastro</p>
+          <p className="text-gray-600">Informe seu CPF para continuar o cadastro</p>
         </div>
 
         {/* Form */}
-        <form
+          <form
           onSubmit={handleSubmit(onSubmit)}
           className="bg-white rounded-lg shadow-lg p-6 md:p-8"
         >
           <div className="space-y-6">
-            {/* Phone Input */}
-            <div>
-              <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-2">
-                Telefone <span className="text-red-500">*</span>
-              </label>
-              <InputMask
-                mask="(99) 99999-9999"
-                value={watchedValues.telefone || ''}
-                onChange={(e) => {
-                  setValue('telefone', e.target.value, { shouldValidate: true });
-                }}
-              >
-                  {(inputProps: any) => (
-                    <input
-                      {...inputProps}
-                      id="telefone"
-                      type="tel"
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#c92041] focus:border-transparent ${
-                        errors.telefone ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="(00) 00000-0000"
-                    />
-                  )}
-              </InputMask>
-              {errors.telefone && (
-                <p className="mt-1 text-sm text-red-500">{errors.telefone.message}</p>
-              )}
-            </div>
-
             {/* CPF Input */}
             <div>
               <label htmlFor="cpf" className="block text-sm font-medium text-gray-700 mb-2">

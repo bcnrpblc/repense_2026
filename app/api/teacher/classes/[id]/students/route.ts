@@ -76,6 +76,8 @@ export async function GET(
             nome: true,
             email: true,
             telefone: true,
+            priority_list: true,
+            priority_list_course_id: true,
           },
         },
       },
@@ -117,6 +119,8 @@ export async function GET(
         nome: enrollment.student.nome,
         email: enrollment.student.email,
         telefone: enrollment.student.telefone,
+        priority_list: enrollment.student.priority_list,
+        priority_list_course_id: enrollment.student.priority_list_course_id,
         faltas: attendance.faltas,
         totalSessoes: attendance.total,
       };

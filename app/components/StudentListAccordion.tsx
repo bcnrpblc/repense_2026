@@ -18,6 +18,8 @@ interface Student {
   telefone: string;
   faltas: number;
   totalSessoes: number;
+  priority_list?: boolean;
+  priority_list_course_id?: string | null;
 }
 
 interface StudentListAccordionProps {
@@ -29,6 +31,12 @@ interface StudentListAccordionProps {
 // ============================================================================
 // STUDENT LIST ACCORDION COMPONENT
 // ============================================================================
+
+const priorityGroupLabels: Record<string, string> = {
+  Igreja: 'Igreja',
+  Espiritualidade: 'Espiritualidade',
+  Evangelho: 'Evangelho',
+};
 
 export function StudentListAccordion({
   classId,
@@ -127,6 +135,11 @@ export function StudentListAccordion({
                   {student.faltas > 0 ? `${student.faltas} faltas` : 'Sem faltas'}
                   {student.totalSessoes > 0 && ` • ${student.totalSessoes} sessões`}
                 </p>
+                {student.priority_list && student.priority_list_course_id && priorityGroupLabels[student.priority_list_course_id] && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    Na lista de prioridade para: {priorityGroupLabels[student.priority_list_course_id]}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2 ml-4">
                 <WhatsAppButton telefone={student.telefone} size="sm" />

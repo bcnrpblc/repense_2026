@@ -66,8 +66,6 @@ export default function RegisterFormPage() {
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [addingToPriorityList, setAddingToPriorityList] = useState(false);
   const [priorityListSelectedCourse, setPriorityListSelectedCourse] = useState<string>('');
-  const [allCoursesForPriority, setAllCoursesForPriority] = useState<Course[]>([]);
-  const [loadingPriorityCourses, setLoadingPriorityCourses] = useState(false);
   const [requiresCourseChange, setRequiresCourseChange] = useState(false);
   const [courseChangeData, setCourseChangeData] = useState<{
     existingEnrollment: {
@@ -238,7 +236,7 @@ export default function RegisterFormPage() {
             ? (brazilianDateToISO(watchedValues.nascimento) || null)
             : undefined,
           cidade_preferencia: watchedValues.cidade_preferencia || undefined,
-          course_id: priorityListSelectedCourse,
+          grupo_repense: priorityListSelectedCourse as GrupoRepense,
         }),
       });
 
@@ -780,27 +778,9 @@ export default function RegisterFormPage() {
                 </p>
                 <button
                   type="button"
-                  onClick={async () => {
+                  onClick={() => {
                     setPriorityListSelectedCourse('');
                     setShowPriorityModal(true);
-                    // Fetch all courses (including inactive) for priority list
-                    setLoadingPriorityCourses(true);
-                    try {
-                      // Fetch courses without gender filter to get all options
-                      const response = await fetch('/api/courses');
-                      if (response.ok) {
-                        const data = await response.json();
-                        const allPriorityCourses: Course[] = [
-                          ...(Object.values(data.indaiatuba || {}).flat() as Course[]),
-                          ...(Object.values(data.itu || {}).flat() as Course[]),
-                        ];
-                        setAllCoursesForPriority(allPriorityCourses);
-                      }
-                    } catch (error) {
-                      console.error('Error fetching courses for priority list:', error);
-                    } finally {
-                      setLoadingPriorityCourses(false);
-                    }
                   }}
                   disabled={addingToPriorityList}
                   className="w-full px-4 py-2 bg-red-100 text-[#c92041] border border-red-300 rounded-lg font-medium hover:bg-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -997,34 +977,11 @@ export default function RegisterFormPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#c92041] focus:border-transparent"
                 >
                   <option value="">Selecione um PG Repense...</option>
-                  {loadingPriorityCourses ? (
-                    <option value="" disabled>Carregando PG Repense...</option>
-                  ) : (
-                    /* Group courses by grupo_repense and show options */
-                    (['Igreja', 'Espiritualidade', 'Evangelho'] as GrupoRepense[]).map((grupo) => {
-                      // Use allCoursesForPriority (includes inactive) if available, otherwise fallback to allCourses
-                      const coursesToUse = allCoursesForPriority.length > 0 ? allCoursesForPriority : allCourses;
-                      const grupoCourses = coursesToUse.filter(c => c.grupo_repense === grupo);
-                      
-                      if (grupoCourses.length === 0) {
-                        // If no courses found even in allCoursesForPriority, still show option but note it's unavailable
-                        return (
-                          <option key={grupo} value="" disabled>
-                            {grupoLabels[grupo]} (sem PG Repense no momento)
-                          </option>
-                        );
-                      }
-                      
-                      // Use the first course as representative for this grupo_repense
-                      const representativeCourse = grupoCourses[0];
-                      
-                      return (
-                        <option key={grupo} value={representativeCourse.id}>
-                          {grupoLabels[grupo]}
-                        </option>
-                      );
-                    })
-                  )}
+                  {(['Igreja', 'Espiritualidade', 'Evangelho'] as GrupoRepense[]).map((grupo) => (
+                    <option key={grupo} value={grupo}>
+                      {grupoLabels[grupo]}
+                    </option>
+                  ))}
                 </select>
                 {submitError && !priorityListSelectedCourse && (
                   <p className="mt-1 text-sm text-red-500">{submitError}</p>

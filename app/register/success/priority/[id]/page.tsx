@@ -5,12 +5,7 @@ import { useParams } from 'next/navigation';
 
 interface PriorityListData {
   student_id: string;
-  course: {
-    id: string;
-    grupo_repense: string;
-    modelo: string;
-    horario: string | null;
-  };
+  grupo_repense: string;
   priority_list_added_at: string;
 }
 
@@ -63,24 +58,9 @@ export default function PriorityListSuccessPage() {
           return;
         }
 
-        // Fetch course data
-        const courseResponse = await fetch(`/api/courses/${studentData.priority_list_course_id}`);
-        if (!courseResponse.ok) {
-          setError('Curso não encontrado');
-          setLoading(false);
-          return;
-        }
-
-        const courseData = await courseResponse.json();
-        
         setData({
           student_id: studentId,
-          course: {
-            id: courseData.id,
-            grupo_repense: courseData.grupo_repense,
-            modelo: courseData.modelo,
-            horario: courseData.horario,
-          },
+          grupo_repense: studentData.priority_list_course_id,
           priority_list_added_at: studentData.priority_list_added_at || new Date().toISOString(),
         });
       } catch (error) {
@@ -167,7 +147,7 @@ export default function PriorityListSuccessPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold">Lista de Prioridade</h2>
-                <p className="text-sm text-blue-100 mt-1">PG Repense</p>
+                <p className="text-sm text-blue-100 mt-1">PG Repense - Grupo de Interesse</p>
               </div>
             </div>
           </div>
@@ -176,20 +156,13 @@ export default function PriorityListSuccessPage() {
           <div className="p-6 space-y-6">
             {/* Course Info */}
             <div className="border-b border-gray-200 pb-4">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Curso de Interesse</h3>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Repense de Interesse</h3>
               <div className="space-y-2">
                 <div>
                   <p className="text-lg font-semibold text-gray-900">
-                    {grupoLabels[data.course.grupo_repense] || data.course.grupo_repense} - {modeloLabels[data.course.modelo] || data.course.modelo}
+                    {grupoLabels[data.grupo_repense] || data.grupo_repense}
                   </p>
                 </div>
-                {data.course.horario && (
-                  <div>
-                    <p className="text-base text-gray-700">
-                      Horário: {data.course.horario}
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -218,7 +191,7 @@ export default function PriorityListSuccessPage() {
                   <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Entraremos em contato via WhatsApp ou email</span>
+                  <span>Entraremos em contato via WhatsApp</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
